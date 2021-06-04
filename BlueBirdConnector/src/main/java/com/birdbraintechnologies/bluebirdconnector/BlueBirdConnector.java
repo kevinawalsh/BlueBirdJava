@@ -26,8 +26,8 @@ import java.net.URL;
 public class BlueBirdConnector extends Application{
 
     static final Logger LOG = LoggerFactory.getLogger(BlueBirdConnector.class);
-    private Double screen_width = 300.0;
-    private Double screen_height = 300.0;
+    private Double screen_width = 600.0;
+    private Double screen_height = 700.0;
     //static ScratchME scratchME = null;
 
 
