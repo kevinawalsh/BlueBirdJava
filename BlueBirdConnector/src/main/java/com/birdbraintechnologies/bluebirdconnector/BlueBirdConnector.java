@@ -97,10 +97,12 @@ public class BlueBirdConnector extends Application{
 
                 URL indexUrl = this.getClass().getResource("/frontend/index.html");
                 webview.getEngine().load(indexUrl.toString());
-
+                LOG.debug("resource url " + indexUrl.toString());
                 stage.setTitle("Bluebird Connector");
                 //String url = "file:///"+ScratchME.userDir+"/scratchx/images/hummingbirdlogo32x32.png";
-                String url = "/frontend/img/hummingbirdlogo32x32.png";
+                //String url = "/frontend/img/hummingbirdlogo32x32.png";
+                URL iconUrl = this.getClass().getResource("/frontend/img/hummingbirdlogo32x32.png");
+                String url = iconUrl.toString();
                 Image img = new Image(url);
                 stage.getIcons().add(img);
                 stage.show();
