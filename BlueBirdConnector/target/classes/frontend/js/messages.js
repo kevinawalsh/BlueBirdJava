@@ -9,10 +9,10 @@ function sendMessageToBackend(type, details) {
   this.message = details
   this.message.type = type
 
-  if (window.webkit) {
-    window.webkit.messageHandlers.serverSubstitute.postMessage(this.message);
+  if (typeof javaConnector !== 'undefined') {
+    javaConnector.handleMessage(this.message);
   } else {
-    console.error("window.webkit missing. ", this.message);
+    console.error("javaConnector is missing. ", this.message);
   }
 }
 const msgTypes = {
@@ -203,4 +203,8 @@ CallbackManager.showCalibrationResult = function(success) {
   } else {
     $('#calibrate-modal .status').addClass('status-fail');
   }
+}
+
+function getCallbackManager() {
+    return CallbackManager
 }
