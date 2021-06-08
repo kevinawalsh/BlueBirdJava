@@ -8,6 +8,33 @@ public class FrontendServer {
 
     static final Logger LOG = LoggerFactory.getLogger(FrontendServer.class);
 
+    private static FrontendServer sharedInstance;
+    private JSObject callbackManager;
+
+    private FrontendServer(){
+
+    }
+
+    public static FrontendServer getSharedInstance() {
+        if (sharedInstance == null) {
+            sharedInstance = new FrontendServer();
+        }
+        return sharedInstance;
+    }
+
+    public void setCallbackManager(JSObject cbManager) {
+        callbackManager = cbManager;
+    }
+
+    public void updateGUIScanStatus(boolean scanning) {
+        if (scanning) {
+            callbackManager.call("scanStarted");
+        } else {
+            callbackManager.call("scanEnded");
+        }
+    }
+
+
     public void handleMessage(JSObject json) {
 
         Object type = json.getMember("type");

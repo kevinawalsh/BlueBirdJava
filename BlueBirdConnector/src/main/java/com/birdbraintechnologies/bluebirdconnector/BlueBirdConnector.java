@@ -1,9 +1,5 @@
 package com.birdbraintechnologies.bluebirdconnector;
 
-//WebView
-
-//import com.creativecomputerlab.ScratchME;
-//import com.sun.javafx.webkit.WebConsoleListener;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.concurrent.Worker;
@@ -32,26 +28,18 @@ public class BlueBirdConnector extends Application{
     static final Logger LOG = LoggerFactory.getLogger(BlueBirdConnector.class);
     private Double screen_width = 600.0;
     private Double screen_height = 700.0;
-    //static ScratchME scratchME = null;
-    private JSObject callbackManager;
-    private FrontendServer frontendServer = new FrontendServer();
+
+    private FrontendServer frontendServer = FrontendServer.getSharedInstance();
+
 
 
     public static void main(String[] args) {
-			/*scratchME = ScratchME.getInstance(args);
-	        while (!ScratchME.ready) {
-	        	LOG.info("Waiting for web server to start");
-	        	try { Thread.sleep(1000);} catch (Exception e) {}
-	        }*/
         LOG.info("Ready to launch");
         launch(args);
-
     }
 
     @Override
     public void start(Stage stage) throws Exception {
-			/*screen_width = scratchME.screen_width;
-			screen_height = scratchME.screen_height;*/
         startGUI(stage);
     }
 
@@ -64,25 +52,19 @@ public class BlueBirdConnector extends Application{
                 WebView webView = new WebView();
                 final WebEngine webEngine = webView.getEngine();
 
-                // print javascript console.log messages to java console
-			        /*WebConsoleListener.setDefaultListener((webView, message, lineNumber, sourceId) -> {
-			            //System.out.println("WEB:: " + message + "[at " + lineNumber + "]");
-						LOG.info("WEB({}:{}): {}", sourceId, lineNumber, message);
-			        });*/
-
-
                 webEngine.getLoadWorker().stateProperty().addListener((observable, oldValue, newValue) -> {
                     if (newValue == Worker.State.SUCCEEDED) {
                         LOG.debug("setting up frontend communications...");
                         JSObject window = (JSObject) webEngine.executeScript("window");
                         window.setMember("javaConnector", frontendServer);
 
-                        callbackManager = (JSObject) webEngine.executeScript("getCallbackManager()");
+                        JSObject callbackManager = (JSObject) webEngine.executeScript("getCallbackManager()");
                         LOG.debug("callbackManager = " + callbackManager.toString());
-                        callbackManager.call("scanStarted");
+                        frontendServer.setCallbackManager(callbackManager);
+                        //callbackManager.call("scanStarted");
+                        RobotManager.getSharedInstance().startDiscovery();
                     }
                 });
-
 
                 //this makes all stages close and the app exit when the main stage is closed
                 stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
@@ -92,7 +74,6 @@ public class BlueBirdConnector extends Application{
                         System.exit(0);
                     }
                 });
-
 
                 // Get screen size
                 Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
@@ -110,11 +91,9 @@ public class BlueBirdConnector extends Application{
 
                 webView.setPrefSize(screen_width, screen_height);
                 stage.setScene(new Scene(webView));
-                //stage.setMaximized(true);
                 Thread.sleep (500);
                 LOG.debug("Showing Stage");
                 webView.getEngine().setJavaScriptEnabled(true);
-                //webview.getEngine().load("http://localhost:30061/prototype.html");
 
                 URL indexUrl = this.getClass().getResource("/frontend/index.html");
                 LOG.debug("resource url " + indexUrl);
@@ -122,8 +101,6 @@ public class BlueBirdConnector extends Application{
                 webView.getEngine().load(indexUrl.toString());
 
                 stage.setTitle("Bluebird Connector");
-                //String url = "file:///"+ScratchME.userDir+"/scratchx/images/hummingbirdlogo32x32.png";
-                //String url = "/frontend/img/hummingbirdlogo32x32.png";
                 URL iconUrl = this.getClass().getResource("/frontend/img/hummingbirdlogo32x32.png");
                 String url = iconUrl.toString();
                 Image img = new Image(url);
@@ -131,7 +108,6 @@ public class BlueBirdConnector extends Application{
                 stage.show();
             } catch (Exception ex) {
                 LOG.error("Cannot Start GUI");
-                //LOG.error("{}", ex.toString());
                 StringWriter sw = new StringWriter();
                 PrintWriter pw = new PrintWriter(sw);
                 ex.printStackTrace(pw);
@@ -150,7 +126,7 @@ public class BlueBirdConnector extends Application{
                 alert.setTitle(title);
                 alert.setHeaderText(header);
                 alert.setContentText(message);
-                //alert.showAndWait();
+
                 Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
                 stage.setAlwaysOnTop(true);
                 stage.toFront(); // not sure if necessary
