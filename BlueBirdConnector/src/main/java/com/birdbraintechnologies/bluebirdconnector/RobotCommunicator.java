@@ -41,7 +41,7 @@ public abstract class RobotCommunicator {
     abstract void stopFirmwareUpgrade(); //Stop the currently running firmware upgrade
     abstract void cancelConnectionRequest(); //Cancel the current connection request
     abstract void sendCommand(byte[] command, int connection); //Send command to specified device
-    abstract void disconnect(); //shut down the communicator
+    abstract void kill(); //shut down the communicator
     abstract boolean isRunning(); //is this communicator prepared to communicate
     abstract boolean robotFound(); //has the communicator found a robot it can connect to
 

@@ -70,6 +70,7 @@ public class BlueBirdConnector extends Application{
                 stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
                     @Override
                     public void handle(WindowEvent event) {
+                        RobotManager.getSharedInstance().close();
                         Platform.exit();
                         System.exit(0);
                     }

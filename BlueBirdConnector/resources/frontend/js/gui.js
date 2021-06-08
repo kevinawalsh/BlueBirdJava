@@ -104,7 +104,7 @@ $.scanListRefresh = function() {
     var el = $(
       "<div class=\"row robot-item\"><a href=\"#\"> " +
       "<div class=\"row robot-item\">" +
-      "<div class=\"col-xs-2 img\"><img src=\"" + deviceImage + "\" alt=\"Bit\" /></div>" +
+      "<div class=\"col-xs-2 img\"><img src=\"img/" + deviceImage + "\" alt=\"Bit\" /></div>" +
       "<div class=\"col-xs-8 name\">" + name + "</div>" +
       btn + "</a>");
 
@@ -136,11 +136,11 @@ $.scanListRefresh = function() {
       // Send the actual connect command
       var connect = {
         'command': 'connect',
-        'address': item.address
+        'name': item.name
       }
 
       sendMessageToBackend(msgTypes.CONSOLE_LOG, {
-        consoleLog: "Connection address = " + connect.address
+        consoleLog: "Connection name = " + connect.name
       })
 
       // There appeared to be a conflict between stopping the scan and connecting, so experimentation

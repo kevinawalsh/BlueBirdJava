@@ -43,6 +43,24 @@ public class RobotManager {
         robotCommunicator.startDiscovery();
     }
 
+    public void stopDiscovery(){
+        if (robotCommunicator == null || !robotCommunicator.isRunning()){
+            LOG.error("Trying to stop discovery without a running communicator.");
+            return;
+        }
+        robotCommunicator.stopDiscovery();
+    }
+
+    public void connectToRobot(String name){
+        LOG.error("NOT IMPLEMENTED");
+    }
+
+    public void close(){
+        if(robotCommunicator != null) {
+            robotCommunicator.kill();
+        }
+    }
+
     public void receiveNotification(int connection, byte[] bytes) {
 
     }

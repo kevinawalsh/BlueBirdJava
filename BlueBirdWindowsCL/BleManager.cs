@@ -65,7 +65,7 @@ namespace BlueBirdWindowsCL
                 //Console.WriteLine("empty...");
                 return;
             }
-            var args = new string[] {"peripheral", eventArgs.Advertisement.LocalName, "rssi", eventArgs.RawSignalStrengthInDBm.ToString()};
+            var args = new string[] {"name", eventArgs.Advertisement.LocalName, "rssi", eventArgs.RawSignalStrengthInDBm.ToString()};
             Utilities.WriteOut("discovery", args);
         }
 

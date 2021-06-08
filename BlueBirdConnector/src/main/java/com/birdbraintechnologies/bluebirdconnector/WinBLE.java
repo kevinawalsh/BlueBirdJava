@@ -6,6 +6,11 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.net.URL;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+
 public class WinBLE extends RobotCommunicator {
 
     static final Logger LOG = LoggerFactory.getLogger(WinBLE.class);
@@ -171,6 +176,7 @@ public class WinBLE extends RobotCommunicator {
 
 
     public void kill() {
+        LOG.info("Killing Windows native ble driver");
         try {
             Thread.sleep(1000); //Give some tasks a chance to finish up
             writeBLE("quit\n");
@@ -183,7 +189,6 @@ public class WinBLE extends RobotCommunicator {
 
         try {
             LOG.info("killNativeBLEDriver(): closing IO streams...");
-            //receive.close();
             notificationPipe.close();
             send.close();
         }
@@ -194,30 +199,38 @@ public class WinBLE extends RobotCommunicator {
 
     // Receives communications from the BlueBirdNative driver
     private void blePacketReceived(String packetData){
-        /*long notification_ms = System.currentTimeMillis() - notificationStartTime;
+        long notification_ms = System.currentTimeMillis() - notificationStartTime;
         //LOG.debug("Time since last notification: {} ms", notification_ms);
         notificationStartTime = System.currentTimeMillis();  // reset timer to now for next iteration
         try {
             //Parse JSON
-            JsonNode root = mapper.readTree(packetData);
-            JsonNode packet = root.path("packetType");
+            JSONObject root = new JSONObject(packetData);
+            String packetType = root.getString("packetType");
+
+            //JsonNode root = mapper.readTree(packetData);
+            //JsonNode packet = root.path("packetType");
             int connection = -1;
 
-            if (!packet.isMissingNode()) {
-                String packetType = packet.asText();
+            //if (!packet.isMissingNode()) {
+                //String packetType = packet.asText();
                 switch (packetType) {
                     case "quit":
-                        JsonNode reason = root.path("reason");
-                        LOG.info("BlueBirdNative process has quit due to '" + reason.asText() + "'.");
+                        //JsonNode reason = root.path("reason");
+                        String reason = root.getString("reason");
+                        //LOG.info("BlueBirdNative process has quit due to '" + reason.asText() + "'.");
+                        LOG.info("BlueBirdNative process has quit due to '" + reason + "'.");
                         break;
                     case "ping":
                         LOG.debug("BlueBirdNative process returned ping.");
                         break;
                     case  "notification" :
-                        JsonNode peripheral = root.path("peripheral");
+                        /*JsonNode peripheral = root.path("peripheral");
                         String peripheralName = peripheral.asText();
                         JsonNode data = root.path("data");
-                        String peripheralData = data.asText();
+                        String peripheralData = data.asText();*/
+                        String peripheralName = root.getString("peripheral");
+                        String peripheralData = root.getString("data");
+                        String devLetterStr = root.getString("devLetter");
                         //LOG.debug("blePacketReceived(): Peripheral: {},  Data: {}", peripheralName, peripheralData);
                         //byte[] bytes = Base64.getDecoder().decode(peripheralData);
                         String[] hexArray = peripheralData.split("-");
@@ -226,37 +239,46 @@ public class WinBLE extends RobotCommunicator {
                             bytes[i] = (byte)Integer.parseInt(hexArray[i], 16);
                         }
                         //LOG.debug("Notification bytes: " + bytesToString(bytes));
-                        JsonNode devLetterNode = root.path("devLetter");
-                        String devLetterStr = devLetterNode.asText();
+                        //JsonNode devLetterNode = root.path("devLetter");
+                        //String devLetterStr = devLetterNode.asText();
                         char devLetter = devLetterStr.charAt(0);
-                        connection = blueBirdDriver.mapDevLetterToConnection(devLetter);
-
-                        listener.receiveNotification(connection, bytes);
+                        //connection = blueBirdDriver.mapDevLetterToConnection(devLetter);
+                        LOG.error("NOTIFICATION NOT IMPLEMENTED");
+                        //listener.receiveNotification(connection, bytes);
                         break;
                     case  "discovery" :
-                        peripheral = root.path("peripheral");
-                        peripheralName = peripheral.asText();
+                        //peripheral = root.path("peripheral");
+                        //peripheralName = peripheral.asText();
+                        peripheralName = root.getString("name");
                         if (!(peripheralName.startsWith("FN") || peripheralName.startsWith("BB") || peripheralName.startsWith("MB"))){
                             break;
                         }
-                        JsonNode rssiNode = root.path("rssi");
+                        /*JsonNode rssiNode = root.path("rssi");
                         ActiveDeviceInfo activeDevice = new ActiveDeviceInfo();
                         activeDevice.name = peripheralName;
                         activeDevice.fancyName = blueBirdDriver.getDeviceFancyName(peripheralName);
                         activeDevice.address = peripheralName; // macos native address is peripheral name i.e. BBxxxxx
-                        activeDevice.rssi = rssiNode.asInt();
-                        LOG.debug("blePacketReceived():discovery: Peripheral: {},  rssi: {}", peripheralName, activeDevice.rssi);
-                        listener.receiveScanResponse(activeDevice);
+                        activeDevice.rssi = rssiNode.asInt();*/
+
+                        //int rssi = root.getInt("rssi");
+                        //RobotInfo robotInfo = new RobotInfo(peripheralName, rssi);
+                        //LOG.debug("blePacketReceived():discovery: Peripheral: {},  rssi: {}", peripheralName, rssi);
+                        frontendServer.receiveScanResponse(peripheralName, root);
+
+                        //LOG.debug("blePacketReceived():discovery: Peripheral: {},  rssi: {}", peripheralName, activeDevice.rssi);
+                        //listener.receiveScanResponse(activeDevice);
                         break;
                     case  "bluetoothState" :
-                        JsonNode bleStatusNode = root.path("status");
-                        String bleStatus = bleStatusNode.asText();
+                        //JsonNode bleStatusNode = root.path("status");
+                        //String bleStatus = bleStatusNode.asText();
+                        String bleStatus = root.getString("status");
                         LOG.info("blePacketReceived(): bluetoothStatus: {}", bleStatus);
-                        listener.updateBleStatus(bleStatus);
+                        //listener.updateBleStatus(bleStatus);
+                        //TODO: for when the computer's bluetooth is on or off.
 
                         break;
                     case  "connection" :
-                        JsonNode statusNode = root.path("status");
+                        /*JsonNode statusNode = root.path("status");
                         String status = statusNode.asText();
                         peripheral = root.path("peripheral"); // The address i.e. BBxxxxxx
                         peripheralName = peripheral.asText();
@@ -284,21 +306,23 @@ public class WinBLE extends RobotCommunicator {
                             case "deviceDisconnected":  // THe device disconnected itself i.e. power cut or out of range.
                                 listener.receiveDisconnectionEvent(connection, false);
                                 break;
-                        }
+                        }*/
+                        LOG.error("CONNECTION NOT IMPLEMENTED");
                         break;
                     case "ERROR":
-                        String message = root.path("message").asText();
+                        //String message = root.path("message").asText();
+                        String message = root.getString("message");
                         LOG.error("Ble packet error: " + message);
                     default:
                         LOG.error ("Invalid packet type received from BlueBirdNative Driver");
                 }
-            } else
-                LOG.error ("Invalid data received from BlueBirdNative Driver. packet: " + packetData);
+            //} else
+            //    LOG.error ("Invalid data received from BlueBirdNative Driver. packet: " + packetData);
         } catch (Exception e) {
             LOG.error("Error! packet: " + packetData);
             System.out.println("blePacketReceived: JSON Parsing exception:" + e.toString());
             e.printStackTrace();
-        }*/
+        }
     }
 
     public void requestDisconnect(String address, int connection) {

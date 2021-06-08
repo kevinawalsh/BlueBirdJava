@@ -1,8 +1,12 @@
 package com.birdbraintechnologies.bluebirdconnector;
 
+import javafx.application.Platform;
 import netscape.javascript.JSObject;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.*;
 
 public class FrontendServer {
 
@@ -10,9 +14,10 @@ public class FrontendServer {
 
     private static FrontendServer sharedInstance;
     private JSObject callbackManager;
+    private Hashtable<String, String> availableRobots;
 
     private FrontendServer(){
-
+        availableRobots = new Hashtable<>();
     }
 
     public static FrontendServer getSharedInstance() {
@@ -34,11 +39,31 @@ public class FrontendServer {
         }
     }
 
+    public void receiveScanResponse(String name, JSONObject discoveryInfo){
+        discoveryInfo.put("fancyName", FancyNames.getDeviceFancyName(name));
+        availableRobots.put(name, discoveryInfo.toString());
+        LOG.debug("blePacketReceived():discovery: {} {}", name, discoveryInfo.toString());
+
+        /*List<JSONObject> list = new ArrayList<>(availableRobots.values());
+        JSONObject[] newList = list.toArray(new JSONObject[0]);
+        LOG.debug("first value of new list: " + newList[0].toString());*/
+        //String string = discoveryInfo.toString();
+        //String[] newList = new String[] { string };
+        String[] newList = (new ArrayList<>(availableRobots.values())).toArray(new String[0]);
+        LOG.debug(newList[0]);
+
+        String[][] args = new String[1][];
+        args[0] = newList;
+        Platform.runLater(() -> {
+            callbackManager.call("updateScanDeviceList", args);
+        });
+    }
+
 
     public void handleMessage(JSObject json) {
 
         Object type = json.getMember("type");
-        LOG.debug("From frontend: " + type.toString());
+        //LOG.debug("From frontend: " + type.toString());
 
         switch (type.toString()) {
             case "console log":
@@ -51,6 +76,8 @@ public class FrontendServer {
                 LOG.debug("DOCUMENT STATUS: " + documentStatus + ". Full message: " + json.toString());
                 switch (documentStatus) {
                     case "READY":
+                        LOG.info("Received document ready");
+                        //TODO: use this or remove
                         //MainPage.Current.RobotManager.StartScan();
                         break;
                     default:
@@ -67,10 +94,10 @@ public class FrontendServer {
                         //mDict.TryGetValue("scanState", out scanState);
                         switch (scanState) {
                             case "on":
-                                //MainPage.Current.RobotManager.StartScan();
+                                RobotManager.getSharedInstance().startDiscovery();
                                 break;
                             case "off":
-                                //MainPage.Current.RobotManager.StopScan();
+                                RobotManager.getSharedInstance().stopDiscovery();
                                 break;
                             default:
                                 LOG.debug("UNHANDLED SCAN MESSAGE: " + json.toString());
@@ -78,7 +105,9 @@ public class FrontendServer {
                         }
                         break;
                     case "connect":
-                        String addressToConnect = json.getMember("address").toString();
+                        String nameToConnect = json.getMember("name").toString();
+                        LOG.debug("Requesting connection to " + nameToConnect);
+                        RobotManager.getSharedInstance().connectToRobot(nameToConnect);
                         //mDict.TryGetValue("address", out address);
                         //MainPage.Current.RobotManager.ConnectToRobot(addressToConnect);
                         break;
