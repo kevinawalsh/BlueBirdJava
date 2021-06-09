@@ -50,9 +50,9 @@ namespace BlueBirdWindowsCL
                     BleManager.Shared.stopScan();
                     break;
                 case "connect":
-                    if (strs.Length > 2)
+                    if (strs.Length > 1)
                     {
-                        BleManager.Shared.OpenDevice(strs[1], strs[2]);
+                        BleManager.Shared.OpenDevice(strs[1]);
                     }
                     else
                     {

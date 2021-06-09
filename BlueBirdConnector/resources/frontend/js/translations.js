@@ -220,11 +220,13 @@ function translateStrings() {
  * setLanguage - Set the app language based on the navigator language. Set to
  * English if the language is not supported. Translate initial strings once set.
  */
-function setLanguage() {
-  language = window.navigator.language;
-  console.log("window.navigator.language = " + language);
+function setLanguage(language) {
+  if (language == null) {
+    language = window.navigator.language;
+  }
+  console.log("setting language = " + language);
   sendMessageToBackend(msgTypes.CONSOLE_LOG, {
-    consoleLog: "window.navigator.language = " + language
+    consoleLog: "setting language = " + language
   })
 
   if (language.startsWith("zh")) {

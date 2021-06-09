@@ -59,6 +59,10 @@ window.onresize = () => {
  */
 CallbackManager = {}
 
+CallbackManager.setTranslationTable = function(language) {
+    setLanguage(language);
+}
+
 /**
  * CallbackManager.scanStarted - Ble scanning has started. Update display.
  */

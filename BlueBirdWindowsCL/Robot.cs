@@ -23,6 +23,14 @@ namespace BlueBirdWindowsCL
         private string devLetter;
         private string deviceType;
         private int microBitVersionNumber = 0;
+        public bool hasV2
+        {
+            get
+            {
+                return microBitVersionNumber == 2;
+            }
+        }
+
         private GattCharacteristic tx;
         private GattCharacteristic rx;
 
@@ -53,20 +61,12 @@ namespace BlueBirdWindowsCL
                 return name;
             }
         }
-        public string Letter
-        {
-            get
-            {
-                return devLetter;
-            }
-        }
 
 
-        public Robot(BluetoothLEDevice device, string letter)
+        public Robot(BluetoothLEDevice device)
         {
             bleDevice = device;
             name = device.Name;
-            devLetter = letter;
             deviceType = device.Name.Substring(0, 2);
 
             bleDevice.ConnectionStatusChanged += BleManager.Shared.RobotConnectionStatusChanged;

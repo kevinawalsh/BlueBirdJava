@@ -96,7 +96,7 @@ namespace BlueBirdWindowsCL
         /// </summary>
         /// <param name="deviceName"></param>
         /// <returns></returns>
-        public async Task<int> OpenDevice(string deviceName, string devLetter)
+        public async Task<int> OpenDevice(string deviceName)
         {
             int retVal = 0;
             if (!string.IsNullOrEmpty(deviceName))
@@ -110,7 +110,7 @@ namespace BlueBirdWindowsCL
                     try
                     {
                         var device = await BluetoothLEDevice.FromIdAsync(foundId).AsTask().TimeoutAfter(_timeout);
-                        var robot = new Robot(device, devLetter);
+                        var robot = new Robot(device);
                         connectedRobots.Add(device.Name, robot);
                     }
                     catch

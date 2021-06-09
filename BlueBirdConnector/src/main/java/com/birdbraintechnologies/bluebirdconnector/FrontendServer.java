@@ -31,31 +31,55 @@ public class FrontendServer {
         callbackManager = cbManager;
     }
 
+    public void setTranslationTable(String language) {
+        sendToGUI("setTranslationTable", language);
+    }
+
     public void updateGUIScanStatus(boolean scanning) {
         if (scanning) {
-            callbackManager.call("scanStarted");
+            sendToGUI("scanStarted");
         } else {
-            callbackManager.call("scanEnded");
+            sendToGUI("scanEnded");
         }
+    }
+
+    public void updateGUIConnection(Robot robot, int index) {
+        //deviceDidConnect = function(address, name, fancyName, devLetter, hasV2) {
+        if (robot.isConnected) {
+            String devLetter = Character.toString((char)(index + 65));
+            String[] args = new String[] {robot.name, robot.name, robot.fancyName, devLetter, String.valueOf(robot.hasV2) };
+            sendToGUI("deviceDidConnect", args);
+        } else {
+            sendToGUI("deviceDidDisconnect", robot.name);
+        }
+
     }
 
     public void receiveScanResponse(String name, JSONObject discoveryInfo){
         discoveryInfo.put("fancyName", FancyNames.getDeviceFancyName(name));
-        availableRobots.put(name, discoveryInfo.toString());
+        //Remove first 2 characters so that the name can change while advertising...
+        availableRobots.put(name.substring(2), discoveryInfo.toString());
         LOG.debug("blePacketReceived():discovery: {} {}", name, discoveryInfo.toString());
 
-        /*List<JSONObject> list = new ArrayList<>(availableRobots.values());
-        JSONObject[] newList = list.toArray(new JSONObject[0]);
-        LOG.debug("first value of new list: " + newList[0].toString());*/
-        //String string = discoveryInfo.toString();
-        //String[] newList = new String[] { string };
-        String[] newList = (new ArrayList<>(availableRobots.values())).toArray(new String[0]);
-        LOG.debug(newList[0]);
+        updateGuiDeviceList();
+    }
+    private void updateGuiDeviceList() {
+        LOG.debug("updateGuiDeviceList() availableRobots.values(): " + availableRobots.values());
+        String[] newList = availableRobots.values().toArray(new String[0]);
 
         String[][] args = new String[1][];
         args[0] = newList;
+
+        sendToGUI("updateScanDeviceList", args);
+    }
+
+    public void showCalibrationResult(boolean success) {
+        sendToGUI("showCalibrationResult", success);
+    }
+
+    private void sendToGUI(String methodName, Object... args) {
         Platform.runLater(() -> {
-            callbackManager.call("updateScanDeviceList", args);
+            callbackManager.call(methodName, args);
         });
     }
 
@@ -107,21 +131,28 @@ public class FrontendServer {
                     case "connect":
                         String nameToConnect = json.getMember("name").toString();
                         LOG.debug("Requesting connection to " + nameToConnect);
+                        availableRobots.remove(nameToConnect.substring(2));
+                        updateGuiDeviceList();
                         RobotManager.getSharedInstance().connectToRobot(nameToConnect);
                         //mDict.TryGetValue("address", out address);
                         //MainPage.Current.RobotManager.ConnectToRobot(addressToConnect);
                         break;
                     case "disconnect":
                         String addressToDisconnect = json.getMember("address").toString();
+                        RobotManager.getSharedInstance().disconnectFromRobot(addressToDisconnect);
                         //MainPage.Current.RobotManager.DisconnectFromRobot(addressToDisconnect);
                         break;
+                    case "calibrate":
+                        String deviceLetter = json.getMember("devLetter").toString();
+                        RobotManager.getSharedInstance().calibrate(deviceLetter);
+                        break;
                     default:
-                        LOG.debug("UNHANDLED COMMAND: '" + command + "'. Original message: " + json.toString());
+                        LOG.debug("UNHANDLED COMMAND: '" + command + "'.");
                         break;
                 }
                 break;
             default:
-                LOG.debug("Message of type '" + type + "' not implemented. Original message: " + json.toString());
+                LOG.debug("Message of type '" + type + "' not implemented. ");
                 break;
 
         }

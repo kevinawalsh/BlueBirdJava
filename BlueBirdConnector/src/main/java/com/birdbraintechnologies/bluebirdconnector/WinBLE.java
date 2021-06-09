@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.net.URL;
+import java.util.Base64;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -40,7 +41,7 @@ public class WinBLE extends RobotCommunicator {
         //this.blueBirdDriver = blueBirdDriver;
 
         //blueBirdDriver.connectionTable.clear();
-        manager.connectionTable.clear();
+        //manager.connectionTable.clear();
 
         LOG.info("WinBLE about to look for resource dir");
 
@@ -134,30 +135,15 @@ public class WinBLE extends RobotCommunicator {
         frontendServer.updateGUIScanStatus(false);
     }
 
-    @Override
-    void startCalibration(int connection) {
-        LOG.error("startCalibration: Method not implemented in WinBLE");
-    }
-
-    @Override
-    void stopCalibration() {
-        LOG.error("stopCalibration: Method not implemented in WinBLE");
-    }
-
-    @Override
-    void stopFirmwareUpgrade() {
-        LOG.error("stopFirmwareUpgrade: Method not implemented in WinBLE");
-    }
-
-    public void sendCommand(byte[] command, int connection){
+    public void sendCommand(String name, byte[] command){
         //encode UInt8 array to base64 String
-        /*char devLetter = blueBirdDriver.getDevLetterFromConnection(connection);
+        //char devLetter = blueBirdDriver.getDevLetterFromConnection(connection);
         String blob = Base64.getEncoder().encodeToString(command);//https://howtodoinjava.com/array/convert-byte-array-string-vice-versa/
-        String name = blueBirdDriver.getAddressFromDevLetter(devLetter);
+        //String name = blueBirdDriver.getAddressFromDevLetter(devLetter);
         // Assemble the command. Note the BlueBirdNative command "sendBlob" takes the encoded array as a string parameter
         String cmd = "sendBlob " + name + " " + blob + "\n";
         LOG.debug("Send win command: {}", cmd);
-        writeBLE(cmd);*/
+        writeBLE(cmd);
     }
 
     private void writeBLE(String str){
@@ -230,7 +216,7 @@ public class WinBLE extends RobotCommunicator {
                         String peripheralData = data.asText();*/
                         String peripheralName = root.getString("peripheral");
                         String peripheralData = root.getString("data");
-                        String devLetterStr = root.getString("devLetter");
+                        //String devLetterStr = root.getString("devLetter");
                         //LOG.debug("blePacketReceived(): Peripheral: {},  Data: {}", peripheralName, peripheralData);
                         //byte[] bytes = Base64.getDecoder().decode(peripheralData);
                         String[] hexArray = peripheralData.split("-");
@@ -241,10 +227,11 @@ public class WinBLE extends RobotCommunicator {
                         //LOG.debug("Notification bytes: " + bytesToString(bytes));
                         //JsonNode devLetterNode = root.path("devLetter");
                         //String devLetterStr = devLetterNode.asText();
-                        char devLetter = devLetterStr.charAt(0);
+                        //char devLetter = devLetterStr.charAt(0);
                         //connection = blueBirdDriver.mapDevLetterToConnection(devLetter);
-                        LOG.error("NOTIFICATION NOT IMPLEMENTED");
+
                         //listener.receiveNotification(connection, bytes);
+                        robotManager.receiveNotification(peripheralName, bytes);
                         break;
                     case  "discovery" :
                         //peripheral = root.path("peripheral");
@@ -285,29 +272,35 @@ public class WinBLE extends RobotCommunicator {
                         devLetterNode = root.path("devLetter");
                         devLetterStr = devLetterNode.asText();
                         devLetter = devLetterStr.charAt(0);
-                        connection = blueBirdDriver.mapDevLetterToConnection(devLetter);
+                        connection = blueBirdDriver.mapDevLetterToConnection(devLetter);*/
+                        String status = root.getString("status");
+                        peripheralName = root.getString("peripheral");
+                        String hasV2String = root.getString("hasV2");
                         switch (status) {
                             case "connected":
-                                LOG.info("blePacketReceived():Connection: connected, Peripheral: {}, devLetter: {}", peripheralName, devLetter);
+                                LOG.info("blePacketReceived():Connection: connected, Peripheral: {}, hasV2: {}", peripheralName, hasV2String);
                                 deviceConnecting = false;
-                                DeviceInfo deviceInfo = new DeviceInfo();
+                                /*DeviceInfo deviceInfo = new DeviceInfo();
                                 deviceInfo.deviceConnection = connection;
                                 deviceInfo.deviceName = peripheralName;
                                 deviceInfo.deviceAddress = peripheralName;
                                 deviceInfo.devLetter = devLetter;
                                 deviceInfo.deviceFancyName = blueBirdDriver.getDeviceFancyName(peripheralName);
                                 //listener.receiveConnectionEvent(connection, peripheralName, devLetter);
-                                listener.receiveConnectionEvent(deviceInfo);
+                                listener.receiveConnectionEvent(deviceInfo);*/
+                                boolean hasV2 = hasV2String.equals("True");
+                                RobotManager.getSharedInstance().receiveConnectionEvent(peripheralName, hasV2);
                                 break;
                             case "userDisconnected":  // The device was disconnected by the user
-                                listener.receiveDisconnectionEvent(connection, true);
-                                LOG.info("blePacketReceived() userDisconnected: Peripheral: {}, devLetter: {}, connection: {}", peripheralName, devLetter, connection);
+                                //listener.receiveDisconnectionEvent(connection, true);
+                                RobotManager.getSharedInstance().receiveDisconnectionEvent(peripheralName, true);
+                                LOG.info("blePacketReceived() userDisconnected: Peripheral: {}", peripheralName);
                                 break;
                             case "deviceDisconnected":  // THe device disconnected itself i.e. power cut or out of range.
-                                listener.receiveDisconnectionEvent(connection, false);
+                                //listener.receiveDisconnectionEvent(connection, false);
+                                RobotManager.getSharedInstance().receiveDisconnectionEvent(peripheralName, false);
                                 break;
-                        }*/
-                        LOG.error("CONNECTION NOT IMPLEMENTED");
+                        }
                         break;
                     case "ERROR":
                         //String message = root.path("message").asText();
@@ -325,23 +318,23 @@ public class WinBLE extends RobotCommunicator {
         }
     }
 
-    public void requestDisconnect(String address, int connection) {
+    public void requestDisconnect(String address) {
         writeBLE("disconnect " + address + "\n");
     }
 
     /**
      * Request a connection to specified robot
-     * @param deviceInfo - info about the device to connect
+     * @param robotName - name of the device to connect
      */
-    public void requestConnection(RobotInfo deviceInfo){
+    public void requestConnection(String robotName){
         /*LOG.info("Requesting Native MacOS Connection to {} at position {}", deviceInfo.deviceAddress, deviceInfo.devLetter);
         ConnectionRequestObj connReq = new ConnectionRequestObj ();
         connReq.address = deviceInfo.deviceAddress;
         connReq.devLetter = deviceInfo.devLetter;*/
-        LOG.info("Requesting Windows Native BLE connection to {} at position {}", deviceInfo.deviceName, deviceInfo.devLetter);
+        LOG.info("Requesting Windows Native BLE connection to {}.", robotName);
 
         // Launch the connection attempt in a separate thread so it doesn't block the next connection request.
-        new Thread(() -> processConnectionRequest(deviceInfo)).start();
+        new Thread(() -> processConnectionRequest(robotName)).start();
 
     }
 
@@ -353,23 +346,23 @@ public class WinBLE extends RobotCommunicator {
     /**
      * Process a request to connect to a robot over MacOS native ble.
      * If there is a queue, add it. If the queue is empty, connect immediately.
-     * @param connReq - request object
+     * @param name - name of device to connect
      */
-    private void processConnectionRequest(RobotInfo connReq) {
+    private void processConnectionRequest(String name) {
 
         if (connectionQueue.isEmpty() && !deviceConnecting) {
             deviceConnecting = true;
-            sendConnectionRequest(connReq.deviceName, connReq.devLetter);
+            sendConnectionRequest(name);
         }
         else {
-            LOG.info("Adding connection request: address: {}  Device: {}  to queue", connReq.deviceName, connReq.devLetter);
-            connectionQueue.add(connReq);  // Place in queue (FIFO)
+            LOG.info("Adding connection request: {}  to queue", name);
+            connectionQueue.add(name);  // Place in queue (FIFO)
         }
 
     }
-    private void sendConnectionRequest(String address, char devLetter){
-        LOG.info("sendConnectionRequest() command: connect " + address + " " + devLetter);
-        writeBLE("connect " + address + " " + devLetter + "\n");
+    private void sendConnectionRequest(String address){
+        LOG.info("sendConnectionRequest() command: connect {}", address);
+        writeBLE("connect " + address + "\n");
         // Wait for the response
         final WinBLE.WaitForConnectionResponse waitForConnectionResponse = new WinBLE.WaitForConnectionResponse();
         Thread thread = new Thread(waitForConnectionResponse);
@@ -438,9 +431,9 @@ public class WinBLE extends RobotCommunicator {
                 LOG.info("Connection queue empty. Nothing to do.");
             } else {
                 deviceConnecting = true;
-                RobotInfo connReq = connectionQueue.remove();
+                String connReq = connectionQueue.remove();
                 // Launch the connection thread with status/timeout
-                sendConnectionRequest(connReq.deviceName, connReq.devLetter);
+                sendConnectionRequest(connReq);
             }
         }
     }

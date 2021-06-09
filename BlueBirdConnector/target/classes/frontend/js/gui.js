@@ -192,7 +192,7 @@ $.connectedDevListRefresh = function() {
 
     var el = $(
       "             <div class=\"row robot-item\">" +
-      "               <div class=\"col-xs-2 img\">" + devLetter + " <img src=\"" + deviceImage + "\" alt=\"Hummingbird Bit\" /></div>" +
+      "               <div class=\"col-xs-2 img\">" + devLetter + " <img src=\"img/" + deviceImage + "\" alt=\"Hummingbird Bit\" /></div>" +
       "               <div class=\"col-xs-6 name\">" + name + "</div>" +
       "               <div class=\"col-xs-4 buttons\">" +
 

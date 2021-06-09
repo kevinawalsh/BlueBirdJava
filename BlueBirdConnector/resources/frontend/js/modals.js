@@ -170,7 +170,7 @@ function launchVideo(videoName) {
     videoElement.setAttribute("type", "video/mp4");
     videoElement.setAttribute("id", "video" + videoName);
     videoElement.setAttribute("loop", "loop");
-    videoElement.src = videoName;
+    videoElement.src = "vid/" + videoName;
     videoElement.muted = true; //video must be muted to autoplay on Android.
 
     //Wait until the video is ready to play to display it.

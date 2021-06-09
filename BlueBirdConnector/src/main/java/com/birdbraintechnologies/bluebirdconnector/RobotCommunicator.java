@@ -22,7 +22,8 @@ public abstract class RobotCommunicator {
     protected boolean deviceConnecting;
     //queue of robots waiting to connect
     //protected Deque<ConnectionRequestObj> connectionQueue = new ArrayDeque<ConnectionRequestObj>();
-    protected Deque<RobotInfo> connectionQueue = new ArrayDeque<RobotInfo>();
+    //protected Deque<RobotInfo> connectionQueue = new ArrayDeque<RobotInfo>();
+    protected Deque<String> connectionQueue = new ArrayDeque<String>();
 
     /*public RobotCommunicator(RobotCommListener listener) {
         this.listener = listener;
@@ -32,15 +33,15 @@ public abstract class RobotCommunicator {
         robotManager = manager;
     }
 
-    abstract void requestConnection(RobotInfo deviceInfo); //connect to specified robot
-    abstract void requestDisconnect(String address, int connection); //disconnect from specified robot
+    abstract void requestConnection(String name); //connect to specified robot
+    abstract void requestDisconnect(String address); //disconnect from specified robot
     abstract void startDiscovery(); //Start looking for robots
     abstract void stopDiscovery(); //Stop looking for robots
-    abstract void startCalibration(int connection); //Start calibration for connection
-    abstract void stopCalibration(); //Stop the currently running calibration
-    abstract void stopFirmwareUpgrade(); //Stop the currently running firmware upgrade
+    //abstract void startCalibration(int connection); //Start calibration for connection
+    //abstract void stopCalibration(); //Stop the currently running calibration
+    //abstract void stopFirmwareUpgrade(); //Stop the currently running firmware upgrade
     abstract void cancelConnectionRequest(); //Cancel the current connection request
-    abstract void sendCommand(byte[] command, int connection); //Send command to specified device
+    abstract void sendCommand(String robotName, byte[] command); //Send command to specified device
     abstract void kill(); //shut down the communicator
     abstract boolean isRunning(); //is this communicator prepared to communicate
     abstract boolean robotFound(); //has the communicator found a robot it can connect to

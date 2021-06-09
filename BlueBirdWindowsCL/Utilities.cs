@@ -26,7 +26,7 @@ namespace BlueBirdWindowsCL
         }
         public static void WriteConnectionUpdate(string status, Robot robot)
         {
-            var args = new string[] { "status", status, "peripheral", robot.Name, "devLetter", robot.Letter };
+            var args = new string[] { "status", status, "peripheral", robot.Name, "hasV2", robot.hasV2.ToString() };
             Utilities.WriteOut("connection", args);
         }
 

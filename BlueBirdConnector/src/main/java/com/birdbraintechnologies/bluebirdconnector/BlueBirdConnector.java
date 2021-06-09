@@ -17,16 +17,19 @@ import javafx.stage.WindowEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
+import java.io.*;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
 
 import netscape.javascript.JSObject;
 
 public class BlueBirdConnector extends Application{
 
     static final Logger LOG = LoggerFactory.getLogger(BlueBirdConnector.class);
-    private Double screen_width = 600.0;
+    private Double screen_width = 700.0;
     private Double screen_height = 700.0;
 
     private FrontendServer frontendServer = FrontendServer.getSharedInstance();
@@ -61,6 +64,10 @@ public class BlueBirdConnector extends Application{
                         JSObject callbackManager = (JSObject) webEngine.executeScript("getCallbackManager()");
                         LOG.debug("callbackManager = " + callbackManager.toString());
                         frontendServer.setCallbackManager(callbackManager);
+
+                        String language = Locale.getDefault().getLanguage();
+                        frontendServer.setTranslationTable(language);
+
                         //callbackManager.call("scanStarted");
                         RobotManager.getSharedInstance().startDiscovery();
                     }
@@ -141,5 +148,6 @@ public class BlueBirdConnector extends Application{
             }
         });
     }
+
 
 }
