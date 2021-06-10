@@ -127,7 +127,7 @@ public class RobotManager {
         }
         Robot robot = selectedRobots[index];
         robot.isConnected = true;
-        robot.hasV2 = hasV2;
+        robot.setHasV2(hasV2);
         LOG.debug("receiveConnectionEvent {} {}", robotName, hasV2);
         FrontendServer.getSharedInstance().updateGUIConnection(robot, index);
     }

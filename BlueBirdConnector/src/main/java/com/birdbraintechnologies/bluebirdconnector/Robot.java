@@ -15,12 +15,25 @@ public abstract class Robot {
     public boolean hasV2;
     private boolean isCalibrating;
     private byte[] currentData;
+    private String currentBattery;
+
+    //Constants
+    int calibrationIndex;
+    int batteryIndex;
+    double greenThresh;
+    double yellowThresh;
+    double rawToVoltage;
+    double voltageConst;
+    int batteryMask; //TODO: is this the right type?
+    double batteryTolerance;
+
 
     public Robot(String robotName) {
         name = robotName;
         fancyName = FancyNames.getDeviceFancyName(name);
         isConnected = false;
         hasV2 = false;
+        currentBattery = "unknown";
     }
 
     public static Robot Factory(String name) {
@@ -33,7 +46,11 @@ public abstract class Robot {
         }
     }
 
-    protected abstract int getCalibrationIndex();
+
+    public void setHasV2(boolean robotHasV2) {
+        hasV2 = robotHasV2;
+    }
+
 
     public void setCalibrating() {
         LOG.debug("setCalibrating");
@@ -51,14 +68,8 @@ public abstract class Robot {
         currentData = bytes;
 
         if (isCalibrating) {
-            /*int index = 7;
-            if (devType.equals("FN")) {
-                index = 16;
-            }*/
-            int index = getCalibrationIndex();
             //get byte containing calibration bits
-            //byte calibrationByte = getNotificationDataByte(index, devLetter); //Bit 7 is button byte
-            byte calibrationByte = bytes[index];
+            byte calibrationByte = bytes[calibrationIndex];
             byte calibrationStatus = (byte) (calibrationByte & (byte) 0x0C);
             LOG.debug("Calibration Status: {}", calibrationStatus);
 
@@ -74,8 +85,70 @@ public abstract class Robot {
                     FrontendServer.getSharedInstance().showCalibrationResult(false);
                     break;
             }
-
         }
+
+        //Check battery state
+        byte battByte = bytes[batteryIndex];
+        int battInt = battByte;
+        int battUInt = battByte & batteryMask;
+        //LOG.debug ("Battery Byte = {} (0x{}); Battery Int = {};  Battery UInt = {}", battByte, Integer.toHexString(battByte), battUInt);
+        double voltage = (battUInt + voltageConst) * rawToVoltage;
+        //battData = Math.abs(battData);
+        //LOG.debug ("Battery level connection {}: {}", i, battData);
+        String battLevel = "unknown";
+        switch (currentBattery) {
+            case "unknown":
+                if (voltage > greenThresh) {
+                    battLevel = "green";
+                } else if (voltage > yellowThresh) {
+                    battLevel = "yellow";
+                } else {
+                    battLevel = "red";
+                }
+                break;
+            case "green":
+                if (voltage < yellowThresh) {
+                    battLevel = "red";
+                } else if (voltage < greenThresh - batteryTolerance) {
+                    battLevel = "yellow";
+                } else {
+                    battLevel = "green";
+                }
+                break;
+            case "yellow":
+                if (voltage > greenThresh + batteryTolerance) {
+                    battLevel = "green";
+                } else if (voltage < yellowThresh - batteryTolerance) {
+                    battLevel = "red";
+                } else {
+                    battLevel = "yellow";
+                }
+                break;
+            case "red":
+                if (voltage > greenThresh) {
+                    battLevel = "green";
+                } else if (voltage > yellowThresh + batteryTolerance) {
+                    battLevel = "yellow";
+                } else {
+                    battLevel = "red";
+                }
+                break;
+        }
+
+        if (!battLevel.equals(currentBattery)) {
+            currentBattery = battLevel;
+            FrontendServer.getSharedInstance().updateBatteryState(name, battLevel);
+        }
+
+
+        //hashtable.put(devLetter, battLevel);
+        //LOG.debug("getBatteryData for {}: {} -> {} -> {}", i, battUInt, battData, battLevel);
+
+        /* TODO:
+        if (tts != null && (getConnectionFromDevLetter(devLetter) != -1) && (currentBatteryTable == null || currentBatteryTable.get(devLetter) != battLevel)) {
+            LOG.info("Battery level for device " + devLetter + "(" + i + ") is " + battLevel + "; total connections: " + connectionTable.size());
+            tts.say("Battery level " + battLevel);
+        }*/
     }
 
 }

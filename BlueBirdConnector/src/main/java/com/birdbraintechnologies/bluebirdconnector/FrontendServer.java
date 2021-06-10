@@ -77,6 +77,11 @@ public class FrontendServer {
         sendToGUI("showCalibrationResult", success);
     }
 
+    public void updateBatteryState(String robotName, String batteryState) {
+        String[] args = new String[] { robotName, batteryState };
+        sendToGUI("deviceBatteryUpdate", args);
+    }
+
     private void sendToGUI(String methodName, Object... args) {
         Platform.runLater(() -> {
             callbackManager.call(methodName, args);
