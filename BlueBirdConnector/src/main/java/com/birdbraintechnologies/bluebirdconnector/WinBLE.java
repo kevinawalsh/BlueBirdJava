@@ -182,8 +182,9 @@ public class WinBLE extends RobotCommunicator {
                 case  "bluetoothState" :
                     String bleStatus = root.getString("status");
                     LOG.info("blePacketReceived(): bluetoothStatus: {}", bleStatus);
-                    //TODO: for when the computer's bluetooth is on or off.
-
+                    boolean isAvailable = !bleStatus.equals("unavailable");
+                    boolean isOn = bleStatus.equals("on");
+                    FrontendServer.getSharedInstance().updateBleStatus(isAvailable, isOn);
                     break;
                 case  "connection" :
                     String status = root.getString("status");

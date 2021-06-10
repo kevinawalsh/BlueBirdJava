@@ -97,7 +97,8 @@ CallbackManager.bleDisabled = function() {
   connectedDeviceList = []
   $.scanListRefresh();
   $.connectedDevListRefresh();
-  launchNativeMacOSBLEvideo();
+  //TODO: windows video
+  //launchNativeMacOSBLEvideo();
 }
 
 /**

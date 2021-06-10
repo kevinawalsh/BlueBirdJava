@@ -18,7 +18,11 @@ namespace BlueBirdWindowsCL
         static async Task MainAsync(string[] args)
         {
             //TODO: evaluate bluetooth state.
-            Utilities.WriteOut("bluetoothState", new string[] { "status", "on" });
+            bool bleAvailable = await BleManager.Shared.CheckBleAvailability();
+            if (!bleAvailable)
+            {
+                Utilities.WriteBluetoothState( "unavailable" );
+            }
 
             while (shouldRun)
             {

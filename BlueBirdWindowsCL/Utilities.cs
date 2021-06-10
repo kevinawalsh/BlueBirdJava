@@ -29,6 +29,11 @@ namespace BlueBirdWindowsCL
             var args = new string[] { "status", status, "peripheral", robot.Name, "hasV2", robot.hasV2.ToString() };
             Utilities.WriteOut("connection", args);
         }
+        public static void WriteBluetoothState(string status)
+        {
+            var args = new string[] { "status", status };
+            Utilities.WriteOut("bluetoothState", args);
+        }
 
         /// <summary>
         ///     Converts from standard 128bit UUID to the assigned 32bit UUIDs. Makes it easy to compare services
@@ -84,8 +89,7 @@ namespace BlueBirdWindowsCL
                             result = (collection as List<DeviceInformation>)[devNumber].Id;
                         }
                         else
-                            if (Console.IsOutputRedirected)
-                            Console.WriteLine("Device number {0:00} is not in device list range", devNumber);
+                            Utilities.WriteError($"Device number {devNumber} is not in device list range");
                     }
                     // for services or attributes
                     else
@@ -97,8 +101,7 @@ namespace BlueBirdWindowsCL
                     }
                 }
                 else
-                    if (!Console.IsOutputRedirected)
-                    Console.WriteLine("Invalid device number {0}", name.Substring(1));
+                    Utilities.WriteError($"Invalid device number {name.Substring(1)}");
             }
             // else try to find name
             else
@@ -109,8 +112,7 @@ namespace BlueBirdWindowsCL
                     var foundDevices = (collection as List<DeviceInformation>).Where(d => d.Name.ToLower().StartsWith(name.ToLower())).ToList();
                     if (foundDevices.Count == 0)
                     {
-                        if (!Console.IsOutputRedirected)
-                            Console.WriteLine("Can't connect to {0}.", name);
+                        Utilities.WriteError($"Can't connect to {name}.");
                     }
                     else if (foundDevices.Count == 1)
                     {
@@ -118,8 +120,7 @@ namespace BlueBirdWindowsCL
                     }
                     else
                     {
-                        if (!Console.IsOutputRedirected)
-                            Console.WriteLine("Found multiple devices with names started from {0}. Please provide an exact name.", name);
+                        Utilities.WriteError($"Found multiple devices with names started from {name}. Please provide an exact name.");
                     }
                 }
                 // for services or attributes
@@ -128,8 +129,7 @@ namespace BlueBirdWindowsCL
                     var foundDispAttrs = (collection as List<BluetoothLEAttributeDisplay>).Where(d => d.Name.ToLower().StartsWith(name.ToLower())).ToList();
                     if (foundDispAttrs.Count == 0)
                     {
-                        if (Console.IsOutputRedirected)
-                            Console.WriteLine("No service/characteristic found by name {0}.", name);
+                        Utilities.WriteError($"No service/characteristic found by name {name}.");
                     }
                     else if (foundDispAttrs.Count == 1)
                     {
@@ -137,8 +137,7 @@ namespace BlueBirdWindowsCL
                     }
                     else
                     {
-                        if (Console.IsOutputRedirected)
-                            Console.WriteLine("Found multiple services/characteristic with names started from {0}. Please provide an exact name.", name);
+                        Utilities.WriteError($"Found multiple services/characteristic with names started from {name}. Please provide an exact name.");
                     }
                 }
             }

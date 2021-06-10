@@ -35,6 +35,15 @@ public class FrontendServer {
         sendToGUI("setTranslationTable", language);
     }
 
+    public void updateBleStatus(boolean isAvailable, boolean isOn) {
+        if(isAvailable && !isOn) {
+            sendToGUI("bleDisabled");
+        }
+
+        //TODO: add video for turning ble on
+        //TODO: implement other possibilities
+    }
+
     public void updateGUIScanStatus(boolean scanning) {
         if (scanning) {
             sendToGUI("scanStarted");

@@ -168,7 +168,7 @@ namespace BlueBirdWindowsCL
             }
             else
             {
-                Utilities.WriteError($"Device {Name} is unreachable.");
+                Utilities.WriteError($"Could not get services for device {Name}.");
             }
 
             if (!setupSuccess)

@@ -25,37 +25,58 @@ namespace BlueBirdWindowsCL
 
         static TimeSpan _timeout = TimeSpan.FromSeconds(3);
 
+        public async Task<bool> CheckBleAvailability()
+        {
+            BluetoothAdapter adapter = await BluetoothAdapter.GetDefaultAsync();
+
+            if (adapter == null || !adapter.IsCentralRoleSupported || !adapter.IsLowEnergySupported)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
         public void startScan()
         {
-            // Create Bluetooth Listener
-            adWatcher = new BluetoothLEAdvertisementWatcher();
-            adWatcher.ScanningMode = BluetoothLEScanningMode.Active;
-            // Only activate the watcher when we're recieving values >= -80
-            adWatcher.SignalStrengthFilter.InRangeThresholdInDBm = -80;
-            // Stop watching if the value drops below -90 (user walked away)
-            adWatcher.SignalStrengthFilter.OutOfRangeThresholdInDBm = -90;
-            // Register callback for when we see an advertisements
-            adWatcher.Received += OnAdvertisementReceived;
-            // Wait 5 seconds to make sure the device is really out of range
-            adWatcher.SignalStrengthFilter.OutOfRangeTimeout = TimeSpan.FromMilliseconds(5000);
-            adWatcher.SignalStrengthFilter.SamplingInterval = TimeSpan.FromMilliseconds(2000);
-
-
-            // Start endless BLE device watcher
-            watcher = DeviceInformation.CreateWatcher(_aqsAllBLEDevices, _requestedBLEProperties, DeviceInformationKind.AssociationEndpoint);
-            watcher.Added += (DeviceWatcher sender, DeviceInformation devInfo) =>
+            try
             {
-                if (_deviceList.FirstOrDefault(d => d.Id.Equals(devInfo.Id) || d.Name.Equals(devInfo.Name)) == null) _deviceList.Add(devInfo);
-            };
-            watcher.Updated += (_, __) => { }; // We need handler for this event, even an empty!
-            //TODO:
-            watcher.Removed += (_, __) => { };
-            watcher.EnumerationCompleted += (_, __) => { };
-            watcher.Stopped += (_, __) => { };
+                // Create Bluetooth Listener
+                adWatcher = new BluetoothLEAdvertisementWatcher();
+                adWatcher.ScanningMode = BluetoothLEScanningMode.Active;
+                // Only activate the watcher when we're recieving values >= -80
+                adWatcher.SignalStrengthFilter.InRangeThresholdInDBm = -80;
+                // Stop watching if the value drops below -90 (user walked away)
+                adWatcher.SignalStrengthFilter.OutOfRangeThresholdInDBm = -90;
+                // Register callback for when we see an advertisements
+                adWatcher.Received += OnAdvertisementReceived;
+                // Wait 5 seconds to make sure the device is really out of range
+                adWatcher.SignalStrengthFilter.OutOfRangeTimeout = TimeSpan.FromMilliseconds(5000);
+                adWatcher.SignalStrengthFilter.SamplingInterval = TimeSpan.FromMilliseconds(2000);
 
-            watcher.Start();
-            adWatcher.Start();
-            //Console.WriteLine("Scan Started...");
+
+                // Start endless BLE device watcher
+                watcher = DeviceInformation.CreateWatcher(_aqsAllBLEDevices, _requestedBLEProperties, DeviceInformationKind.AssociationEndpoint);
+                watcher.Added += (DeviceWatcher sender, DeviceInformation devInfo) =>
+                {
+                    if (_deviceList.FirstOrDefault(d => d.Id.Equals(devInfo.Id) || d.Name.Equals(devInfo.Name)) == null) _deviceList.Add(devInfo);
+                };
+                watcher.Updated += (_, __) => { }; // We need handler for this event, even an empty!
+                                                   //TODO:
+                watcher.Removed += (_, __) => { };
+                watcher.EnumerationCompleted += (_, __) => { };
+                watcher.Stopped += (_, __) => { };
+
+                watcher.Start();
+                adWatcher.Start();
+
+                Utilities.WriteBluetoothState("on");
+            }
+            catch (Exception ex)
+            {
+                Utilities.WriteBluetoothState("off");
+                Utilities.WriteError($"Exception caught while starting scan: {ex.Message}");
+            }
         }
 
         private void OnAdvertisementReceived(BluetoothLEAdvertisementWatcher watcher, BluetoothLEAdvertisementReceivedEventArgs eventArgs)
@@ -115,7 +136,7 @@ namespace BlueBirdWindowsCL
                     }
                     catch
                     {
-                        Console.WriteLine($"Device {deviceName} is unreachable.");
+                        Utilities.WriteError($"Device {deviceName} is unreachable.");
                         retVal += 1;
                     }
                 }
@@ -126,7 +147,7 @@ namespace BlueBirdWindowsCL
             }
             else
             {
-                Console.WriteLine("Device name can not be empty.");
+                Utilities.WriteError("Device name cannot be empty.");
                 retVal += 1;
             }
             return retVal;
