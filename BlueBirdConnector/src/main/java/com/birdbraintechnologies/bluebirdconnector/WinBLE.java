@@ -11,6 +11,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import static com.birdbraintechnologies.bluebirdconnector.Utilities.stackTraceToString;
 
 public class WinBLE extends RobotCommunicator {
 

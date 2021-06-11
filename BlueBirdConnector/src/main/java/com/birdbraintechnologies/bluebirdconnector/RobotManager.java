@@ -8,7 +8,12 @@ import java.util.Hashtable;
 public class RobotManager {
 
     static final Logger LOG = LoggerFactory.getLogger(RobotManager.class);
-    static byte[] CALIBRATE_CMD = {(byte) 0xCE, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF};
+
+    static final double FINCH_TICKS_PER_CM = 49.7; //51;
+    static final double FINCH_TICKS_PER_DEGREE = 4.335;
+    static final int FINCH_TICKS_PER_ROTATION = 792;
+    static final double FINCH_SPEED_SCALING = 0.36; //0.45;// 45/100;
+    static final int MAX_LED_PRINT_WORD_LEN = 10;
 
     //public Hashtable connectionTable = new Hashtable();
     private Robot[] selectedRobots = new Robot[3]; //Limit to 3 connections at a time.
@@ -72,7 +77,7 @@ public class RobotManager {
             LOG.error("Max connections already reached! Cannot connect {}.", name);
             return;
         }
-        Robot connecting = Robot.Factory(name);
+        Robot connecting = Robot.Factory(name, robotCommunicator);
         selectedRobots[index] = connecting;
         robotIndexes.put(name, index);
         LOG.debug("Connecting {} at index {}", name, index);
@@ -89,8 +94,18 @@ public class RobotManager {
         robotCommunicator.requestDisconnect(name);
     }
 
+    public Robot getConnectedRobot(char devLetter, String errorMsg){
+        int index = (int)devLetter - 65;
+
+        if (index < 0 || index >= selectedRobots.length || selectedRobots[index] == null || !selectedRobots[index].isConnected) {
+            LOG.error("No robot connected at {}. {}", devLetter, errorMsg);
+            return null;
+        }
+        return selectedRobots[index];
+    }
+
     public void calibrate(String deviceLetter) {
-        int index = ((int)deviceLetter.charAt(0) - 65);
+        /*int index = ((int)deviceLetter.charAt(0) - 65);
         LOG.debug("Calibrating device {} at index {}", deviceLetter, index);
         if (index < 0 || index >= selectedRobots.length || selectedRobots[index] == null) {
             LOG.error("Calibrate: invalid robot selection.");
@@ -99,7 +114,66 @@ public class RobotManager {
 
         Robot robot = selectedRobots[index];
         robotCommunicator.sendCommand(robot.name, CALIBRATE_CMD);
-        robot.setCalibrating();
+        robot.setCalibrating();*/
+
+        Robot robot = getConnectedRobot(deviceLetter.charAt(0), "Cannot calibrate.");
+        if (robot != null) { robot.startCalibration(); }
+    }
+
+    public void updateSetAll(char devLetter, int index, byte value) {
+        Robot robot = getConnectedRobot(devLetter, "Cannot update setAll.");
+        if (robot != null) {
+            robot.updateSetAll(index, value);
+        }
+    }
+
+    public void updateSetAllLED(char devLetter, String port, byte rVal, byte gVal, byte bVal) {
+        Robot robot = getConnectedRobot(devLetter, "Cannot update LED.");
+        if (robot != null) {
+            robot.updateSetAllLED(port, rVal, gVal, bVal);
+        }
+    }
+
+    public void updateBuzzer(char devLetter, int note, int ms) {
+        Robot robot = getConnectedRobot(devLetter, "Cannot update buzzer.");
+        if (robot != null) {
+            robot.updateBuzzer(note, ms);
+        }
+    }
+
+    public void startPrint(char devLetter, char[] charBuf) {
+        Robot robot = getConnectedRobot(devLetter, "Cannot start print.");
+        if (robot != null) {
+            robot.startPrint(charBuf);
+        }
+    }
+
+    public void setSymbol(char devLetter, byte[] symbolCommand){
+        Robot robot = getConnectedRobot(devLetter, "Cannot set symbol.");
+        if (robot != null) {
+            robot.setSymbol(symbolCommand);
+        }
+    }
+
+    public void resetEncoders(char devLetter) {
+        Robot robot = getConnectedRobot(devLetter, "Cannot reset encoders.");
+        if (robot != null) {
+            robot.resetEncoders();
+        }
+    }
+
+    public void updateMotors(char devLetter, int speedL, int ticksL, int speedR, int ticksR){
+        Robot robot = getConnectedRobot(devLetter, "Cannot update motors.");
+        if (robot != null) {
+            robot.updateMotors(speedL, ticksL, speedR, ticksR);
+        }
+    }
+
+    public void robotStopAll(char devLetter) {
+        Robot robot = getConnectedRobot(devLetter, "Cannot stop all.");
+        if (robot != null) {
+            robot.stopAll();
+        }
     }
 
     public void close(){

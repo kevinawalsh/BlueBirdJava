@@ -6,7 +6,11 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.URL;
 import java.util.*;
+import java.awt.Desktop;
 
 public class FrontendServer {
 
@@ -160,6 +164,23 @@ public class FrontendServer {
                         String deviceLetter = json.getMember("devLetter").toString();
                         RobotManager.getSharedInstance().calibrate(deviceLetter);
                         break;
+                    case "openSnap":
+                        /*command: "openSnap",
+                        project: projectName,
+                        online: shouldOpenOnline,
+                        language: language*/
+                        String projectName = json.getMember("project").toString();
+                        String lang = json.getMember("language").toString();
+                        boolean local = json.getMember("online").toString().equals("false");
+                        String url;
+                        if (local) {
+                            url = "http://127.0.0.1:30061/snap/snap.html#open:/snap/snapProjects/" + projectName + ".xml&editMode&noRun&lang=" + lang;
+                        } else {
+                            url = "https://snap.berkeley.edu/snapsource/snap.html#present:Username=birdbraintech&ProjectName=" + projectName + "&editMode&noRun&lang=" + lang;
+                        }
+
+                        openURLinDefaultBrowser(url);
+                        break;
                     default:
                         LOG.debug("UNHANDLED COMMAND: '" + command + "'.");
                         break;
@@ -170,5 +191,96 @@ public class FrontendServer {
                 break;
 
         }
+    }
+
+    private static void openURLinDefaultBrowser (String urlString) {
+        try {
+            Desktop.getDesktop().browse(new URL(urlString).toURI());
+        } catch (Exception e) {
+            LOG.error("Failed to open url {}", urlString);
+            e.printStackTrace();
+        }
+
+        /*try {
+            final String dir = System.getProperty("user.dir");
+            System.out.println("current dir = " + dir);
+
+            String osName = System.getProperty("os.name");
+            LOG.debug("OS = {}" , osName);
+
+            String chromePath = null;
+
+            if (osName.contains("Win")) {
+                try {
+                    LOG.info("Opening Chrome Browser. Looking in HKEY_LOCAL_MACHINE...");
+                    chromePath = Advapi32Util.registryGetStringValue(
+                            WinReg.HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\chrome.exe", "");
+                    LOG.info("Chrome Path: {}", chromePath);
+                    Process p = Runtime.getRuntime().exec(chromePath + " " + url);
+                } catch (Exception e) {
+                    try {
+                        LOG.info("Chrome Browser not found. Looking in HKEY_CURRENT_USER...");
+                        chromePath = Advapi32Util.registryGetStringValue(
+                                WinReg.HKEY_CURRENT_USER, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\chrome.exe", "");
+                        LOG.info("Chrome Path: {}", chromePath);
+                        Process p = Runtime.getRuntime().exec(chromePath + " " + url);
+                    } catch (Exception ex){
+                        LOG.info("Chrome installation not found, notifying user");
+                        String message = "\nGoogle Chrome web browser has not been detected on your system. Please install Chrome in order to code with Snap!";
+                        showErrorDialog("Google Chrome Browser Required", "Cannot find Google Chrome  browser on system.", message, false);
+                    }
+                }
+
+
+
+
+
+                //Process p = Runtime.getRuntime().exec("rundll32 url.dll,FileProtocolHandler " + url);
+                //p.waitFor();
+            }
+
+            if (osName.contains("OS X")) {
+                //Command line properties assigned by bash shell script on app start
+                //String chrome_path = System.getProperty("chrome_path");
+                //String firefox_path = System.getProperty("firefox_path");
+                String cmd = "";
+
+                //LOG.info ("chrome_path: {}", chrome_path);
+                //LOG.info ("firefox_path: {}", firefox_path);
+
+
+                String as_command = prop.getProperty("as_command");
+                LOG.info("as_command: {}", as_command);
+
+                String [] args = new String[3];
+                args[0] = "osascript";
+                args[1] = "-e";
+                args[2] = as_command + " \"" + url + "\"";
+
+                LOG.info ("Lauhching Chrome browser: {}, {}, {}", args);
+                Process p = Runtime.getRuntime().exec(args);
+
+                String lsString, lsConsoleString;
+                BufferedReader bufferedReader = new BufferedReader(
+                        new InputStreamReader(p.getErrorStream()));
+                while ((lsString = bufferedReader.readLine()) != null) {
+                    LOG.error(lsString);
+                    String message = "\nGoogle Chrome web browser has not been detected on your system. Please install Chrome in order to code with Snap! \n\n Error: " + lsString;
+                    showErrorDialog("Google Chrome Browser Required", "Cannot find Google Chrome  browser on system.", message, false);
+                }
+
+
+                BufferedReader bufferedConsoleReader = new BufferedReader(
+                        new InputStreamReader(p.getInputStream()));
+                while ((lsConsoleString = bufferedReader.readLine()) != null) {
+                    LOG.info(lsString);
+                }
+
+            }
+        } catch(Exception e) {
+            LOG.error ("{}", e.toString());
+            LOG.error ("{}", stackTraceToString(e));
+        }*/
+
     }
 }

@@ -46,17 +46,5 @@ public abstract class RobotCommunicator {
     abstract boolean isRunning(); //is this communicator prepared to communicate
     abstract boolean robotFound(); //has the communicator found a robot it can connect to
 
-    protected static String stackTraceToString(Exception e) {
-        StringWriter sw = new StringWriter();
-        PrintWriter pw = new PrintWriter(sw);
-        e.printStackTrace(pw);
-        return sw.toString(); // stack trace as a string
-    }
-    public String bytesToString(byte[] bytes) {
-        StringBuffer result = new StringBuffer();
-        result.append("[ ");
-        for(byte b : bytes) result.append( Integer.toHexString(b & 0xFF) + " ");
-        result.append("]");
-        return result.toString();
-    }
+
 }

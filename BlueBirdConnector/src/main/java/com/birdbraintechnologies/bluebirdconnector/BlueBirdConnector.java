@@ -14,6 +14,13 @@ import javafx.scene.web.WebView;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
+import org.eclipse.jetty.http.HttpVersion;
+import org.eclipse.jetty.server.*;
+import org.eclipse.jetty.servlet.FilterHolder;
+import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.util.ssl.SslContextFactory;
+import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,6 +33,8 @@ import java.util.Locale;
 
 import netscape.javascript.JSObject;
 
+import static com.birdbraintechnologies.bluebirdconnector.Utilities.stackTraceToString;
+
 public class BlueBirdConnector extends Application{
 
     static final Logger LOG = LoggerFactory.getLogger(BlueBirdConnector.class);
@@ -33,7 +42,7 @@ public class BlueBirdConnector extends Application{
     private Double screen_height = 700.0;
 
     private FrontendServer frontendServer = FrontendServer.getSharedInstance();
-
+    private Thread webServerThread;
 
 
     public static void main(String[] args) {
@@ -44,6 +53,7 @@ public class BlueBirdConnector extends Application{
     @Override
     public void start(Stage stage) throws Exception {
         startGUI(stage);
+        startHttpServer();
     }
 
 
@@ -126,6 +136,132 @@ public class BlueBirdConnector extends Application{
         });
     }
 
+    public void startHttpServer() {
+        webServerThread = new Thread() {
+            public Server server;
+            @Override
+            public void run() {
+                Thread thisThread = Thread.currentThread();
+                try {
+                    LOG.info("Starting Web Server");
+                    server = new Server();
+
+                    // HTTPS Configuration
+                    HttpConfiguration http_config = new HttpConfiguration();
+                    //http_config.setSecureScheme("https");
+                    //http_config.setSecurePort(22179);
+                    //http_config.setPersistentConnectionsEnabled(true);
+
+                    ServerConnector http = new ServerConnector(server,
+                            new HttpConnectionFactory(http_config));
+                    http.setPort(30061);
+                    http.setIdleTimeout(-1);
+
+
+                    /*SslContextFactory sslContextFactory = new SslContextFactory();
+                    File keystoreFile = new File("birdbrain.jks");
+                    sslContextFactory.setKeyStorePath(keystoreFile.getAbsolutePath());
+                    sslContextFactory.setKeyStorePassword("Asdqwe123");
+
+                    HttpConfiguration https = new HttpConfiguration(http_config);
+                    https.addCustomizer(new SecureRequestCustomizer());
+
+                    ServerConnector httpsConnector = new ServerConnector(server,
+                            new SslConnectionFactory(sslContextFactory, HttpVersion.HTTP_1_1.asString()),
+                            new HttpConnectionFactory(https));
+                    httpsConnector.setPort(22179);
+                    httpsConnector.setIdleTimeout(500000);
+
+                    server.setConnectors(new Connector[] {http, httpsConnector });*/
+                    server.setConnectors(new Connector[] {http});
+
+                    // Setup the basic application "context" for this application at "/"
+                    // This is also known as the handler tree (in jetty speak)
+                    ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
+                    context.setContextPath("/");
+                    context.setResourceBase(".");
+
+                    FilterHolder filterHolder = new FilterHolder(CrossOriginFilter.class);
+                    filterHolder.setInitParameter("allowedOrigins", "*");
+                    filterHolder.setInitParameter("allowedMethods", "GET, POST");
+                    context.addFilter(filterHolder, "/*", null);
+
+                    //URL handlers
+                    //add this first in case order matters as this is the most heavily used.
+                    //ServletHolder hummingbird = new ServletHolder("hummingbird", hummingbirdServelet.class);
+                    ServletHolder hummingbird = new ServletHolder("hummingbird", RobotServlet.class);
+                    context.addServlet(hummingbird, "/hummingbird/*");
+
+                    // Command
+                    /*ServletHolder holderCommand = new ServletHolder("command", commandServlet.class);
+                    context.addServlet(holderCommand, "/command/*");
+
+                    // Websockets
+                    // Add a websocket to a specific path spec
+                    ServletHolder holderEvents = new ServletHolder("scratch", ScratchServlet.class);
+                    context.addServlet(holderEvents, "/scratch/*");
+
+                    ServletHolder holderDev = new ServletHolder("dev", devServlet.class);
+                    context.addServlet(holderDev, "/dev/*");
+
+                    // Add a websocket to a specific path spec
+                    ServletHolder holderControl = new ServletHolder("control", ControlServlet.class);
+                    context.addServlet(holderControl, "/control/*");
+
+                    //From: https://stackoverflow.com/questions/20207477/serving-static-files-from-alternate-path-in-embedded-jetty
+                    // add special pathspec of "/" content mapped to the root dir
+                    ServletHolder holderHome = new ServletHolder("static-home", DefaultServlet.class);
+                    holderHome.setInitParameter("resourceBase","./scratchx");
+                    holderHome.setInitParameter("dirAllowed","true");
+                    holderHome.setInitParameter("pathInfoOnly","true");
+                    context.addServlet(holderHome,"/*");
+
+                    // Lastly, the default servlet for root content (always needed, to satisfy servlet spec)
+                    // It is important that this is last.
+                    ServletHolder holderPwd = new ServletHolder("default", DefaultServlet.class);
+                    holderPwd.setInitParameter("dirAllowed","true");
+                    context.addServlet(holderPwd,"/");*/
+
+                    server.setHandler(context);
+
+                    LOG.info("Starting Web Server on ports 30061 and 22179");
+                    try {
+                        server.start();
+                    } catch (Exception e) {
+                        LOG.error(e.toString());
+                        //abortLaunch = true;
+                        String message = "Only one instance of the Bluebird Connector can be running at a time.\n"
+                                + "Shut down the currently running instance before starting a new one.\n\n"
+                                + "If you are sure this is the only instance of Bluebird Connector running then "
+                                + "check to see if another application is using port 30061 or 22179";
+                        LOG.error(message);
+                        LOG.error("{}", stackTraceToString(e));
+
+                        showErrorDialog("ERROR", "Bluebird Connector Already Running", message, true);
+                    } finally {
+                        /*if (!abortLaunch) {
+                            blueBirdDriverThread.start();
+                            ready = true;
+                            //startGUI(stage);
+                            //server.join();
+                        }*/
+                        LOG.info("Web Server started on ports 30061 and 22179");
+                    }
+                } catch (Exception e) {
+                    System.out.println(e.toString());
+                }
+            }
+
+            public void stopServer() {
+                try {
+                    server.stop();
+                }
+                catch (Exception e) {System.out.println(e.toString());}
+            }
+        };
+
+        webServerThread.start();
+    }
 
     public static void showErrorDialog(String title, String header, String message, boolean abort) {
         Platform.runLater(() -> {

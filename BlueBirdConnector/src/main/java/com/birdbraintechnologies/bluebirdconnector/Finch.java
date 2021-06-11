@@ -2,8 +2,8 @@ package com.birdbraintechnologies.bluebirdconnector;
 
 public class Finch extends Robot {
 
-    public Finch(String name){
-        super(name);
+    public Finch(String name, RobotCommunicator rc){
+        super(name, rc);
 
         //Set constants
         calibrationIndex = 16;
@@ -14,6 +14,12 @@ public class Finch extends Robot {
         rawToVoltage = 0.00937;
         voltageConst = 320;
         batteryTolerance = 0.05;
+        FREQ_INDEX_MSB = 16;
+        FREQ_INDEX_LSB = 17;
+        DURATION_INDEX_MSB = 18;
+        DURATION_INDEX_LSB = 19;
+        setAllCmd = (byte) 0xD0;
+        stopAllCmd = new byte[] {(byte)0xDF, (byte)0xFF, (byte)0xFF, (byte)0xFF};
     }
 
 
