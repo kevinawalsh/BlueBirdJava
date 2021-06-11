@@ -58,7 +58,7 @@ public class FrontendServer {
 
     public void updateGUIConnection(Robot robot, int index) {
         //deviceDidConnect = function(address, name, fancyName, devLetter, hasV2) {
-        if (robot.isConnected) {
+        if (robot.isConnected()) {
             String devLetter = Character.toString((char)(index + 65));
             String[] args = new String[] {robot.name, robot.name, robot.fancyName, devLetter, String.valueOf(robot.hasV2) };
             sendToGUI("deviceDidConnect", args);

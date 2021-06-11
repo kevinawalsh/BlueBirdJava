@@ -97,7 +97,7 @@ public class RobotManager {
     public Robot getConnectedRobot(char devLetter, String errorMsg){
         int index = (int)devLetter - 65;
 
-        if (index < 0 || index >= selectedRobots.length || selectedRobots[index] == null || !selectedRobots[index].isConnected) {
+        if (index < 0 || index >= selectedRobots.length || selectedRobots[index] == null || !selectedRobots[index].isConnected()) {
             LOG.error("No robot connected at {}. {}", devLetter, errorMsg);
             return null;
         }
@@ -200,8 +200,8 @@ public class RobotManager {
             return;
         }
         Robot robot = selectedRobots[index];
-        robot.isConnected = true;
         robot.setHasV2(hasV2);
+        robot.setConnected(true);
         LOG.debug("receiveConnectionEvent {} {}", robotName, hasV2);
         FrontendServer.getSharedInstance().updateGUIConnection(robot, index);
     }
@@ -214,7 +214,7 @@ public class RobotManager {
             return;
         }
         Robot robot = selectedRobots[index];
-        robot.isConnected = false;
+        robot.setConnected(false);
         if (userInitiated) {
             selectedRobots[index] = null;
         }

@@ -16,7 +16,7 @@ public abstract class Robot {
     public final String fancyName;
     public final String type;
     private final RobotCommunicator communicator;
-    public boolean isConnected;
+    private boolean isConnected;
     public boolean hasV2;
     private boolean isCalibrating;
     private byte[] currentData;
@@ -50,6 +50,9 @@ public abstract class Robot {
     private Object motorsChannelLock; // each channel has its own lock
     private boolean motorsChanged;
 
+    private SetAllThread setAllThread;
+    private static final int COMMAND_INTERVAL = 30;
+
     //Device Specific Constants
     int calibrationIndex;
     int batteryIndex;
@@ -78,11 +81,12 @@ public abstract class Robot {
         currentBattery = "unknown";
 
         currentData = new byte[20];
-        initializeSetAllChannel();
         setAllChanged = false;
         ledPrintChanged = false;
         ledDisplayChanged = false;
         motorsChanged = false;
+
+        setAllThread = new SetAllThread();
     }
 
     public static Robot Factory(String name, RobotCommunicator rc) {
@@ -137,11 +141,24 @@ public abstract class Robot {
         ledDisplayChanged = false;
         motorsChanged = false;
         //masterDisconnect = false;
+
+        LOG.debug("setAll initialized with {} to {}", setAllCmd, Utilities.bytesToString(setAllData));
     }
 
 
     public void setHasV2(boolean robotHasV2) {
         hasV2 = robotHasV2;
+    }
+
+    public void setConnected(boolean connected) {
+        isConnected = connected;
+        if (connected) {
+            initializeSetAllChannel();
+            setAllThread.start();
+        }
+    }
+    public boolean isConnected() {
+        return isConnected;
     }
 
 
@@ -271,6 +288,13 @@ public abstract class Robot {
             setAllData[DURATION_INDEX_LSB] = duration_lsb;
             setAllChanged = true;
         }
+    }
+
+    private void clearBuzzerBytes () {
+        setAllData[FREQ_INDEX_MSB] = 0;
+        setAllData[FREQ_INDEX_LSB] = 0;
+        setAllData[DURATION_INDEX_MSB] = 0;
+        setAllData[DURATION_INDEX_LSB] = 0;
     }
 
     public void setSymbol(byte[] data) {
@@ -548,6 +572,135 @@ public abstract class Robot {
             } catch (InterruptedException e) {
                 LOG.debug("killPrintThreadDelay {} Interrupted : {}", e.toString());
             }
+    }
+
+    private class SetAllThread extends Thread {
+        @Override
+        public void run() {
+            while(isConnected) {
+
+                boolean firstCommandSent = false;
+                //Send set all
+                synchronized (setAllDataChannelLock) {
+                    if (setAllChanged) {
+                        try {
+                            LOG.debug("sendSetAllWriteCommand: sending SetAll data to {}", name);
+                            LOG.debug("{}", Utilities.bytesToString(setAllData));
+                            sendCommand(setAllData);
+                            clearBuzzerBytes();
+                            firstCommandSent = true;
+                        } catch (Exception e) {
+                            LOG.error("SetAll ERROR: " + e.toString());
+                            e.printStackTrace();
+                        } finally {
+                            setAllChanged = false;
+                        }
+                    }
+                }
+
+                if (firstCommandSent) {
+                    try {
+                        Thread.sleep(COMMAND_INTERVAL);
+                    } catch (InterruptedException e) {
+                        LOG.error("Error sleeping");
+                        e.printStackTrace();
+                    }
+                }
+
+                boolean secondCommandSent = false;
+                if (type.equals("FN")) {
+                    synchronized (motorsChannelLock) { //TODO: lock other channels?
+                        byte[] ledDisplay = ledDisplayData;
+                        byte[] ledPrint = ledPrintData;
+                        byte[] motors = motorsData;
+                        int printlength = ledPrint[1] - 64;
+                        byte[] command = new byte[20];
+                        command[0] = (byte)0xD2;
+
+                        byte mode = 0;
+                        if (motorsChanged){
+                            for (int i = 0; i < 8; i++){
+                                command[i+2] = motors[i];
+                            }
+                            if (ledPrintChanged){
+                                mode = (byte)(0x80 + printlength);
+                                for (int i = 0; i < printlength; i++){
+                                    command[i+10] = ledPrint[i+2];
+                                }
+                            } else if (ledDisplayChanged){
+                                mode = 0x60;
+                                for (int i = 0; i < 4; i++){
+                                    command[i+10] = ledDisplay[i+2];
+                                }
+                            } else {
+                                mode = 0x40;
+                            }
+                        } else if (ledPrintChanged) {
+                            mode = (byte)printlength;
+                            for (int i = 0; i < printlength; i++){
+                                command[i+2] = ledPrint[i+2];
+                            }
+                        } else if (ledDisplayChanged) {
+                            mode = 0x20;
+                            for (int i = 0; i < 4; i++){
+                                command[i+2] = ledDisplay[i+2];
+                            }
+                        }
+                        command[1] = mode;
+
+                        if (mode != 0) {
+                            LOG.debug("sendFinchMotorsCommand printlength={} ledPrint={}", printlength, Utilities.bytesToString(ledPrint));
+                            sendCommand(command);
+                            ledDisplayChanged = false;
+                            ledPrintChanged = false;
+                            motorsChanged = false;
+                            secondCommandSent = true;
+                        }
+
+                    }
+                } else {
+                    synchronized (ledDisplayChannelLock) {
+                        if (ledDisplayChanged) {
+                            try {
+                                LOG.debug("Sending ledDisplayData Data to {}", name);
+                                sendCommand(ledDisplayData);
+                                secondCommandSent = true;
+                            } catch (Exception e) {
+                                LOG.error("ERROR: ledDisplay Timer: {}" , e.toString());
+                                e.printStackTrace();
+                            } finally {
+                                ledDisplayChanged = false;
+                            }
+                        }
+                    }
+                    synchronized (ledPrintChannelLock) {
+                        if (ledPrintChanged) {
+                            try {
+                                LOG.debug("Sending ledPrint Data to {}, Print bytes: {}", name, Utilities.bytesToString(ledPrintData));
+                                sendCommand(ledPrintData);
+                                secondCommandSent = true;
+                            } catch (Exception e) {
+                                LOG.error("ERROR: ledPrint Timer: {}" , e.toString());
+                                e.printStackTrace();
+                            } finally {
+                                ledPrintChanged = false;
+                            }
+                        }
+                    }
+                }
+
+
+                if (secondCommandSent || !firstCommandSent) {
+                    try {
+                        Thread.sleep(COMMAND_INTERVAL);
+                    } catch (InterruptedException e) {
+                        LOG.error("Error sleeping");
+                        e.printStackTrace();
+                    }
+                }
+
+            }
+        }
     }
 
 }
