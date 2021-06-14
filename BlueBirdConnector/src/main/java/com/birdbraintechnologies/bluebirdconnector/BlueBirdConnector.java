@@ -16,6 +16,7 @@ import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import org.eclipse.jetty.http.HttpVersion;
 import org.eclipse.jetty.server.*;
+import org.eclipse.jetty.servlet.DefaultServlet;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
@@ -179,7 +180,10 @@ public class BlueBirdConnector extends Application{
                     // This is also known as the handler tree (in jetty speak)
                     ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
                     context.setContextPath("/");
-                    context.setResourceBase(".");
+                    //context.setResourceBase(".");
+                    URL snapUrl = this.getClass().getResource("Snap-6.1.4/");
+                    LOG.debug("snapURL: {}", snapUrl.toString());
+                    context.setResourceBase(snapUrl.toString());
 
                     FilterHolder filterHolder = new FilterHolder(CrossOriginFilter.class);
                     filterHolder.setInitParameter("allowedOrigins", "*");
@@ -214,13 +218,13 @@ public class BlueBirdConnector extends Application{
                     holderHome.setInitParameter("resourceBase","./scratchx");
                     holderHome.setInitParameter("dirAllowed","true");
                     holderHome.setInitParameter("pathInfoOnly","true");
-                    context.addServlet(holderHome,"/*");
+                    context.addServlet(holderHome,"/*");*/
 
                     // Lastly, the default servlet for root content (always needed, to satisfy servlet spec)
                     // It is important that this is last.
                     ServletHolder holderPwd = new ServletHolder("default", DefaultServlet.class);
                     holderPwd.setInitParameter("dirAllowed","true");
-                    context.addServlet(holderPwd,"/");*/
+                    context.addServlet(holderPwd,"/");
 
                     server.setHandler(context);
 

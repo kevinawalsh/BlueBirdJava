@@ -7,8 +7,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.*;
 import java.awt.Desktop;
 
@@ -54,6 +57,9 @@ public class FrontendServer {
         } else {
             sendToGUI("scanEnded");
         }
+
+        boolean online = internetIsAvailable();
+        LOG.debug("Internet is available? {}", online);
     }
 
     public void updateGUIConnection(Robot robot, int index) {
@@ -195,10 +201,23 @@ public class FrontendServer {
 
     private static void openURLinDefaultBrowser (String urlString) {
         try {
-            Desktop.getDesktop().browse(new URL(urlString).toURI());
-        } catch (Exception e) {
-            LOG.error("Failed to open url {}", urlString);
-            e.printStackTrace();
+            final String dir = System.getProperty("user.dir");
+            String osName = System.getProperty("os.name");
+            LOG.debug("OS = {}; user dir = {}" , osName, dir);
+
+            if (osName.contains("Win")) {
+                Runtime.getRuntime().exec(new String[]{"cmd", "/c","start chrome " + urlString});
+            } else { //Linux
+                Runtime.getRuntime().exec(new String[] { "chromium-browser", urlString });
+            }
+        } catch (Exception exception) {
+            LOG.info("Could not open url in chrome. Trying the default browser.");
+            try {
+                Desktop.getDesktop().browse(new URL(urlString).toURI());
+            } catch (Exception e) {
+                LOG.error("Failed to open url {}", urlString);
+                e.printStackTrace();
+            }
         }
 
         /*try {
@@ -282,5 +301,20 @@ public class FrontendServer {
             LOG.error ("{}", stackTraceToString(e));
         }*/
 
+    }
+
+    private static boolean internetIsAvailable() {
+        try {
+            final URL url = new URL("https://snap.berkeley.edu/");
+            final URLConnection conn = url.openConnection();
+            conn.connect();
+            conn.getInputStream().close();
+            return true;
+        } catch (MalformedURLException e) {
+            //throw new RuntimeException(e);
+            return false;
+        } catch (IOException e) {
+            return false;
+        }
     }
 }

@@ -328,6 +328,9 @@ function getDeviceImage(deviceName) {
  * starting when the document is ready.
  */
 function updateInternetStatus() {
+    sendMessageToBackend(msgTypes.CONSOLE_LOG, {
+        consoleLog: "updateInternetStatus " + navigator.onLine
+      })
   if (navigator.onLine) {
     $('#indicator-wifi').addClass("indicator-on");
     //$('#cloud-slider').prop('checked', true);

@@ -1,0 +1,1314 @@
+<project name="FinchSingleDeviceStarterProject" app="Snap! 4.2, http://snap.berkeley.edu" version="1">
+    <notes></notes>
+    <thumbnail>
+        data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKAAAAB4CAYAAAB1ovlvAAADYElEQVR4Xu3XMUqkaxCF4a9BEUNNNFLUVA1EA12ZkWtxTS7CVFMjh9vZDWamGDgeaB4Tk6KKfv63u+nN9/f39/JHoCSwEWBJ3tmtgACFUBUQYJXfcQFqoCogwCq/4wLUQFVAgFV+xwWogaqAAKv8jgtQA1UBAVb5HRegBqoCAqzyOy5ADVQFBFjld1yAGqgKCLDK77gANVAVEGCV33EBaqAqIMAqv+MC1EBVQIBVfscFqIGqgACr/I4LUANVAQFW+R0XoAaqAgKs8jsuQA1UBQRY5XdcgBqoCgiwyu+4ADVQFRBgld9xAWqgKiDAKr/jAtRAVUCAVX7HBaiBqoAAq/yOC1ADVQEBVvkdF6AGqgICrPI7LkANVAUEWOV3XIAaqAoIsMrvuAA1UBUQYJXfcQFqoCogwCq/4wLUQFVAgFV+xwWogaqAAH/D//r6uvb29tbt7e26ublZm82m+qB29bgAf/Nk39/f1/Pz8/r8/FwHBwfr4eFhXV5ebv+fn5/vag8//roE+Afyt7e39fLy8r9Pv6+vr3VycrLu7u7WxcXFenp6WsfHxz/+4HbloAD/IcDT09NtgP99Ij4+Pq6jo6Nd6eHHX4cA//IV/PHxsQ4PD9f9/f26urrafgWfnZ39+IPa1YMC/MOPkP39/e2PkOvraz9CQu8AAYZgrZ0JCHDmZCokIMAQrLUzAQHOnEyFBAQYgrV2JiDAmZOpkIAAQ7DWzgQEOHMyFRIQYAjW2pmAAGdOpkICAgzBWjsTEODMyVRIQIAhWGtnAgKcOZkKCQgwBGvtTECAMydTIQEBhmCtnQkIcOZkKiQgwBCstTMBAc6cTIUEBBiCtXYmIMCZk6mQgABDsNbOBAQ4czIVEhBgCNbamYAAZ06mQgICDMFaOxMQ4MzJVEhAgCFYa2cCApw5mQoJCDAEa+1MQIAzJ1MhAQGGYK2dCQhw5mQqJCDAEKy1MwEBzpxMhQQEGIK1diYgwJmTqZCAAEOw1s4EBDhzMhUSEGAI1tqZgABnTqZCAgIMwVo7ExDgzMlUSECAIVhrZwICnDmZCgkIMARr7UxAgDMnUyEBAYZgrZ0JCHDmZCokIMAQrLUzAQHOnEyFBAQYgrV2JiDAmZOpkIAAQ7DWzgQEOHMyFRIQYAjW2pnALycjCLelAiIPAAAAAElFTkSuQmCC
+    </thumbnail>
+    <stage name="Stage" width="480" height="360" costume="0" tempo="60" threadsafe="false" lines="round" ternary="false"
+           codify="false" inheritance="true" sublistIDs="false" scheduled="false" id="1">
+        <pentrails>
+            data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAeAAAAFoCAYAAACPNyggAAAOhUlEQVR4Xu3VwQkAAAjEMN1/abewn7jAQRC64wgQIECAAIF3gX1fNEiAAAECBAiMAHsCAgQIECAQCAhwgG6SAAECBAgIsB8gQIAAAQKBgAAH6CYJECBAgIAA+wECBAgQIBAICHCAbpIAAQIECAiwHyBAgAABAoGAAAfoJgkQIECAgAD7AQIECBAgEAgIcIBukgABAgQICLAfIECAAAECgYAAB+gmCRAgQICAAPsBAgQIECAQCAhwgG6SAAECBAgIsB8gQIAAAQKBgAAH6CYJECBAgIAA+wECBAgQIBAICHCAbpIAAQIECAiwHyBAgAABAoGAAAfoJgkQIECAgAD7AQIECBAgEAgIcIBukgABAgQICLAfIECAAAECgYAAB+gmCRAgQICAAPsBAgQIECAQCAhwgG6SAAECBAgIsB8gQIAAAQKBgAAH6CYJECBAgIAA+wECBAgQIBAICHCAbpIAAQIECAiwHyBAgAABAoGAAAfoJgkQIECAgAD7AQIECBAgEAgIcIBukgABAgQICLAfIECAAAECgYAAB+gmCRAgQICAAPsBAgQIECAQCAhwgG6SAAECBAgIsB8gQIAAAQKBgAAH6CYJECBAgIAA+wECBAgQIBAICHCAbpIAAQIECAiwHyBAgAABAoGAAAfoJgkQIECAgAD7AQIECBAgEAgIcIBukgABAgQICLAfIECAAAECgYAAB+gmCRAgQICAAPsBAgQIECAQCAhwgG6SAAECBAgIsB8gQIAAAQKBgAAH6CYJECBAgIAA+wECBAgQIBAICHCAbpIAAQIECAiwHyBAgAABAoGAAAfoJgkQIECAgAD7AQIECBAgEAgIcIBukgABAgQICLAfIECAAAECgYAAB+gmCRAgQICAAPsBAgQIECAQCAhwgG6SAAECBAgIsB8gQIAAAQKBgAAH6CYJECBAgIAA+wECBAgQIBAICHCAbpIAAQIECAiwHyBAgAABAoGAAAfoJgkQIECAgAD7AQIECBAgEAgIcIBukgABAgQICLAfIECAAAECgYAAB+gmCRAgQICAAPsBAgQIECAQCAhwgG6SAAECBAgIsB8gQIAAAQKBgAAH6CYJECBAgIAA+wECBAgQIBAICHCAbpIAAQIECAiwHyBAgAABAoGAAAfoJgkQIECAgAD7AQIECBAgEAgIcIBukgABAgQICLAfIECAAAECgYAAB+gmCRAgQICAAPsBAgQIECAQCAhwgG6SAAECBAgIsB8gQIAAAQKBgAAH6CYJECBAgIAA+wECBAgQIBAICHCAbpIAAQIECAiwHyBAgAABAoGAAAfoJgkQIECAgAD7AQIECBAgEAgIcIBukgABAgQICLAfIECAAAECgYAAB+gmCRAgQICAAPsBAgQIECAQCAhwgG6SAAECBAgIsB8gQIAAAQKBgAAH6CYJECBAgIAA+wECBAgQIBAICHCAbpIAAQIECAiwHyBAgAABAoGAAAfoJgkQIECAgAD7AQIECBAgEAgIcIBukgABAgQICLAfIECAAAECgYAAB+gmCRAgQICAAPsBAgQIECAQCAhwgG6SAAECBAgIsB8gQIAAAQKBgAAH6CYJECBAgIAA+wECBAgQIBAICHCAbpIAAQIECAiwHyBAgAABAoGAAAfoJgkQIECAgAD7AQIECBAgEAgIcIBukgABAgQICLAfIECAAAECgYAAB+gmCRAgQICAAPsBAgQIECAQCAhwgG6SAAECBAgIsB8gQIAAAQKBgAAH6CYJECBAgIAA+wECBAgQIBAICHCAbpIAAQIECAiwHyBAgAABAoGAAAfoJgkQIECAgAD7AQIECBAgEAgIcIBukgABAgQICLAfIECAAAECgYAAB+gmCRAgQICAAPsBAgQIECAQCAhwgG6SAAECBAgIsB8gQIAAAQKBgAAH6CYJECBAgIAA+wECBAgQIBAICHCAbpIAAQIECAiwHyBAgAABAoGAAAfoJgkQIECAgAD7AQIECBAgEAgIcIBukgABAgQICLAfIECAAAECgYAAB+gmCRAgQICAAPsBAgQIECAQCAhwgG6SAAECBAgIsB8gQIAAAQKBgAAH6CYJECBAgIAA+wECBAgQIBAICHCAbpIAAQIECAiwHyBAgAABAoGAAAfoJgkQIECAgAD7AQIECBAgEAgIcIBukgABAgQICLAfIECAAAECgYAAB+gmCRAgQICAAPsBAgQIECAQCAhwgG6SAAECBAgIsB8gQIAAAQKBgAAH6CYJECBAgIAA+wECBAgQIBAICHCAbpIAAQIECAiwHyBAgAABAoGAAAfoJgkQIECAgAD7AQIECBAgEAgIcIBukgABAgQICLAfIECAAAECgYAAB+gmCRAgQICAAPsBAgQIECAQCAhwgG6SAAECBAgIsB8gQIAAAQKBgAAH6CYJECBAgIAA+wECBAgQIBAICHCAbpIAAQIECAiwHyBAgAABAoGAAAfoJgkQIECAgAD7AQIECBAgEAgIcIBukgABAgQICLAfIECAAAECgYAAB+gmCRAgQICAAPsBAgQIECAQCAhwgG6SAAECBAgIsB8gQIAAAQKBgAAH6CYJECBAgIAA+wECBAgQIBAICHCAbpIAAQIECAiwHyBAgAABAoGAAAfoJgkQIECAgAD7AQIECBAgEAgIcIBukgABAgQICLAfIECAAAECgYAAB+gmCRAgQICAAPsBAgQIECAQCAhwgG6SAAECBAgIsB8gQIAAAQKBgAAH6CYJECBAgIAA+wECBAgQIBAICHCAbpIAAQIECAiwHyBAgAABAoGAAAfoJgkQIECAgAD7AQIECBAgEAgIcIBukgABAgQICLAfIECAAAECgYAAB+gmCRAgQICAAPsBAgQIECAQCAhwgG6SAAECBAgIsB8gQIAAAQKBgAAH6CYJECBAgIAA+wECBAgQIBAICHCAbpIAAQIECAiwHyBAgAABAoGAAAfoJgkQIECAgAD7AQIECBAgEAgIcIBukgABAgQICLAfIECAAAECgYAAB+gmCRAgQICAAPsBAgQIECAQCAhwgG6SAAECBAgIsB8gQIAAAQKBgAAH6CYJECBAgIAA+wECBAgQIBAICHCAbpIAAQIECAiwHyBAgAABAoGAAAfoJgkQIECAgAD7AQIECBAgEAgIcIBukgABAgQICLAfIECAAAECgYAAB+gmCRAgQICAAPsBAgQIECAQCAhwgG6SAAECBAgIsB8gQIAAAQKBgAAH6CYJECBAgIAA+wECBAgQIBAICHCAbpIAAQIECAiwHyBAgAABAoGAAAfoJgkQIECAgAD7AQIECBAgEAgIcIBukgABAgQICLAfIECAAAECgYAAB+gmCRAgQICAAPsBAgQIECAQCAhwgG6SAAECBAgIsB8gQIAAAQKBgAAH6CYJECBAgIAA+wECBAgQIBAICHCAbpIAAQIECAiwHyBAgAABAoGAAAfoJgkQIECAgAD7AQIECBAgEAgIcIBukgABAgQICLAfIECAAAECgYAAB+gmCRAgQICAAPsBAgQIECAQCAhwgG6SAAECBAgIsB8gQIAAAQKBgAAH6CYJECBAgIAA+wECBAgQIBAICHCAbpIAAQIECAiwHyBAgAABAoGAAAfoJgkQIECAgAD7AQIECBAgEAgIcIBukgABAgQICLAfIECAAAECgYAAB+gmCRAgQICAAPsBAgQIECAQCAhwgG6SAAECBAgIsB8gQIAAAQKBgAAH6CYJECBAgIAA+wECBAgQIBAICHCAbpIAAQIECAiwHyBAgAABAoGAAAfoJgkQIECAgAD7AQIECBAgEAgIcIBukgABAgQICLAfIECAAAECgYAAB+gmCRAgQICAAPsBAgQIECAQCAhwgG6SAAECBAgIsB8gQIAAAQKBgAAH6CYJECBAgIAA+wECBAgQIBAICHCAbpIAAQIECAiwHyBAgAABAoGAAAfoJgkQIECAgAD7AQIECBAgEAgIcIBukgABAgQICLAfIECAAAECgYAAB+gmCRAgQICAAPsBAgQIECAQCAhwgG6SAAECBAgIsB8gQIAAAQKBgAAH6CYJECBAgIAA+wECBAgQIBAICHCAbpIAAQIECAiwHyBAgAABAoGAAAfoJgkQIECAgAD7AQIECBAgEAgIcIBukgABAgQICLAfIECAAAECgYAAB+gmCRAgQICAAPsBAgQIECAQCAhwgG6SAAECBAgIsB8gQIAAAQKBgAAH6CYJECBAgIAA+wECBAgQIBAICHCAbpIAAQIECAiwHyBAgAABAoGAAAfoJgkQIECAgAD7AQIECBAgEAgIcIBukgABAgQICLAfIECAAAECgYAAB+gmCRAgQICAAPsBAgQIECAQCAhwgG6SAAECBAgIsB8gQIAAAQKBgAAH6CYJECBAgIAA+wECBAgQIBAICHCAbpIAAQIECAiwHyBAgAABAoGAAAfoJgkQIECAgAD7AQIECBAgEAgIcIBukgABAgQICLAfIECAAAECgYAAB+gmCRAgQICAAPsBAgQIECAQCAhwgG6SAAECBAgIsB8gQIAAAQKBgAAH6CYJECBAgIAA+wECBAgQIBAICHCAbpIAAQIECAiwHyBAgAABAoGAAAfoJgkQIECAgAD7AQIECBAgEAgIcIBukgABAgQICLAfIECAAAECgYAAB+gmCRAgQICAAPsBAgQIECAQCAhwgG6SAAECBAgIsB8gQIAAAQKBgAAH6CYJECBAgIAA+wECBAgQIBAICHCAbpIAAQIECAiwHyBAgAABAoGAAAfoJgkQIECAgAD7AQIECBAgEAgIcIBukgABAgQICLAfIECAAAECgYAAB+gmCRAgQICAAPsBAgQIECAQCAhwgG6SAAECBAgIsB8gQIAAAQKBgAAH6CYJECBAgIAA+wECBAgQIBAICHCAbpIAAQIECAiwHyBAgAABAoGAAAfoJgkQIECAgAD7AQIECBAgEAgIcIBukgABAgQIHLFxAWmhEwHPAAAAAElFTkSuQmCC
+        </pentrails>
+        <costumes>
+            <list id="2"></list>
+        </costumes>
+        <sounds>
+            <list id="3"></list>
+        </sounds>
+        <variables></variables>
+        <blocks></blocks>
+        <scripts>
+            <script x="10" y="13">
+                <block s="receiveInteraction">
+                    <l>
+                        <option>stopped</option>
+                    </l>
+                </block>
+                <custom-block s="stop all"></custom-block>
+            </script>
+        </scripts>
+        <sprites>
+            <sprite name="Sprite" idx="1" x="0" y="0" heading="90" scale="1" rotation="1" draggable="true" costume="0"
+                    color="80,80,80" pen="tip" id="11">
+                <costumes>
+                    <list id="12"></list>
+                </costumes>
+                <sounds>
+                    <list id="13"></list>
+                </sounds>
+                <blocks></blocks>
+                <variables></variables>
+                <scripts></scripts>
+            </sprite>
+        </sprites>
+    </stage>
+    <hidden>receiveCondition</hidden>
+    <headers></headers>
+    <code></code>
+    <blocks>
+        <block-definition s="Finch Distance (cm)" type="reporter" category="sensing">
+            <header></header>
+            <code></code>
+            <translations>ca:Finch Distància (cm)&#xD;de:Finch Entfernung (cm)&#xD;es:Finch Distancia (cm)&#xD;fr:Finch Distance (cm)&#xD;he:Finch מרחק (cm)&#xD;ko:Finch 거리 센서 (cm)&#xD;nl:Finch Afstand (cm)&#xD;pt:Finch Distância (cm)&#xD;zh_CN:Finch 距离 (cm)&#xD;zh_TW:Finch 距離 (cm)&#xD;</translations>
+            <script>
+              <block s="doReport">
+                <block s="reportURL">
+                  <l>http://127.0.0.1:30061/hummingbird/in/Distance/static</l>
+                </block>
+              </block>
+            </script>
+        </block-definition>
+        <block-definition s="Finch %&apos;port&apos; Light" type="reporter" category="sensing">
+            <header></header>
+            <code></code>
+            <translations>ca:Finch _ Llum&#xD;de:Finch _ Licht&#xD;es:Finch _ Luz&#xD;fr:Finch _ Lumière&#xD;he:Finch _ אור&#xD;ko:Finch _ 빛 센서&#xD;nl:Finch _ Licht&#xD;pt:Finch _ Luz&#xD;zh_CN:Finch _ 灯光&#xD;zh_TW:Finch _ 燈光&#xD;</translations>
+            <inputs>
+                <input type="%txt" readonly="true">Right<options>Left&#xD;Right</options></input>
+            </inputs>
+            <script>
+                <block s="doReport">
+                    <block s="reportURL">
+                        <block s="reportJoinWords">
+                            <list>
+                                <l>http://127.0.0.1:30061/hummingbird/in/Light/</l>
+                                <block var="port"/>
+                            </list>
+                        </block>
+                    </block>
+                </block>
+            </script>
+        </block-definition>
+        <block-definition s="Finch %&apos;port&apos; Line" type="reporter" category="sensing">
+            <header></header>
+            <code></code>
+            <translations>ca:Finch _ Línia&#xD;de:Finch _ Linie&#xD;es:Finch _ Línea&#xD;fr:Finch _ Ligne&#xD;he:Finch _ קו&#xD;ko:Finch _ 선&#xD;nl:Finch _ Lijn&#xD;pt:Finch _ Linha&#xD;zh_CN:Finch _ 线&#xD;zh_TW:Finch _ 線&#xD;</translations>
+            <inputs>
+                <input type="%txt" readonly="true">Right<options>Left&#xD;Right</options></input>
+            </inputs>
+            <script>
+                <block s="doDeclareVariables">
+                    <list>
+                        <l>value</l>
+                    </list>
+                </block>
+                <block s="doSetVar">
+                    <l>value</l>
+                    <block s="reportURL">
+                        <block s="reportJoinWords">
+                            <list>
+                                <l>http://127.0.0.1:30061/hummingbird/in/Line/</l>
+                                <block var="port"/>
+                            </list>
+                        </block>
+                    </block>
+                </block>
+                <block s="doIfElse">
+                    <block s="reportNot">
+                        <block s="reportEquals">
+                            <block var="value"/>
+                            <l>Not Connected</l>
+                        </block>
+                    </block>
+                    <script>
+                        <block s="doReport">
+                            <block s="reportRound">
+                                <block var="value"/>
+                            </block>
+                        </block>
+                    </script>
+                    <script>
+                        <block s="doReport">
+                            <l>Not Connected</l>
+                        </block>
+                    </script>
+                </block>
+            </script>
+        </block-definition>
+        <block-definition s="Finch %&apos;port&apos; Encoder (rotations)" type="reporter" category="sensing">
+            <header></header>
+            <code></code>
+            <translations>ca:Finch Recompte de voltes _&#xD;de:Finch _ Kodierer&#xD;es:Finch Recuento de vueltas _&#xD;fr:Finch _ Encodeur&#xD;he:Finch _ קודאי&#xD;ko:Finch _ 인코더&#xD;nl:Finch _ Encoder&#xD;pt:Finch _ Código&#xD;zh_CN:Finch _ 编码器&#xD;zh_TW:Finch _ 編碼器&#xD;</translations>
+            <inputs>
+                <input type="%txt" readonly="true">Right<options>Left&#xD;Right</options></input>
+            </inputs>
+            <script>
+                <block s="doDeclareVariables">
+                    <list>
+                        <l>value</l>
+                    </list>
+                </block>
+                <block s="doSetVar">
+                    <l>value</l>
+                    <block s="reportURL">
+                        <block s="reportJoinWords">
+                            <list>
+                                <l>http://127.0.0.1:30061/hummingbird/in/Encoder/</l>
+                                <block var="port"/>
+                            </list>
+                        </block>
+                    </block>
+                </block>
+                <block s="doIfElse">
+                    <block s="reportNot">
+                        <block s="reportEquals">
+                            <block var="value"/>
+                            <l>Not Connected</l>
+                        </block>
+                    </block>
+                    <script>
+                        <block s="doReport">
+                            <block var="value"/>
+                        </block>
+                    </script>
+                    <script>
+                        <block s="doReport">
+                            <l>Not Connected</l>
+                        </block>
+                    </script>
+                </block>
+            </script>
+        </block-definition>
+        <block-definition s="Finch Reset Encoders" type="command" category="sensing">
+            <header></header>
+            <code></code>
+            <translations>ca:Finch Reinicialitza els comptadors de voltes&#xD;de:Finch Kodierer Zurücksetzen&#xD;es:Finch Reinicializar los contadores de vueltas&#xD;fr:Finch Réinitialiser les encodeurs&#xD;he:Finch לאפס קודאי&#xD;ko:Finch 인코더 리셋하기&#xD;nl:Finch Encoders Resetten&#xD;pt:Finch Redefinir Código&#xD;zh_CN:Finch 重置编码器&#xD;zh_TW:Finch 重置編碼器&#xD;</translations>
+            <inputs></inputs>
+            <script>
+                <block s="doRun">
+                    <block s="reifyReporter">
+                        <autolambda>
+                            <block s="reportURL">
+                                <block s="reportJoinWords">
+                                    <list>
+                                        <l>http://127.0.0.1:30061/hummingbird/out/resetEncoders/A/</l>
+                                    </list>
+                                </block>
+                            </block>
+                        </autolambda>
+                        <list></list>
+                    </block>
+                    <list></list>
+                </block>
+                <block s="doWait">
+                    <l>0.2</l>
+                </block>
+            </script>
+        </block-definition>
+        <block-definition s="Finch Play Note %&apos;note&apos; for %&apos;beats&apos; beats" type="command"
+                          category="sound">
+            <header></header>
+            <code></code>
+            <translations>ko:Finch _ 번 음을 _ 박자로 연주하기&#xD;de:Finch Spiele Note _ für _ Schläge&#xD;pt:Finch Toque Notas _ por _ Batidas&#xD;fr:Finch Jouer la note _ pour _ battement(s)&#xD;nl:Finch Speel Noot _ voor _ Beats&#xD;zh_CN:Finch 演奏 音阶 _ 于 _ 拍&#xD;zh_TW:Finch 演奏 音階 _ 於 _ 拍&#xD;ar:Finch تشغيل الموسيقى _ _&#xD;dk:Finch Spil tone _ i _ slag&#xD;he:Finch נגן תו _ במשך _ פעימות&#xD;es:Finch Emitir un sonido _ por _ pulsos&#xD;ca:Finch Toca nota _ durant _ temps&#xD;fi:Finch Soita sävel _ _ iskun ajan&#xD;sv:Finch Spela not _ _&#xD;</translations>
+            <inputs>
+                <input type="%n">60<options>§_pianoKeyboardMenu</options></input>
+                <input type="%n">0.5</input>
+            </inputs>
+            <script>
+                <block s="doIf">
+                    <block s="reportGreaterThan">
+                        <block var="note"/>
+                        <l>135</l>
+                    </block>
+                    <script>
+                        <block s="doSetVar">
+                            <l>note</l>
+                            <l>135</l>
+                        </block>
+                    </script>
+                </block>
+                <block s="doIf">
+                    <block s="reportGreaterThan">
+                        <l>32</l>
+                        <block var="note"/>
+                    </block>
+                    <script>
+                        <block s="doSetVar">
+                            <l>note</l>
+                            <l>32</l>
+                        </block>
+                    </script>
+                </block>
+                <block s="doIf">
+                    <block s="reportGreaterThan">
+                        <block var="beats"/>
+                        <l>16</l>
+                    </block>
+                    <script>
+                        <block s="doSetVar">
+                            <l>beats</l>
+                            <l>16</l>
+                        </block>
+                    </script>
+                </block>
+                <block s="doIf">
+                    <block s="reportGreaterThan">
+                        <l>0</l>
+                        <block var="beats"/>
+                    </block>
+                    <script>
+                        <block s="doSetVar">
+                            <l>beats</l>
+                            <l>0</l>
+                        </block>
+                    </script>
+                </block>
+                <block s="doSetVar">
+                    <l>beats</l>
+                    <block s="reportRound">
+                        <block s="reportProduct">
+                            <block s="reportQuotient">
+                                <l>60000</l>
+                                <block s="getTempo"></block>
+                            </block>
+                            <block var="beats"/>
+                        </block>
+                        <comment w="242" collapsed="false">BPM = tempo&#xD;60 * 1000/BPM = BPMS beats per millisecond&#xD;beats
+                            = Duration in ms = BPMS * number of beats
+                        </comment>
+                    </block>
+                </block>
+                <block s="doSetVar">
+                  <l>note</l>
+                  <block s="reportRound">
+                    <block var="note"/>
+                  </block>
+                </block>
+                <block s="doRun">
+                    <block s="reifyReporter">
+                        <autolambda>
+                            <block s="reportURL">
+                                <block s="reportJoinWords">
+                                    <list>
+                                        <l>http://127.0.0.1:30061/hummingbird/out/playnote/</l>
+                                        <block var="note"/>
+                                        <l>/</l>
+                                        <block var="beats"/>
+                                    </list>
+                                </block>
+                            </block>
+                        </autolambda>
+                        <list></list>
+                    </block>
+                    <list></list>
+                </block>
+                <block s="doWait">
+                    <block s="reportQuotient">
+                        <block var="beats"/>
+                        <l>1000</l>
+                    </block>
+                    <comment w="205" collapsed="false">block for number of seconds</comment>
+                </block>
+            </script>
+        </block-definition>
+        <block-definition s="micro:bit Button %&apos;button&apos;" type="predicate" category="sensing">
+            <header></header>
+            <code></code>
+            <translations>ko:micro:bit 버튼 _&#xD;de:micro:bit Knopf _&#xD;pt:micro:bit Tecla _&#xD;fr:micro:bit Bouton _&#xD;nl:micro:bit Knop _&#xD;zh_CN:micro:bit 按钮 _&#xD;zh_TW:micro:bit 按鈕 _&#xD;ar:micro:bit زر _&#xD;dk:micro:bit Knap _&#xD;he:micro:bit לחצן _&#xD;es:micro:bit Pulsador _&#xD;ca:micro:bit Botó _&#xD;fi:micro:bit Painike _&#xD;sv:micro:bit Knapp _&#xD;</translations>
+            <inputs>
+                <input type="%txt" readonly="true">A<options>A&#xD;B&#xD;Logo (V2)</options></input>
+            </inputs>
+            <script>
+                <block s="doIf">
+                    <block s="reportEquals">
+                        <block var="button"/>
+                        <l>Logo (V2)</l>
+                    </block>
+                    <script>
+                        <block s="doSetVar">
+                            <l>button</l>
+                            <l>Logo</l>
+                        </block>
+                    </script>
+                </block>
+                <block s="doDeclareVariables">
+                <list>
+                  <l>result</l>
+                </list>
+              </block>
+              <block s="doSetVar">
+                <l>result</l>
+                <block s="reportURL">
+                  <block s="reportJoinWords">
+                    <list>
+                      <l>http://127.0.0.1:30061/hummingbird/in/button/</l><block var="button"/></list>
+                  </block>
+                </block>
+              </block>
+              <block s="doReport">
+                <block s="reportIfElse">
+                  <block s="reportEquals">
+                    <block var="result"/>
+                    <l>true</l>
+                  </block>
+                  <block s="reportBoolean">
+                    <l>
+                      <bool>true</bool>
+                    </l>
+                  </block>
+                  <block s="reportIfElse">
+                    <block s="reportEquals">
+                      <block var="result"/>
+                      <l>false</l>
+                    </block>
+                    <block s="reportBoolean">
+                      <l>
+                        <bool>false</bool>
+                      </l>
+                    </block>
+                    <block var="result"/>
+                  </block>
+                </block>
+              </block>
+            </script>
+        </block-definition>
+        <block-definition s="micro:bit V2 %&apos;sensor&apos;" type="reporter" category="sensing">
+                <header></header>
+                <code></code>
+                <translations></translations>
+                <inputs>
+                    <input type="%txt" readonly="true">Sound<options>Sound&#xD;Temperature (°C)</options></input>
+                </inputs>
+                <script>
+                    <block s="doIf">
+                        <block s="reportEquals">
+                            <block var="sensor"/>
+                            <l>Temperature (°C)</l>
+                        </block>
+                        <script>
+                            <block s="doSetVar">
+                                <l>sensor</l>
+                                <l>Temperature</l>
+                            </block>
+                        </script>
+                    </block>
+                    <block s="doReport">
+                        <block s="reportURL">
+                            <block s="reportJoinWords">
+                                <list>
+                                    <l>http://127.0.0.1:30061/hummingbird/in/V2sensor/</l>
+                                    <block var="sensor"/>
+                                </list>
+                            </block>
+                        </block>
+                    </block>
+                </script>
+        </block-definition>
+        <block-definition s="Finch %&apos;dim&apos;" type="predicate" category="sensing">
+            <header></header>
+            <code></code>
+            <translations></translations>
+            <inputs>
+                <input type="%txt" readonly="true">Beak Up<options>Beak Up&#xD;Beak Down&#xD;Tilt Left&#xD;Tilt Right&#xD;Level&#xD;Upside Down&#xD;Shake</options></input>
+            </inputs>
+            <script>
+                <block s="doIfElse">
+                    <block s="reportEquals">
+                        <block s="reportURL">
+                            <block s="reportJoinWords">
+                                <list>
+                                    <l>http://127.0.0.1:30061/hummingbird/in/finchOrientation/</l>
+                                    <block var="dim"/>
+                                </list>
+                            </block>
+                        </block>
+                        <l>true</l>
+                    </block>
+                    <script>
+                        <block s="doReport">
+                            <block s="reportBoolean">
+                                <l>
+                                    <bool>true</bool>
+                                </l>
+                            </block>
+                        </block>
+                    </script>
+                    <script>
+                        <block s="doReport">
+                            <block s="reportBoolean">
+                                <l>
+                                    <bool>false</bool>
+                                </l>
+                            </block>
+                        </block>
+                    </script>
+                </block>
+            </script>
+        </block-definition>
+        <block-definition s="Finch %&apos;device&apos; %&apos;dim&apos;" type="reporter" category="sensing">
+            <header></header>
+            <code></code>
+            <translations></translations>
+            <inputs>
+                <input type="%txt" readonly="true">Accelerometer (m/s²)<options>Accelerometer (m/s²)&#xD;Magnetometer (µT)</options></input>
+                <input type="%txt" readonly="true">X<options>X&#xD;Y&#xD;Z</options></input>
+            </inputs>
+            <script>
+                <block s="doIf">
+                    <block s="reportEquals">
+                        <block var="device"/>
+                        <l>Accelerometer (m/s²)</l>
+                    </block>
+                    <script>
+                        <block s="doSetVar">
+                            <l>device</l>
+                            <l>finchAccel</l>
+                        </block>
+                    </script>
+                </block>
+                <block s="doIf">
+                    <block s="reportEquals">
+                        <block var="device"/>
+                        <l>Magnetometer (µT)</l>
+                    </block>
+                    <script>
+                        <block s="doSetVar">
+                            <l>device</l>
+                            <l>finchMag</l>
+                        </block>
+                    </script>
+                </block>
+                <block s="doReport">
+                    <block s="reportURL">
+                        <block s="reportJoinWords">
+                            <list>
+                                <l>http://127.0.0.1:30061/hummingbird/in/</l>
+                                <block var="device"/>
+                                <l>/</l>
+                                <block var="dim"/>
+                            </list>
+                        </block>
+                    </block>
+                </block>
+            </script>
+        </block-definition>
+        <block-definition s="Finch Compass" type="reporter" category="sensing">
+            <header></header>
+            <code></code>
+            <translations>ko:Finch 나침반 센서&#xD;de:Finch Kompass&#xD;pt:Finch Bússola&#xD;fr:Finch Compas&#xD;nl:Finch Kompas&#xD;zh_CN:Finch 指南针&#xD;zh_TW:Finch 指南針&#xD;ar:Finch بوصلة&#xD;dk:Finch Kompas&#xD;he:Finch מצפן&#xD;es:Finch Brujula&#xD;ca:Finch Brúixola&#xD;fi:Finch Kompassi&#xD;sv:Finch Kompass&#xD;</translations>
+            <inputs></inputs>
+            <script>
+                <block s="doReport">
+                    <block s="reportURL">
+                        <block s="reportJoinWords">
+                            <list>
+                                <l>http://127.0.0.1:30061/hummingbird/in/</l>
+                                <l>finchCompass/static</l>
+                            </list>
+                        </block>
+                    </block>
+                </block>
+            </script>
+        </block-definition>
+        <block-definition s="stop all" type="command" category="control">
+            <header></header>
+            <code></code>
+            <translations>ko:모두 멈추기&#xD;de:stoppe alles&#xD;pt:pare todos&#xD;fr:stop tout&#xD;nl:stop alle&#xD;zh_CN:停止 全部&#xD;zh_TW:停止 全部&#xD;ar:توقف الكل&#xD;dk:stop alle&#xD;he:להפסיק הכל&#xD;es:detener todo&#xD;ca:atura tot&#xD;fi:pysäytä kaikki&#xD;sv:stop allt&#xD;</translations>
+            <inputs></inputs>
+            <script>
+                <block s="doReport">
+                    <block s="reportURL">
+                        <block s="reportJoinWords">
+                            <list>
+                                <l>http://127.0.0.1:30061/hummingbird/out/stopall</l>
+                            </list>
+                        </block>
+                    </block>
+                </block>
+            </script>
+        </block-definition>
+        <block-definition s="Finch Move %&apos;direction&apos; %&apos;distance&apos; cm at %&apos;speed&apos; %" type="command"
+                          category="motion">
+            <header></header>
+            <code></code>
+            <translations>ca:Finch Mou-te cap _ _ cm  a velocitat _ %&#xD;de:Finch Gehe _ _ cm mit _ %&#xD;es:Finch Mover hacia _ _ cm a velocidad _ %&#xD;fr:Finch Déplacer _ _ cm sur _ %&#xD;he:Finch זוז _ _ ס''מ ב _ %&#xD;ko:Finch _ _ cm 로 움직이기 빠르기 _ %&#xD;nl:Finch Beweeg _ _ cm op _ %&#xD;pt:Finch Mova _ _ cm  a _ %&#xD;zh_CN:Finch 移动 _ _ cm 以 _ %&#xD;zh_TW:Finch 移動  _ _ 厘米在 _ %&#xD;</translations>
+            <inputs>
+                <input type="%txt" readonly="true">Forward<options>Forward&#xD;Backward</options></input>
+                <input type="%n">10</input>
+                <input type="%n">50</input>
+            </inputs>
+            <script>
+                <block s="doIf">
+                    <block s="reportLessThan">
+                        <block var="distance"/>
+                        <l>-10000</l>
+                    </block>
+                    <script>
+                        <block s="doSetVar">
+                            <l>distance</l>
+                            <l>-10000</l>
+                        </block>
+                    </script>
+                </block>
+                <block s="doIf">
+                    <block s="reportGreaterThan">
+                        <block var="distance"/>
+                        <l>10000</l>
+                    </block>
+                    <script>
+                        <block s="doSetVar">
+                            <l>distance</l>
+                            <l>10000</l>
+                        </block>
+                    </script>
+                </block>
+                <block s="doIf">
+                    <block s="reportLessThan">
+                        <block var="speed"/>
+                        <l>0</l>
+                    </block>
+                    <script>
+                        <block s="doSetVar">
+                            <l>speed</l>
+                            <l>0</l>
+                        </block>
+                    </script>
+                </block>
+                <block s="doIf">
+                    <block s="reportGreaterThan">
+                        <block var="speed"/>
+                        <l>100</l>
+                    </block>
+                    <script>
+                        <block s="doSetVar">
+                            <l>speed</l>
+                            <l>100</l>
+                        </block>
+                    </script>
+                </block>
+                <block s="doDeclareVariables">
+                    <list><l>wasMoving</l><l>isMoving</l><l>commandSendTime</l></list>
+                </block>
+                <block s="doSetVar">
+                    <l>isMoving</l>
+                    <block s="reportURL">
+                        <l>http://127.0.0.1:30061/hummingbird/in/finchIsMoving/static/</l>
+                    </block>
+                </block>
+                <block s="doSetVar"><l>wasMoving</l><block var="isMoving"/></block>
+                <block s="doSetVar">
+                    <l>commandSendTime</l>
+                    <block s="reportDate">
+                        <l>
+                            <option>time in milliseconds</option>
+                        </l>
+                    </block>
+                </block>
+                <block s="doRun">
+                    <block s="reifyReporter">
+                        <autolambda>
+                            <block s="reportURL">
+                                <block s="reportJoinWords">
+                                    <list>
+                                        <l>http://127.0.0.1:30061/hummingbird/out/move/A/</l>
+                                        <block var="direction"/>
+                                        <l>/</l>
+                                        <block var="distance"/>
+                                        <l>/</l>
+                                        <block var="speed"/>
+                                    </list>
+                                </block>
+                            </block>
+                        </autolambda>
+                        <list></list>
+                    </block>
+                    <list></list>
+                </block>
+                <block s="doUntil">
+                    <block s="reportOr">
+                        <block s="reportAnd">
+                            <block s="reportOr">
+                                <block s="reportEquals"><block var="wasMoving"/><l>true</l></block>
+                                <block s="reportGreaterThan">
+                                    <block s="reportDate">
+                                        <l>
+                                            <option>time in milliseconds</option>
+                                        </l>
+                                    </block>
+                                    <block s="reportSum">
+                                        <block var="commandSendTime"/>
+                                        <l>500</l>
+                                    </block>
+                                </block>
+                            </block>
+                            <block s="reportEquals"><block var="isMoving"/><l>false</l></block>
+                        </block>
+                        <block s="reportEquals"><block var="isMoving"/><l>Not Connected</l></block>
+                    </block>
+                    <script>
+                        <block s="doSetVar"><l>wasMoving</l><block var="isMoving"/></block>
+                        <block s="doWait"><l>0.01</l></block>
+                        <block s="doSetVar">
+                            <l>isMoving</l>
+                            <block s="reportURL">
+                                <l>http://127.0.0.1:30061/hummingbird/in/finchIsMoving/static/</l>
+                            </block>
+                        </block>
+                    </script>
+                </block>
+                <custom-block s="Finch Stop"><comment w="170" collapsed="true">Compensate for firmware bug</comment></custom-block>
+                <block s="doWait"><l>0.1</l></block>
+            </script>
+        </block-definition>
+        <block-definition s="Finch Turn %&apos;direction&apos; %&apos;angle&apos; ° at %&apos;speed&apos; %" type="command"
+                          category="motion">
+            <header></header>
+            <code></code>
+            <translations>ca:Finch Gira cap a la _ _ ° a velocitat _ %&#xD;de:Finch Drehe _ _ ° mit _ %&#xD;es:Finch Girar hacia la _ _ ° a velocidad _ %&#xD;fr:Finch Tournez _ _ ° à _ %&#xD;he:Finch הסתובב _ _ מעלות ב _ %&#xD;ko:Finch _ _ ° 로 회전하기 빠르기 _ %&#xD;nl:Finch Draai _ _ ° op _ %&#xD;pt:Finch Gire _ _ ° a _ %&#xD;zh_CN:Finch 转动 _ _ ° 以 _ %&#xD;zh_TW:Finch 轉動 _ _ °在 _ %&#xD;</translations>
+            <inputs>
+                <input type="%txt" readonly="true">Right<options>Right&#xD;Left</options></input>
+                <input type="%n">90</input>
+                <input type="%n">50</input>
+            </inputs>
+            <script>
+                <block s="doIf">
+                    <block s="reportLessThan">
+                        <block var="angle"/>
+                        <l>-360000</l>
+                    </block>
+                    <script>
+                        <block s="doSetVar">
+                            <l>angle</l>
+                            <l>-360000</l>
+                        </block>
+                    </script>
+                </block>
+                <block s="doIf">
+                    <block s="reportGreaterThan">
+                        <block var="angle"/>
+                        <l>360000</l>
+                    </block>
+                    <script>
+                        <block s="doSetVar">
+                            <l>angle</l>
+                            <l>360000</l>
+                        </block>
+                    </script>
+                </block>
+                <block s="doIf">
+                    <block s="reportLessThan">
+                        <block var="speed"/>
+                        <l>0</l>
+                    </block>
+                    <script>
+                        <block s="doSetVar">
+                            <l>speed</l>
+                            <l>0</l>
+                        </block>
+                    </script>
+                </block>
+                <block s="doIf">
+                    <block s="reportGreaterThan">
+                        <block var="speed"/>
+                        <l>100</l>
+                    </block>
+                    <script>
+                        <block s="doSetVar">
+                            <l>speed</l>
+                            <l>100</l>
+                        </block>
+                    </script>
+                </block>
+                <block s="doDeclareVariables">
+                    <list><l>wasMoving</l><l>isMoving</l><l>commandSendTime</l></list>
+                </block>
+                <block s="doSetVar">
+                    <l>isMoving</l>
+                    <block s="reportURL">
+                        <l>http://127.0.0.1:30061/hummingbird/in/finchIsMoving/static/</l>
+                    </block>
+                </block>
+                <block s="doSetVar"><l>wasMoving</l><block var="isMoving"/></block>
+                <block s="doSetVar">
+                    <l>commandSendTime</l>
+                    <block s="reportDate">
+                        <l>
+                            <option>time in milliseconds</option>
+                        </l>
+                    </block>
+                </block>
+                <block s="doRun">
+                    <block s="reifyReporter">
+                        <autolambda>
+                            <block s="reportURL">
+                                <block s="reportJoinWords">
+                                    <list>
+                                        <l>http://127.0.0.1:30061/hummingbird/out/turn/A/</l>
+                                        <block var="direction"/>
+                                        <l>/</l>
+                                        <block var="angle"/>
+                                        <l>/</l>
+                                        <block var="speed"/>
+                                    </list>
+                                </block>
+                            </block>
+                        </autolambda>
+                        <list></list>
+                    </block>
+                    <list></list>
+                </block>
+                <block s="doUntil">
+                    <block s="reportOr">
+                        <block s="reportAnd">
+                            <block s="reportOr">
+                                <block s="reportEquals"><block var="wasMoving"/><l>true</l></block>
+                                <block s="reportGreaterThan">
+                                    <block s="reportDate">
+                                        <l>
+                                            <option>time in milliseconds</option>
+                                        </l>
+                                    </block>
+                                    <block s="reportSum">
+                                        <block var="commandSendTime"/>
+                                        <l>500</l>
+                                    </block>
+                                </block>
+                            </block>
+                            <block s="reportEquals"><block var="isMoving"/><l>false</l></block>
+                        </block>
+                        <block s="reportEquals"><block var="isMoving"/><l>Not Connected</l></block>
+                    </block>
+                    <script>
+                        <block s="doSetVar"><l>wasMoving</l><block var="isMoving"/></block>
+                        <block s="doWait"><l>0.01</l></block>
+                        <block s="doSetVar">
+                            <l>isMoving</l>
+                            <block s="reportURL">
+                                <l>http://127.0.0.1:30061/hummingbird/in/finchIsMoving/static/</l>
+                            </block>
+                        </block>
+                    </script>
+                </block>
+                <custom-block s="Finch Stop"><comment w="170" collapsed="true">Compensate for firmware bug</comment></custom-block>
+                <block s="doWait"><l>0.1</l></block>
+            </script>
+        </block-definition>
+        <block-definition s="Finch Wheels L %&apos;left&apos; % R %&apos;right&apos; %" type="command" category="motion">
+            <header></header>
+            <code></code>
+            <translations>ca:Finch Posa les rodes a velocitat E _ % D _ %&#xD;de:Finch Räder L _ % R _ %&#xD;es:Finch Poner las ruedas a velocidad I _ % D _ %&#xD;fr:Finch Roues L _ % R _ %&#xD;he:Finch גלגלים שמאל _ % ימין _ %&#xD;ko:Finch 바퀴 왼쪽 _ % 오른쪽 _ %&#xD;nl:Finch Wielen L _ % R _ %&#xD;pt:Finch Rodas E _ % D _ %&#xD;zh_CN:Finch 左轮 _ % 右轮 _ %&#xD;zh_TW:Finch 車輪  左 _ % 右 _ %&#xD;</translations>
+            <inputs>
+                <input type="%n">0</input>
+                <input type="%n">0</input>
+            </inputs>
+            <script>
+                <block s="doIf">
+                    <block s="reportLessThan">
+                        <block var="left"/>
+                        <l>-100</l>
+                    </block>
+                    <script>
+                        <block s="doSetVar">
+                            <l>left</l>
+                            <l>-100</l>
+                        </block>
+                    </script>
+                </block>
+                <block s="doIf">
+                    <block s="reportGreaterThan">
+                        <block var="left"/>
+                        <l>100</l>
+                    </block>
+                    <script>
+                        <block s="doSetVar">
+                            <l>left</l>
+                            <l>100</l>
+                        </block>
+                    </script>
+                </block>
+                <block s="doIf">
+                    <block s="reportLessThan">
+                        <block var="right"/>
+                        <l>-100</l>
+                    </block>
+                    <script>
+                        <block s="doSetVar">
+                            <l>right</l>
+                            <l>-100</l>
+                        </block>
+                    </script>
+                </block>
+                <block s="doIf">
+                    <block s="reportGreaterThan">
+                        <block var="right"/>
+                        <l>100</l>
+                    </block>
+                    <script>
+                        <block s="doSetVar">
+                            <l>right</l>
+                            <l>100</l>
+                        </block>
+                    </script>
+                </block>
+                <block s="doDeclareVariables">
+                  <list>
+                    <l>response</l>
+                  </list>
+                  <comment w="228" collapsed="true">Storing the url response in a variable forces the block to wait for a response before returning.</comment>
+                </block>
+                <block s="doSetVar">
+                    <l>response</l>
+                    <block s="reportURL">
+                        <block s="reportJoinWords">
+                            <list>
+                                <l>http://127.0.0.1:30061/hummingbird/out/wheels/A/</l>
+                                <block var="left"/>
+                                <l>/</l>
+                                <block var="right"/>
+                            </list>
+                        </block>
+                    </block>
+                </block>
+            </script>
+        </block-definition>
+        <block-definition s="Finch Stop" type="command" category="motion">
+            <header></header>
+            <code></code>
+            <translations>ca:Finch Atura&#xD;de:Finch Stoppe&#xD;es:Finch Detener&#xD;fr:Finch Stop&#xD;he:Finch להפסיק&#xD;ko:Finch 멈추기&#xD;nl:Finch Stop&#xD;pt:Finch Pare&#xD;zh_CN:Finch 停止&#xD;zh_TW:Finch 停止&#xD;</translations>
+            <inputs></inputs>
+            <script>
+                <block s="doDeclareVariables">
+                  <list>
+                    <l>response</l>
+                  </list>
+                  <comment w="228" collapsed="true">Storing the url response in a variable forces the block to wait for a response before returning.</comment>
+                </block>
+                <block s="doSetVar">
+                    <l>response</l>
+                    <block s="reportURL">
+                        <block s="reportJoinWords">
+                            <list>
+                                <l>http://127.0.0.1:30061/hummingbird/out/stopFinch/A/</l>
+                            </list>
+                        </block>
+                    </block>
+                </block>
+            </script>
+        </block-definition>
+        <block-definition s="Finch Beak R %&apos;redLED&apos; % G %&apos;greenLED&apos; % B %&apos;blueLED&apos; %"
+                type="command" category="looks">
+            <header></header>
+            <code></code>
+            <translations>ca:Finch Encén el bec de color R _ % G _ % B _ %&#xD;de:Finch Schnabel R _ % G _ % B _ %&#xD;es:Finch Encender el pico de color R _ % V _ % A _ %&#xD;fr:Finch Bec R _ % G _ % B _ %&#xD;he:Finch מקור אדום _ % ירוק _ % כחול _ %&#xD;ko:Finch 부리 빨강 _ % 초록 _ % 파랑 _ %&#xD;nl:Finch Bek R _ % G _ % B _ %&#xD;pt:Finch Bico R _ % G _ % B _ %&#xD;zh_CN:Finch 鸟喙 R _ % G _ % B _ %&#xD;zh_TW:Finch 鳥嘴 紅 _ % 綠 _ % 藍 _ %&#xD;</translations>
+            <inputs>
+                <input type="%n">0</input>
+                <input type="%n">0</input>
+                <input type="%n">0</input>
+            </inputs>
+            <script>
+                <block s="doIf">
+                    <block s="reportLessThan">
+                        <block var="redLED"/>
+                        <l>0</l>
+                    </block>
+                    <script>
+                        <block s="doSetVar">
+                            <l>redLED</l>
+                            <l>0</l>
+                        </block>
+                    </script>
+                </block>
+                <block s="doIf">
+                    <block s="reportGreaterThan">
+                        <block var="redLED"/>
+                        <l>100</l>
+                    </block>
+                    <script>
+                        <block s="doSetVar">
+                            <l>redLED</l>
+                            <l>100</l>
+                        </block>
+                    </script>
+                </block>
+                <block s="doIf">
+                    <block s="reportLessThan">
+                        <block var="greenLED"/>
+                        <l>0</l>
+                    </block>
+                    <script>
+                        <block s="doSetVar">
+                            <l>greenLED</l>
+                            <l>0</l>
+                        </block>
+                    </script>
+                </block>
+                <block s="doIf">
+                    <block s="reportGreaterThan">
+                        <block var="greenLED"/>
+                        <l>100</l>
+                    </block>
+                    <script>
+                        <block s="doSetVar">
+                            <l>greenLED</l>
+                            <l>100</l>
+                        </block>
+                    </script>
+                </block>
+                <block s="doIf">
+                    <block s="reportLessThan">
+                        <block var="blueLED"/>
+                        <l>0</l>
+                    </block>
+                    <script>
+                        <block s="doSetVar">
+                            <l>blueLED</l>
+                            <l>0</l>
+                        </block>
+                    </script>
+                </block>
+                <block s="doIf">
+                    <block s="reportGreaterThan">
+                        <block var="blueLED"/>
+                        <l>100</l>
+                    </block>
+                    <script>
+                        <block s="doSetVar">
+                            <l>blueLED</l>
+                            <l>100</l>
+                        </block>
+                    </script>
+                </block>
+                <block s="doSetVar">
+                    <l>redLED</l>
+                    <block s="reportRound">
+                        <block s="reportProduct">
+                            <block var="redLED"/>
+                            <l>2.55</l>
+                            <comment w="90" collapsed="false">Scale factor 255/100</comment>
+                        </block>
+                    </block>
+                </block>
+                <block s="doSetVar">
+                    <l>blueLED</l>
+                    <block s="reportRound">
+                        <block s="reportProduct">
+                            <block var="blueLED"/>
+                            <l>2.55</l>
+                            <comment w="90" collapsed="false">Scale factor 255/100</comment>
+                        </block>
+                    </block>
+                </block>
+                <block s="doSetVar">
+                    <l>greenLED</l>
+                    <block s="reportRound">
+                        <block s="reportProduct">
+                            <block var="greenLED"/>
+                            <l>2.55</l>
+                            <comment w="90" collapsed="false">Scale factor 255/100</comment>
+                        </block>
+                    </block>
+                </block>
+                <block s="doDeclareVariables">
+                  <list>
+                    <l>response</l>
+                  </list>
+                  <comment w="228" collapsed="true">Storing the url response in a variable forces the block to wait for a response before returning.</comment>
+                </block>
+                <block s="doSetVar">
+                    <l>response</l>
+                    <block s="reportURL">
+                        <block s="reportJoinWords">
+                            <list>
+                                <l>http://127.0.0.1:30061/hummingbird/out/triled/1/</l>
+                                <block var="redLED"/>
+                                <l>/</l>
+                                <block var="greenLED"/>
+                                <l>/</l>
+                                <block var="blueLED"/>
+                            </list>
+                        </block>
+                    </block>
+                </block>
+            </script>
+        </block-definition>
+        <block-definition s="Finch Tail %&apos;port&apos; R %&apos;redLED&apos; % G %&apos;greenLED&apos; % B %&apos;blueLED&apos; %"
+                type="command" category="looks">
+            <header></header>
+            <code></code>
+            <translations>ca:Finch Encén la cua de color _ R _ % G _ % B _ %&#xD;de:Finch Schwanz _ R _ % G _ % B _ %&#xD;es:Finch Encender la cola de color _ R _ % V _ % A _ %&#xD;fr:Finch Queue _ R _ % G _ % B _ %&#xD;he:Finch זנב _ אדום _ % ירוק _ % כחול _ %&#xD;ko:Finch 꼬리 _ 빨강 _ % 초록 _ % 파랑 _ %&#xD;nl:Finch Staart _ R _ % G _ % B _ %&#xD;pt:Finch Cauda _ R _ % G _ % B _ %&#xD;zh_CN:Finch 鸟尾 _ R _ % G _ % B _ %&#xD;zh_TW:Finch 尾巴 _ 紅 _ % 綠 _ % 藍 _ %&#xD;</translations>
+            <inputs>
+                <input type="%txt" readonly="true">all<options>all&#xD;1&#xD;2&#xD;3&#xD;4</options></input>
+                <input type="%n">0</input>
+                <input type="%n">0</input>
+                <input type="%n">0</input>
+            </inputs>
+            <script>
+                <block s="doIf">
+                    <block s="reportNot">
+                            <block s="reportEquals">
+                                <block var="port"/>
+                                <l>all</l>
+                            </block>
+                    </block>
+                    <script>
+                        <block s="doSetVar">
+                            <l>port</l>
+                            <block s="reportSum">
+                                <block var="port"/>
+                                <l>1</l>
+                            </block>
+                        </block>
+                    </script>
+                </block>
+                <block s="doIf">
+                    <block s="reportLessThan">
+                        <block var="redLED"/>
+                        <l>0</l>
+                    </block>
+                    <script>
+                        <block s="doSetVar">
+                            <l>redLED</l>
+                            <l>0</l>
+                        </block>
+                    </script>
+                </block>
+                <block s="doIf">
+                    <block s="reportGreaterThan">
+                        <block var="redLED"/>
+                        <l>100</l>
+                    </block>
+                    <script>
+                        <block s="doSetVar">
+                            <l>redLED</l>
+                            <l>100</l>
+                        </block>
+                    </script>
+                </block>
+                <block s="doIf">
+                    <block s="reportLessThan">
+                        <block var="greenLED"/>
+                        <l>0</l>
+                    </block>
+                    <script>
+                        <block s="doSetVar">
+                            <l>greenLED</l>
+                            <l>0</l>
+                        </block>
+                    </script>
+                </block>
+                <block s="doIf">
+                    <block s="reportGreaterThan">
+                        <block var="greenLED"/>
+                        <l>100</l>
+                    </block>
+                    <script>
+                        <block s="doSetVar">
+                            <l>greenLED</l>
+                            <l>100</l>
+                        </block>
+                    </script>
+                </block>
+                <block s="doIf">
+                    <block s="reportLessThan">
+                        <block var="blueLED"/>
+                        <l>0</l>
+                    </block>
+                    <script>
+                        <block s="doSetVar">
+                            <l>blueLED</l>
+                            <l>0</l>
+                        </block>
+                    </script>
+                </block>
+                <block s="doIf">
+                    <block s="reportGreaterThan">
+                        <block var="blueLED"/>
+                        <l>100</l>
+                    </block>
+                    <script>
+                        <block s="doSetVar">
+                            <l>blueLED</l>
+                            <l>100</l>
+                        </block>
+                    </script>
+                </block>
+                <block s="doSetVar">
+                    <l>redLED</l>
+                    <block s="reportRound">
+                        <block s="reportProduct">
+                            <block var="redLED"/>
+                            <l>2.55</l>
+                            <comment w="90" collapsed="false">Scale factor 255/100</comment>
+                        </block>
+                    </block>
+                </block>
+                <block s="doSetVar">
+                    <l>blueLED</l>
+                    <block s="reportRound">
+                        <block s="reportProduct">
+                            <block var="blueLED"/>
+                            <l>2.55</l>
+                            <comment w="90" collapsed="false">Scale factor 255/100</comment>
+                        </block>
+                    </block>
+                </block>
+                <block s="doSetVar">
+                    <l>greenLED</l>
+                    <block s="reportRound">
+                        <block s="reportProduct">
+                            <block var="greenLED"/>
+                            <l>2.55</l>
+                            <comment w="90" collapsed="false">Scale factor 255/100</comment>
+                        </block>
+                    </block>
+                </block>
+                <block s="doDeclareVariables">
+                  <list>
+                    <l>response</l>
+                  </list>
+                  <comment w="228" collapsed="true">Storing the url response in a variable forces the block to wait for a response before returning.</comment>
+                </block>
+                <block s="doSetVar">
+                    <l>response</l>
+                    <block s="reportURL">
+                        <block s="reportJoinWords">
+                            <list>
+                                <l>http://127.0.0.1:30061/hummingbird/out/triled/</l>
+                                <block var="port"/>
+                                <l>/</l>
+                                <block var="redLED"/>
+                                <l>/</l>
+                                <block var="greenLED"/>
+                                <l>/</l>
+                                <block var="blueLED"/>
+                            </list>
+                        </block>
+                    </block>
+                </block>
+            </script>
+        </block-definition>
+        <block-definition s="micro:bit Print %&apos;string&apos;" type="command" category="looks">
+            <header></header>
+            <code></code>
+            <translations>ko:micro:bit 출력 _&#xD;de:micro:bit Drucke _&#xD;pt:micro:bit Imprimir _&#xD;fr:micro:bit Imprimer _&#xD;nl:micro:bit Schrijf _&#xD;zh_CN:micro:bit 打印 _&#xD;zh_TW:micro:bit 打印 _&#xD;ar:micro:bit طباعة _&#xD;dk:micro:bit Vis _&#xD;he:micro:bit הדפס _&#xD;es:micro:bit Imprimir _&#xD;ca:micro:bit Escriu _&#xD;fi:micro:bit Näytä teksti _&#xD;sv:micro:bit Visa text _&#xD;</translations>
+            <inputs>
+                <input type="%txt">Hello</input>
+            </inputs>
+            <script>
+                <block s="doRun">
+                    <block s="reifyReporter">
+                        <autolambda>
+                            <block s="reportURL">
+                                <block s="reportJoinWords">
+                                    <list>
+                                        <l>http://127.0.0.1:30061/hummingbird/out/print/</l>
+                                        <block var="string"/>
+                                    </list>
+                                </block>
+                            </block>
+                        </autolambda>
+                        <list></list>
+                    </block>
+                </block>
+                <block s="doWait">
+                    <block s="reportProduct">
+                        <block s="reportStringSize">
+                            <block var="string"/>
+                        </block>
+                        <l>0.6</l>
+                    </block>
+                </block>
+            </script>
+        </block-definition>
+        <block-definition
+                s="micro:bit Display $nl %&apos;11&apos; %&apos;12&apos; %&apos;13&apos; %&apos;14&apos; %&apos;15&apos; $nl %&apos;21&apos; %&apos;22&apos; %&apos;23&apos; %&apos;24&apos; %&apos;25&apos; $nl %&apos;31&apos; %&apos;32&apos; %&apos;33&apos; %&apos;34&apos; %&apos;35&apos; $nl %&apos;41&apos; %&apos;42&apos; %&apos;43&apos; %&apos;44&apos; %&apos;45&apos; $nl %&apos;51&apos; %&apos;52&apos; %&apos;53&apos; %&apos;54&apos; %&apos;55&apos;"
+                type="command" category="looks">
+            <header></header>
+            <code></code>
+            <translations>ko:micro:bit 보이기 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _&#xD;de:micro:bit LED Anzeige _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _&#xD;pt:micro:bit Visor _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _&#xD;fr:micro:bit Display _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _&#xD;nl:micro:bit Scherm _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _&#xD;zh_CN:micro:bit 显示 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _&#xD;zh_TW:micro:bit 顯示 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _&#xD;ar:micro:bit عرض _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _&#xD;dk:micro:bit Display _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _&#xD;he:micro:bit מסך _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _&#xD;es:micro:bit Monitor _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _&#xD;ca:micro:bit Pantalla _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _&#xD;fi:micro:bit Näytä _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _&#xD;sv:micro:bit Skärm _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _&#xD;</translations>
+            <inputs>
+                <input type="%b">false</input>
+                <input type="%b">false</input>
+                <input type="%b">false</input>
+                <input type="%b">false</input>
+                <input type="%b">false</input>
+                <input type="%b">false</input>
+                <input type="%b">false</input>
+                <input type="%b">false</input>
+                <input type="%b">false</input>
+                <input type="%b">false</input>
+                <input type="%b">false</input>
+                <input type="%b">false</input>
+                <input type="%b">false</input>
+                <input type="%b">false</input>
+                <input type="%b">false</input>
+                <input type="%b">false</input>
+                <input type="%b">false</input>
+                <input type="%b">false</input>
+                <input type="%b">false</input>
+                <input type="%b">false</input>
+                <input type="%b">false</input>
+                <input type="%b">false</input>
+                <input type="%b">false</input>
+                <input type="%b">false</input>
+                <input type="%b">false</input>
+            </inputs>
+            <script>
+              <block s="doDeclareVariables">
+                <list>
+                  <l>response</l>
+                </list>
+                <comment w="228" collapsed="true">Storing the url response in a variable forces the block to wait for a response before returning.</comment>
+              </block>
+              <block s="doSetVar">
+                  <l>response</l>
+                  <block s="reportURL">
+                      <block s="reportJoinWords">
+                          <list>
+                              <l>http://127.0.0.1:30061/hummingbird/out/symbol/A/</l>
+                              <block var="11"/>
+                              <l>/</l>
+                              <block var="12"/>
+                              <l>/</l>
+                              <block var="13"/>
+                              <l>/</l>
+                              <block var="14"/>
+                              <l>/</l>
+                              <block var="15"/>
+                              <l>/</l>
+                              <block var="21"/>
+                              <l>/</l>
+                              <block var="22"/>
+                              <l>/</l>
+                              <block var="23"/>
+                              <l>/</l>
+                              <block var="24"/>
+                              <l>/</l>
+                              <block var="25"/>
+                              <l>/</l>
+                              <block var="31"/>
+                              <l>/</l>
+                              <block var="32"/>
+                              <l>/</l>
+                              <block var="33"/>
+                              <l>/</l>
+                              <block var="34"/>
+                              <l>/</l>
+                              <block var="35"/>
+                              <l>/</l>
+                              <block var="41"/>
+                              <l>/</l>
+                              <block var="42"/>
+                              <l>/</l>
+                              <block var="43"/>
+                              <l>/</l>
+                              <block var="44"/>
+                              <l>/</l>
+                              <block var="45"/>
+                              <l>/</l>
+                              <block var="51"/>
+                              <l>/</l>
+                              <block var="52"/>
+                              <l>/</l>
+                              <block var="53"/>
+                              <l>/</l>
+                              <block var="54"/>
+                              <l>/</l>
+                              <block var="55"/>
+                          </list>
+                      </block>
+                  </block>
+              </block>
+            </script>
+        </block-definition>
+    </blocks>
+    <variables></variables>
+</project>

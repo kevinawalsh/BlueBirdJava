@@ -1,5 +1,6 @@
 *.DS_Store
 temp/
+BlueBirdConnector/target/*
 
 # Compiled class file
 *.class
