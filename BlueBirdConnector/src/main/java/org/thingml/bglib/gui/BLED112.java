@@ -15,7 +15,8 @@
  */
 package org.thingml.bglib.gui;
 
-import gnu.io.*;
+//import gnu.io.*;
+import com.fazecast.jSerialComm.SerialPort;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -38,7 +39,7 @@ public class BLED112 {
     /**
      * @return    A HashSet containing the CommPortIdentifier for all serial ports that are not currently being used.
      */
-    public static HashSet<CommPortIdentifier> getAvailableSerialPorts() {
+    /*public static HashSet<CommPortIdentifier> getAvailableSerialPorts() {
         HashSet<CommPortIdentifier> h = new HashSet<CommPortIdentifier>();
         Enumeration thePorts = CommPortIdentifier.getPortIdentifiers();
         while (thePorts.hasMoreElements()) {
@@ -58,7 +59,7 @@ public class BLED112 {
             }
         }
         return h;
-    }
+    }*/
 
     public static void registerPort(String port) {
         
@@ -83,9 +84,27 @@ public class BLED112 {
         System.out.println("javax.comm.rxtx.SerialPorts = " + prop);
     }
 
-    public static String selectSerialPort() {
+    //public static String selectSerialPort() {
+    public static SerialPort selectSerialPort() {
 
-        ArrayList<String> possibilities = new ArrayList<String>();
+        SerialPort[] commPorts = SerialPort.getCommPorts();
+
+        String osName = System.getProperty("os.name");
+        if (osName.contains("Win")) {
+            for (int i = 0; i < commPorts.length; i++) {
+                if (commPorts[i].getDescriptivePortName().contains("Bluegiga")) {
+                    System.out.println("Port found: " + commPorts[i].getDescriptivePortName());
+                    //return commPorts[i].getSystemPortName();
+                    return commPorts[i];
+                }
+            }
+        } else {
+            System.out.println("ERROR: NON Windows comm ports not implemented!");
+        }
+
+        return null;
+
+        /*ArrayList<String> possibilities = new ArrayList<String>();
         //possibilities.add("Emulator");
         for (CommPortIdentifier commportidentifier : getAvailableSerialPorts()) {
             possibilities.add(commportidentifier.getName());
@@ -103,36 +122,41 @@ public class BLED112 {
                JOptionPane.PLAIN_MESSAGE,
                null,
                possibilities.toArray(),
-               possibilities.toArray()[startPosition]);
+               possibilities.toArray()[startPosition]);*/
         
     }
     
-    public static BGAPITransport connectBLED112(String portName) {
-        SerialPort port = connectSerial(portName);
-        try {
-            return new BGAPITransport(port.getInputStream(), port.getOutputStream());
-        } catch (IOException ex) {
-            Logger.getLogger(BLED112.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        return null;
-    }
+//    public static BGAPITransport connectBLED112(String portName) {
+//        SerialPort port = connectSerial(portName);
+//        //try {
+//        if (port != null)
+//            return new BGAPITransport(port.getInputStream(), port.getOutputStream());
+//        /*} catch (IOException ex) {
+//            Logger.getLogger(BLED112.class.getName()).log(Level.SEVERE, null, ex);
+//        }*/
+//        return null;
+//    }
     
-    public static SerialPort connectSerial(String portName) {
+    //public static SerialPort connectSerial(String portName) {
+    public static SerialPort connectSerial(SerialPort port) {
     	try {
     		
     		//String portName = selectSerialPort();
     		
-            CommPortIdentifier portIdentifier = CommPortIdentifier.getPortIdentifier(portName);
-            
-            if (portIdentifier.isCurrentlyOwned()) {
+            //CommPortIdentifier portIdentifier = CommPortIdentifier.getPortIdentifier(portName);
+            //SerialPort port = SerialPort.getCommPort(portName);
+            System.out.println("Connecting to " + port.getDescriptivePortName());
+
+            /*if (portIdentifier.isCurrentlyOwned()) {
                 System.err.println("Error: Port " + portName + " is currently in use");
             } 
-            else {
-                CommPort commPort = portIdentifier.open("BLED112", 2000);
+            else {*/
+                //CommPort commPort = portIdentifier.open("BLED112", 2000);
+                port.openPort(2000);
                 
-                System.out.println("port = " + commPort);
+                //System.out.println("port = " + commPort);
 
-                if (commPort instanceof SerialPort) {
+                /*if (commPort instanceof SerialPort) {
                     SerialPort serialPort = (SerialPort) commPort;
                     serialPort.setSerialPortParams(115200, SerialPort.DATABITS_8, SerialPort.STOPBITS_1, SerialPort.PARITY_NONE);
                     
@@ -146,8 +170,12 @@ public class BLED112 {
 
                 } else {
                     System.err.println("Error: Port " + portName + " is not a valid serial port.");
-                }
-            }
+                }*/
+                port.setComPortParameters(115200, 8, SerialPort.ONE_STOP_BIT, SerialPort.NO_PARITY);
+                port.setFlowControl(SerialPort.FLOW_CONTROL_RTS_ENABLED | SerialPort.FLOW_CONTROL_CTS_ENABLED);
+                port.setRTS();
+                return port;
+            //}
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -158,7 +186,7 @@ public class BLED112 {
         System.out.println("Init RXTX.");
     }
 
-  static {
+  /*static {
       
       try {
             // This is a very dirty hack to try and set the java.library.path dynamically.
@@ -207,5 +235,5 @@ public class BLED112 {
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
+    }*/
 }

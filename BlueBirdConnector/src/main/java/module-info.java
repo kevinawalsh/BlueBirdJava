@@ -8,6 +8,8 @@ module BlueBirdConnector {
     requires org.eclipse.jetty.servlet;
     requires org.eclipse.jetty.servlets;
     requires java.desktop;
+    requires com.fazecast.jSerialComm;
+    requires java.logging;
 
     exports com.birdbraintechnologies.bluebirdconnector;
 }

@@ -22,4 +22,5 @@ package org.thingml.bglib;
 public interface BGAPITransportListener {
     void packetSent(BGAPIPacket packet);
     void packetReceived(BGAPIPacket packet);
+    void serialError();
 }

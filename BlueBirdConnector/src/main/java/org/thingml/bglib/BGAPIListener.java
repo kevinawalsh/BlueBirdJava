@@ -19,7 +19,8 @@ package org.thingml.bglib;
  */
 public interface BGAPIListener {
 
-    
+    //Transport disconnection
+	void serialError();
 	// Callbacks for class system (index = 0)
 	void receive_system_reset();
 	void receive_system_hello();

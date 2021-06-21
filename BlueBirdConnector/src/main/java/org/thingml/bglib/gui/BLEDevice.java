@@ -31,6 +31,9 @@ public class BLEDevice {
     protected String address;
     protected String name;
     protected int rssi;
+    protected int microbitVersion;
+    protected int rxHandle; //notifications characteristic
+    protected int txHandle; //write characteristic
     
     protected Hashtable<String, BLEService> services = new Hashtable<String, BLEService>();
 
@@ -49,6 +52,7 @@ public class BLEDevice {
     public BLEDevice(String address) {
         this.address = address;
         name = "";
+        microbitVersion = 0;
     }
 
     public String getAddress() {
@@ -63,6 +67,12 @@ public class BLEDevice {
         return rssi;
     }
 
+    public int getMicrobitVersion() { return microbitVersion; }
+
+    public int getRxHandle() { return rxHandle; }
+
+    public int getTxHandle() { return txHandle; }
+
     public void setName(String name) {
         this.name = name;
     }
@@ -70,7 +80,13 @@ public class BLEDevice {
     public void setRssi(int rssi) {
         this.rssi = rssi;
     }
+
+    public void setMicrobitVersion(int version) { this.microbitVersion = version; }
     
+    public void setRxHandle(int handle) { this.rxHandle = handle; }
+
+    public void setTxHandle(int handle) { this.txHandle = handle; }
+
     public String toString() {
         return name + " [" + address + "] (" + rssi + " dBm)";
     }

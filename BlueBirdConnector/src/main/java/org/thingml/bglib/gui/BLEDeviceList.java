@@ -50,6 +50,10 @@ public class BLEDeviceList extends AbstractListModel  {
         devices.add(d);
         fireIntervalAdded(this, 0, devices.size()-1);
     }
+
+    public boolean contains(BLEDevice d) {
+        return devices.contains(d);
+    }
     
     public void changed(BLEDevice d) {
         if (devices.isEmpty()) return;
@@ -59,6 +63,13 @@ public class BLEDeviceList extends AbstractListModel  {
     public BLEDevice getFromAddress(String address) {
         for (BLEDevice d : devices) {
             if (d.address.equals(address)) return d;
+        }
+        return null;
+    }
+
+    public BLEDevice getFromName(String name) {
+        for (BLEDevice d : devices) {
+            if (d.name.equals(name)) return d;
         }
         return null;
     }

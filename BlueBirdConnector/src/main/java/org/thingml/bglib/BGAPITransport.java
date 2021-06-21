@@ -56,6 +56,7 @@ public class BGAPITransport implements Runnable {
         this.in = in;
         this.out = out;
         rxthread = new Thread(this);
+        System.out.println("On thread " + Thread.currentThread().getName());
         rxthread.start();
     }
     
@@ -95,7 +96,8 @@ public class BGAPITransport implements Runnable {
         
 
         try {
-            //System.out.println("Receiver Thread Started.");
+            System.out.println("Receiver Thread Started.");
+            System.out.println("On thread " + Thread.currentThread().getName());
             while (!terminate && ((len = this.in.read(buffer)) > -1)) {
                 receivedBytes += len;
                 
@@ -144,6 +146,10 @@ public class BGAPITransport implements Runnable {
             }
         } catch (IOException e) {
             e.printStackTrace();
+        }
+        Iterator iter = listeners.iterator();
+        while(iter.hasNext()) {
+            ((BGAPITransportListener)(iter.next())).serialError();
         }
         try {
             in.close();

@@ -52,6 +52,10 @@ public class BGAPI implements BGAPITransportListener {
         //System.out.println("done");
     }
 
+    public void serialError() {
+
+	}
+
     public void packetSent(BGAPIPacket packet) {}
 
     // General packet handler

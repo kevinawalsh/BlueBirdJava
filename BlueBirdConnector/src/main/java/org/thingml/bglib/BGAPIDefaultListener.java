@@ -19,7 +19,8 @@ package org.thingml.bglib;
  */
 public class BGAPIDefaultListener implements BGAPIListener {
 
-    
+	public void serialError() {}
+
 	// Callbacks for class system (index = 0)
 	public void receive_system_reset() {}
 	public void receive_system_hello() {}
@@ -92,8 +93,8 @@ public class BGAPIDefaultListener implements BGAPIListener {
 	public void receive_attclient_attribute_found(int connection, int chrdecl, int value, int properties, byte[] uuid) {}
 	public void receive_attclient_find_information_found(int connection, int chrhandle, byte[] uuid) {}
 	public void receive_attclient_attribute_value(int connection, int atthandle, int type, byte[] value) {
-        
-            
+
+
         }
 	public void receive_attclient_read_multiple_response(int connection, byte[] handles) {}
 
@@ -151,5 +152,5 @@ public class BGAPIDefaultListener implements BGAPIListener {
 	public void receive_test_phy_reset() {}
 	public void receive_test_get_channel_map(byte[] channel_map) {}
 
-    
+
 }

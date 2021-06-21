@@ -18,7 +18,19 @@ public final class Utilities {
         result.append("]");
         return result.toString();
     }
-
+    public static String bytesToUUIDString(byte[] bytes) {
+        StringBuffer result = new StringBuffer();
+        for(byte b : bytes) result.append( Integer.toHexString(b & 0xFF));
+        return result.toString();
+    }
+    public static byte[] concatBytes(byte[] a, byte[] b) {
+        int aLen = a.length;
+        int bLen = b.length;
+        byte[] c= new byte[aLen+bLen];
+        System.arraycopy(a, 0, c, 0, aLen);
+        System.arraycopy(b, 0, c, aLen, bLen);
+        return c;
+    }
     // Generic function to get sub-array of a non-primitive array
     // between specified indices
     public static char[] subArray(char [] array, int beg, int end) {

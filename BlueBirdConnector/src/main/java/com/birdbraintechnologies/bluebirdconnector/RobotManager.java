@@ -33,7 +33,18 @@ public class RobotManager {
         }
         //TODO: Find best communications option...
 
-        robotCommunicator = new WinBLE(this);
+        robotCommunicator = new DongleBLE(this);
+        if (!robotCommunicator.isRunning()) {
+            robotCommunicator.kill();
+            robotCommunicator = new WinBLE(this);
+        }
+
+    }
+    public void updateCommunicatorStatus(boolean connected) {
+        if (!connected) {
+            robotCommunicator = null;
+            setUpRobotCommunicator();
+        }
     }
 
     public static RobotManager getSharedInstance(){

@@ -63,6 +63,28 @@
             <version>1.7.29</version>
         </dependency>
 
+
+        <!-- https://fazecast.github.io/jSerialComm/ -->
+        <dependency>
+            <groupId>com.fazecast</groupId>
+            <artifactId>jSerialComm</artifactId>
+            <version>[2.0.0,3.0.0)</version>
+        </dependency>
+
+        <!-- Another possibility for serial ports
+        <dependency>
+            <groupId>javax.comm</groupId>
+            <artifactId>comm</artifactId>
+            <version>3.0-u1</version>
+            <scope>system</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.kevoree.extra</groupId>
+            <artifactId>org.kevoree.extra.osgi.rxtx</artifactId>
+            <version>2.2.0</version>
+        </dependency>-->
+
     </dependencies>
     <build>
         <resources>

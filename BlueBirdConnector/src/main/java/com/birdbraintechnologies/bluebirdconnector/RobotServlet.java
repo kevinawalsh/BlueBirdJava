@@ -583,7 +583,7 @@ public class RobotServlet extends HttpServlet {
                         LOG.debug("Rounded Compass Heading: {}", headingDegrees);
                         out.print(String.valueOf(headingDegrees));
                     }catch (Exception e){
-                        LOG.warn("HummingbirdServelet Compass Error: Usually this occurs when notifications are not enabled. {}", stackTraceToString(e));
+                        LOG.warn("HummingbirdServelet Compass Error: Usually this occurs when notifications are not enabled. {}", Utilities.stackTraceToString(e));
                     }
                     break;
                 case "finchIsMoving":
@@ -1013,13 +1013,6 @@ public class RobotServlet extends HttpServlet {
         return bd.floatValue();
     }
 
-
-    public static String stackTraceToString (Exception e) {
-        StringWriter sw = new StringWriter();
-        PrintWriter pw = new PrintWriter(sw);
-        e.printStackTrace(pw);
-        return sw.toString(); // stack trace as a string
-    }
 
     private String roundToString(double value) {
         BigDecimal bd = new BigDecimal(value);  //Scaling factor of 0.1
