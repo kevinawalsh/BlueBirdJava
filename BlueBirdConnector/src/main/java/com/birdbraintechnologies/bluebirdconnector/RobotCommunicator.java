@@ -1,14 +1,9 @@
 package com.birdbraintechnologies.bluebirdconnector;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
-public abstract class RobotCommunicator {
+public abstract class RobotCommunicator { //TODO: turn into interface
 
     //public RobotCommListener listener;
     protected RobotManager robotManager;
@@ -44,7 +39,7 @@ public abstract class RobotCommunicator {
     abstract void sendCommand(String robotName, byte[] command); //Send command to specified device
     abstract void kill(); //shut down the communicator
     abstract boolean isRunning(); //is this communicator prepared to communicate
-    abstract boolean robotFound(); //has the communicator found a robot it can connect to
+    //abstract boolean robotFound(); //has the communicator found a robot it can connect to
 
 
 }

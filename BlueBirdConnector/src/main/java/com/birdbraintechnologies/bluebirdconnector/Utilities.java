@@ -18,11 +18,6 @@ public final class Utilities {
         result.append("]");
         return result.toString();
     }
-    public static String bytesToUUIDString(byte[] bytes) {
-        StringBuffer result = new StringBuffer();
-        for(byte b : bytes) result.append( Integer.toHexString(b & 0xFF));
-        return result.toString();
-    }
     public static byte[] concatBytes(byte[] a, byte[] b) {
         int aLen = a.length;
         int bLen = b.length;

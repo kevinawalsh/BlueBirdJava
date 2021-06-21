@@ -76,12 +76,6 @@ public class WinBLE extends RobotCommunicator {
         return (process != null && process.isAlive());
     }
 
-    @Override
-    boolean robotFound() {
-        LOG.error("robotFound: Method not implemented in WinBLE");
-        return false;
-    }
-
     public void startDiscovery(){
         // Assemble the command.
         String command = "startScan" + "\n";

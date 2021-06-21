@@ -21,9 +21,11 @@ public class RobotManager {
 
     private static RobotManager sharedInstance;
     private RobotCommunicator robotCommunicator;
+    private boolean shouldScanWhenReady = false;
 
     private RobotManager() {
-        setUpRobotCommunicator();
+        Thread managerThread = new Thread(this::setUpRobotCommunicator);
+        managerThread.start();
     }
 
     private void setUpRobotCommunicator() {
@@ -39,6 +41,9 @@ public class RobotManager {
             robotCommunicator = new WinBLE(this);
         }
 
+        if (shouldScanWhenReady) {
+            startDiscovery();
+        }
     }
     public void updateCommunicatorStatus(boolean connected) {
         if (!connected) {
@@ -58,12 +63,14 @@ public class RobotManager {
     public void startDiscovery(){
         if (robotCommunicator == null || !robotCommunicator.isRunning()){
             LOG.error("Trying to start discovery without a running communicator.");
+            shouldScanWhenReady = true;
             return;
         }
         robotCommunicator.startDiscovery();
     }
 
     public void stopDiscovery(){
+        shouldScanWhenReady = false;
         if (robotCommunicator == null || !robotCommunicator.isRunning()){
             LOG.error("Trying to stop discovery without a running communicator.");
             return;

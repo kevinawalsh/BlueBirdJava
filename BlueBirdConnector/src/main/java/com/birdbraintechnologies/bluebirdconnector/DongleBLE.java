@@ -1,31 +1,27 @@
 package com.birdbraintechnologies.bluebirdconnector;
 
 import com.fazecast.jSerialComm.SerialPort; //import gnu.rxtx.*; //import javax.comm.*;  //import gnu.io.SerialPort;
-//import javafx.scene.effect.Blend;
 import org.json.JSONObject;
 import org.thingml.bglib.*;
+
 //logging
-//import com.fasterxml.jackson.databind.JsonNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.thingml.bglib.gui.*;
 
-import java.lang.reflect.Array;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 import java.util.*;
 
-import static com.birdbraintechnologies.bluebirdconnector.Utilities.bytesToString;
-import static com.birdbraintechnologies.bluebirdconnector.Utilities.stackTraceToString;
+import static com.birdbraintechnologies.bluebirdconnector.Utilities.*;
 
-public class DongleBLE extends RobotCommunicator implements BGAPIListener {//, SerialErrorListener {
+//TODO: implement RobotCommunicator and extend BGAPIDefaultListener
+public class DongleBLE extends RobotCommunicator implements BGAPIListener {
 
     static final Logger LOG = LoggerFactory.getLogger(DongleBLE.class);
 
     protected BGAPI bgapi = null;
-    //protected gnu.io.SerialPort port = null; //Port for bluetooth dongle
     private SerialPort port = null;
-    //private BlueBirdDriver blueBirdDriver; //TODO:remove this reference
 
     /*
      * GATT DISCOVERY
@@ -76,10 +72,11 @@ public class DongleBLE extends RobotCommunicator implements BGAPIListener {//, S
     protected boolean firstServiceAddress = false;
     protected String primaryAddress = null;
 
-    //HACK  --- Put these in the properties file
-    String HB_WRITE_SVC_UUID  = "6e4002b5a3f393e0a9e5e24dcca9e";
-    String HB_NOTIFY_SVC_UUID = "6e4003b5a3f393e0a9e5e24dcca9e";
-    int   HB_NOTIFY_CTL_CHAR = 0x2902;
+    static String SERVICE_UUID = "6e4001b5a3f393e0a9e5e24dcca9e";
+    static String WRITE_CHARACTERISTIC_UUID  = "6e4002b5a3f393e0a9e5e24dcca9e";
+    static String NOTIFY_CHARACTERISTIC_UUID = "6e4003b5a3f393e0a9e5e24dcca9e";
+    static int   HB_NOTIFY_CTL_CHAR = 0x2902;
+    static int RSSI_THRESHOLD = 20;
 
     //Information about the device that is currently being connected
     BLEDevice bledConnecting = null;
@@ -87,34 +84,12 @@ public class DongleBLE extends RobotCommunicator implements BGAPIListener {//, S
     BLEDevice[] connectedDevices = new BLEDevice[10]; //TODO: initialize to 3?
     private Hashtable<String, Integer> robotIndexes = new Hashtable<>();
 
-    //public DongleBLE(BlueBirdDriver blueBirdDriver) {
     public DongleBLE(RobotManager manager) {
-        //super(blueBirdDriver);
         super(manager);
-        //this.type = CommType.bleDongle;
-        //this.blueBirdDriver = blueBirdDriver;
-
-        startBLEDongle();
 
         //Initialize characteristic discovery table
         for (int i = 0; i < characteristicDiscover.length; i++)
             characteristicDiscover[i] = false;
-
-        /*interval_min = Integer.parseInt(blueBirdDriver.prop.getProperty("interval_min"));
-        interval_max = Integer.parseInt(blueBirdDriver.prop.getProperty("interval_max"));
-        if (blueBirdDriver.operatingSystem.equals("RasPi")){
-            interval_min = 1000;
-            interval_max = 1200;
-        }
-
-        latency = Integer.parseInt(blueBirdDriver.prop.getProperty("latency"));
-        timeout = Integer.parseInt(blueBirdDriver.prop.getProperty("timeout"));
-        scan_interval = Integer.parseInt(blueBirdDriver.prop.getProperty("scan_interval"));
-        scan_window = Integer.parseInt(blueBirdDriver.prop.getProperty("scan_window"));
-        active = Integer.parseInt(blueBirdDriver.prop.getProperty("active"));
-
-        // Device names list to filter BLE scanning
-        deviceList = new ArrayList<String>(Arrays.asList(blueBirdDriver.prop.getProperty("deviceList").split(",")));*/
 
         //From scratchME.properties
         interval_min = 35;
@@ -124,7 +99,8 @@ public class DongleBLE extends RobotCommunicator implements BGAPIListener {//, S
         scan_interval=500;
         scan_window=  250;
         active =      1;
-        supportedRobotTypes = new ArrayList<String>(Arrays.asList("BBC micro:bit,MB,BB,FN".split(",")));
+        //supportedRobotTypes = new ArrayList<String>(Arrays.asList("BBC micro:bit,MB,BB,FN".split(",")));
+        supportedRobotTypes = new ArrayList<String>(List.of("MB","BB","FN"));
 
         if (supportedRobotTypes!=null){
             try {
@@ -143,7 +119,10 @@ public class DongleBLE extends RobotCommunicator implements BGAPIListener {//, S
         } else
             System.out.println ("ERROR: Could not load device list from properties file!!");
 
+        startBLEDongle();
     }
+
+    //**** RobotCommunicator Methods ****
 
     @Override
     void requestConnection(String name) {
@@ -156,14 +135,9 @@ public class DongleBLE extends RobotCommunicator implements BGAPIListener {//, S
         if (bledConnecting != null) {
             LOG.info("Do_Connect_address: Device found");
             deviceConnecting = true;
-            /*bledConnecting.setDevLetter(devInfo.devLetter);
-            devInfo.deviceFancyName = bledConnecting.getFancyName();
-            devInfo.deviceName = bledConnecting.getName();
-            devInfo.deviceAddressType = bledConnecting.getAddressType();*/
         }else {
             LOG.error("Device " + name + " NOT FOUND");
             deviceConnecting = false;
-            //blueBirdDriver.deviceConnecting = false;
         }
 
         //LOG.info("-----NEW CONNECTION START: connectToDevice sending INITIAL parameters: device: " + devInfo.deviceFancyName +" : " + devInfo.deviceName +" :  "+ interval_min + ", " + interval_max+ ", " + latency + ", " + timeout);
@@ -188,14 +162,9 @@ public class DongleBLE extends RobotCommunicator implements BGAPIListener {//, S
         }
     }
 
+    @Override
     public boolean isRunning() {
         return (bgapi != null);
-    }
-
-    @Override
-    boolean robotFound() {
-        LOG.error("robotFound: method not implement in DongleBLE.");
-        return false;
     }
 
     /**
@@ -241,7 +210,9 @@ public class DongleBLE extends RobotCommunicator implements BGAPIListener {//, S
         bgapi.send_connection_disconnect(connection);
     }*///
 
+    @Override
     public void startDiscovery() {
+        LOG.debug("START DISCOVERY");
         if (bgapi == null){
             LOG.error("Attempting to start discovery with bgapi null.");
             return;
@@ -262,10 +233,13 @@ public class DongleBLE extends RobotCommunicator implements BGAPIListener {//, S
         }
 
         bgapi.send_gap_discover(1);
+        frontendServer.updateGUIScanStatus(true);
     } //Start looking for robots
 
     //Stop looking for robots
+    @Override
     public void stopDiscovery() {
+        LOG.debug("STOP DISCOVERY");
         if (bgapi != null) {
             bgapi.send_gap_end_procedure();
             //listener.updateGUIScanStatus(false);
@@ -277,6 +251,7 @@ public class DongleBLE extends RobotCommunicator implements BGAPIListener {//, S
 
     //Cancel the current connection request
     //TODO: There should be more to this...
+    @Override
     public void cancelConnectionRequest() {
         if (bgapi != null) {
             bgapi.send_gap_end_procedure();
@@ -295,15 +270,53 @@ public class DongleBLE extends RobotCommunicator implements BGAPIListener {//, S
         }
     }
 
+    /**
+     * shut down the communicator
+     */
     @Override
     void kill() {
+        if (bgapi != null) {
+            bgapi.removeListener(this);
+            //bgapi.getLowLevelDriver().removeListener(logger);
+            LOG.info("BLE: Reset BLED112 Dongle");
+            bgapi.send_system_reset(0);
+            bgapi.disconnect();
+            bgapi = null;
+            LOG.info("BLE: Done resetting BLED112 Dongle");
+        }
 
+        if (port != null) {
+            LOG.info("Freeing port");
+            try {
+                LOG.info("Closing input stream");
+                port.getInputStream().close();
+                LOG.info("Closing output stream");
+                port.getOutputStream().close();
+                LOG.info("Port streams closed");
+
+            } catch (Exception ex) {
+                LOG.error(" Error closing serial input and output streams:");
+                LOG.error("{}", stackTraceToString(ex));
+            }
+            finally {
+                LOG.info("Closing port");
+                //port.close();
+                port.closePort();
+                LOG.info("Port closed");
+            }
+        }
+        bgapi = null;
+        port = null;
+        devList.clear();
     }
+
+    //***** Private Helper Methods *****
 
     //Send command to specified device
     private void sendCommand(byte[] command, int connection) {
         //int attHandle = getAttHandleStr(connection, HB_WRITE_SVC_UUID, 0);
         int attHandle = connectedDevices[connection].getTxHandle();
+        LOG.debug("Writing to connection {} using handle {}", connection, attHandle);
         sendAsyncCommandWithHandle(command, connection, attHandle);
     }
 
@@ -313,7 +326,7 @@ public class DongleBLE extends RobotCommunicator implements BGAPIListener {//, S
             return;
         }
         if (bgapi != null) {
-            LOG.debug("Sending to connection {}, handle: {}. command: {}", connection, attHandle, command);
+            LOG.debug("Sending to connection {}, handle: {}. command: {}", connection, attHandle, bytesToString(command));
             bgapi.send_attclient_write_command(connection, attHandle, command);
         } else {
             LOG.error("Tried to write to connection {} while bgapi is null", connection);
@@ -364,6 +377,7 @@ public class DongleBLE extends RobotCommunicator implements BGAPIListener {//, S
                 if (connectedDevices[connection] != null && connectedDevices[connection].getName().startsWith("FN")) {
                     getFirmwareCmd[0] = (byte)0xD4;
                 }
+                LOG.debug("Getting firmware...");
                 sendCommand(getFirmwareCmd, connection);
             }
         }catch (Exception e){
@@ -379,45 +393,6 @@ public class DongleBLE extends RobotCommunicator implements BGAPIListener {//, S
             connectedDevices[connection] = null;
             robotManager.receiveDisconnectionEvent(robot.getName(), false);
         }
-    }
-
-    /**
-     * shut down the communicator
-     */
-    public void disconnect() {
-        if (bgapi != null) {
-            bgapi.removeListener(this);
-            //bgapi.getLowLevelDriver().removeListener(logger);
-            LOG.info("BLE: Reset BLED112 Dongle");
-            bgapi.send_system_reset(0);
-            bgapi.disconnect();
-            bgapi = null;
-            LOG.info("BLE: Done resetting BLED112 Dongle");
-        }
-
-        if (port != null) {
-            LOG.info("Freeing port");
-            try {
-                LOG.info("Closing input stream");
-                port.getInputStream().close();
-                LOG.info("Closing output stream");
-                port.getOutputStream().close();
-                LOG.info("Port streams closed");
-
-            } catch (Exception ex) {
-                LOG.error(" Error closing serial input and output streams:");
-                LOG.error("{}", stackTraceToString(ex));
-            }
-            finally {
-                LOG.info("Closing port");
-                //port.close();
-                port.closePort();
-                LOG.info("Port closed");
-            }
-        }
-        bgapi = null;
-        port = null;
-        devList.clear();
     }
 
     /**
@@ -491,6 +466,15 @@ public class DongleBLE extends RobotCommunicator implements BGAPIListener {//, S
             //jButtonBLED112Conn.setEnabled(true);
         }
 
+    }
+
+    public static String bytesToUUIDString(byte[] bytes) {
+        /*StringBuffer result = new StringBuffer();
+        for(byte b : bytes) result.append( Integer.toHexString(b & 0xFF));
+        return result.toString();*/
+        String result = "";
+        for(byte b : bytes) result = (Integer.toHexString(b & 0xFF)) + result;
+        return result;
     }
 
     //******** BGAPIListener Methods ********//
@@ -571,7 +555,7 @@ public class DongleBLE extends RobotCommunicator implements BGAPIListener {//, S
     public void receive_connection_raw_tx(int connection) {
         LOG.debug("receive_connection_raw_TX");
     }
-
+    //Second response after a connection is requested
     public void receive_connection_status(int conn, int flags, BDAddr address, int address_type, int conn_interval, int timeout, int latency, int bonding) {
         LOG.info("receive_connection_status " + "[" + address.toString() + "] Conn = " + conn + " Flags = " + flags + " address type = " + address_type + " interval = " + conn_interval + " timeout = " + timeout + " latency = " + latency + " bonding = " + bonding);
 
@@ -685,6 +669,8 @@ public class DongleBLE extends RobotCommunicator implements BGAPIListener {//, S
     // Callbacks for class attclient (index = 4)
     public void receive_attclient_find_by_type_value(int connection, int result) {}
     public void receive_attclient_read_by_group_type(int connection, int result) {}
+
+    //Third response after a connection is requested
     public void receive_attclient_read_by_type(int connection, int result) {
         LOG.debug("receive_attclient_read_by_type Result: " + Integer.toHexString(result));
 
@@ -716,6 +702,8 @@ public class DongleBLE extends RobotCommunicator implements BGAPIListener {//, S
     public void receive_attclient_execute_write(int connection, int result) {}
     public void receive_attclient_read_multiple(int connection, int result) {}
     public void receive_attclient_indicated(int connection, int attrhandle) {}
+
+    //Fifth response after connection is requested
     public void receive_attclient_procedure_completed(int connection, int result, int chrhandle) {
 
         LOG.debug("\n receive_attclient_procedure_completed Result: " + Integer.toHexString(result) + " chrhandle: " + Integer.toHexString(result));
@@ -768,10 +756,10 @@ public class DongleBLE extends RobotCommunicator implements BGAPIListener {//, S
                         attHandleService.secondaryUUID = secondarySvc;
                         attHandles.put((Integer)addresses.get(secondarySvc), attHandleService);
 
-                        if (service.equals(HB_WRITE_SVC_UUID)) {
-
-                        } else if (service.equals(HB_NOTIFY_SVC_UUID)) {
-
+                        if (service.equals(WRITE_CHARACTERISTIC_UUID)) {
+                            LOG.debug("Found write characteristic!");
+                        } else if (service.equals(NOTIFY_CHARACTERISTIC_UUID)) {
+                            LOG.debug("Found notify characteristic!");
                         }
                     }
                 }
@@ -843,7 +831,7 @@ public class DongleBLE extends RobotCommunicator implements BGAPIListener {//, S
     }
     public void receive_attclient_group_found(int connection, int start, int end, byte[] uuid) {
         LOG.debug("receive_attclient_group_found");
-        //TODO: something here? what is this function?
+        //TODO: something here? what is this function? Not called?
         /*if (blueBirdDriver.bledevice != null) {
             BLEService srv = new BLEService(uuid, start, end);
             blueBirdDriver.bledevice.getServices().put(srv.getUuidString(), srv);
@@ -864,6 +852,15 @@ public class DongleBLE extends RobotCommunicator implements BGAPIListener {//, S
 
 
         LOG.debug("\n receive_attclient_find_information_found chrhandle: " + Integer.toHexString(chrhandle) + " uuid: " + bytesToString(uuid));
+
+        String uuidString = bytesToUUIDString(uuid);
+        LOG.debug("Found {}, looking for {}", uuidString, SERVICE_UUID);
+        if (uuidString.equals(WRITE_CHARACTERISTIC_UUID) && connectedDevices[connection] != null) {
+            LOG.debug("Setting TX handle to {}", chrhandle);
+            connectedDevices[connection].setTxHandle(chrhandle);
+        }
+
+
         if (discovery_state == ATTRIBUTES && discovery_srv != null) {
             BLEAttribute att = new BLEAttribute(uuid, chrhandle);
             discovery_srv.getAttributes().add(att);
@@ -884,7 +881,7 @@ public class DongleBLE extends RobotCommunicator implements BGAPIListener {//, S
                     LOG.debug("Reversed uuid bytes: " + bytesToString(uuid));
                 }*/
 
-                primaryAddress = Utilities.bytesToUUIDString(uuid);
+                primaryAddress = bytesToUUIDString(uuid);
                 LOG.debug("UUID String: " + primaryAddress);
 
 
@@ -902,9 +899,14 @@ public class DongleBLE extends RobotCommunicator implements BGAPIListener {//, S
                 int secondaryAddress = ((uuid[1] & 0xFF) << 8) + (uuid[0] & 0xFF);   //Unsigned Int SHift
                 Hashtable table = (Hashtable) primaryServiceTable.get(primaryAddress);
                 table.put(secondaryAddress, chrhandle);
+                if (primaryAddress.equals(NOTIFY_CHARACTERISTIC_UUID) && secondaryAddress == HB_NOTIFY_CTL_CHAR && connectedDevices[connection] != null) {
+                    LOG.debug("Setting RX handle to {}", chrhandle);
+                    connectedDevices[connection].setRxHandle(chrhandle);
+                }
             }
         }
     }
+    //Fourth response after a connection is requested - characteristicDiscover
     public void receive_attclient_attribute_value(int connection, int atthandle, int type, byte[] value) {
         //System.out.println(System.currentTimeMillis());
         //System.out.println("Attclient Value atthandle= " + Integer.toHexString(atthandle) + " val = " + bytesToString(value) + " connection = " + Integer.toString(connection) + " type = " + Integer.toString(type));
@@ -987,7 +989,7 @@ public class DongleBLE extends RobotCommunicator implements BGAPIListener {//, S
             //Snap! HTTP support  just copy the data into the global notificationData array
             //blueBirdDriver.updateNotificationData(connection, value);
             //listener.receiveNotification(connection, value);
-
+            LOG.debug("Receive notification for {} with value {}.", connection, bytesToString(value));
             BLEDevice robot = connectedDevices[connection];
             if (robot != null) {
                 if (value.length < 10 && value.length > 3 && robot.getMicrobitVersion() == 0) {
@@ -1042,7 +1044,7 @@ public class DongleBLE extends RobotCommunicator implements BGAPIListener {//, S
         LOG.debug("receive_gap_set_mode. Result: " + result + "  " + Integer.toString(result));
     }
     public void receive_gap_discover(int result) {
-        LOG.debug("receive_gap_discover : Result = " + Integer.toString(result));
+        LOG.debug("receive_gap_discover : Result = " + result);
         if (result == 0) {
             //listener.updateGUIScanStatus(true);
             frontendServer.updateGUIScanStatus(true);
@@ -1052,11 +1054,9 @@ public class DongleBLE extends RobotCommunicator implements BGAPIListener {//, S
         }
 
     }
+    //The first response after a connection is requested.
     public void receive_gap_connect_direct(int result, int connection_handle) {
         LOG.debug("receive_gap_connect_direct Result: {},  connection: {}" , result, connection_handle);
-        //blueBirdDriver.connection = connection_handle;
-        int connection = connection_handle;
-        //try { Thread.sleep(5000);} catch (Exception e) {}
 
         //TODO: What is supposed to be happening here??
         if (result != 0)  {
@@ -1087,106 +1087,40 @@ public class DongleBLE extends RobotCommunicator implements BGAPIListener {//, S
     public void receive_gap_set_directed_connectable_mode(int result) {}
     public void receive_gap_scan_response(int rssi, int packet_type, BDAddr sender, int address_type, int bond, byte[] data) {
 
-
-        //TODO:need to clear devList?
-
-
-        //blueBirdStatus.scanning = true;
-        //TODO: Need to throttle the status messages as this is bombarding the Client UI
-        //sendStatus(blueBirdStatus);
-        //listener.updateGUIScanStatus(true);
-        frontendServer.updateGUIScanStatus(true);
+        //frontendServer.updateGUIScanStatus(true);
 
         if ((packet_type == 0) || (packet_type == 4)) { // Scan Response Packet
-            LOG.debug( "");
-            LOG.debug( "--------------------------------------------------------");
-            String packetString = new String(data).trim();
-            LOG.debug("SCAN RESPONSE PACKET:  {}", bytesToString(data));
-            LOG.debug("Sender: {}  address_type = {}   packet type: {} ", sender.toString(), address_type, packet_type);
-            LOG.debug("Packet to String:  {} ", packetString);
+
             String name = new String(data).trim();
+            if (name.length() < 2) {
+                LOG.debug("Scan response from {} does not contain enough data: {}", sender.toString(), bytesToString(data));
+                return;
+            }
 
-
-            //Refresh filtered device list on arrival of new device:
-            //activeDeviceList.deviceList.clear();
-
-
-            try {
-
-                LOG.debug("Device Name:  {} ", name);
+            String prefix = name.substring(0, 2);
+            if (supportedRobotTypes.contains(prefix)) {
                 BLEDevice d = devList.getFromAddress(sender.toString());
+                LOG.debug("Discovered {}. rssi = {}.", name, rssi);
 
                 // This is a newly advertising device, therefore, place it in the list
                 if (d == null) {
                     LOG.debug("Placing {} in device list: {}", name, sender.toString());
                     d = new BLEDevice(sender.toString());
-                    Iterator<String> deviceListIterator = supportedRobotTypes.iterator();
-                    while (deviceListIterator.hasNext()) {
-                        String devString = deviceListIterator.next();
-                        if (name.toLowerCase().contains(devString.toLowerCase())){
-                            LOG.debug("{} is in supported device list...", name);
-                            //Update list of active devices
-                            /*ActiveDeviceInfo activeDevice = new ActiveDeviceInfo();
-                            activeDevice.name = name;
-                            activeDevice.fancyName = blueBirdDriver.getDeviceFancyName(name);
-                            activeDevice.address = sender.toString();
-                            activeDevice.rssi = rssi;*/
-
-
-                            //if (!devList.isIn(d)){
-                            if (!devList.contains(d)) {
-                                //if (blueBirdDriver.isPureAscii(packetString)) {
-                                if (asciiEncoder.canEncode(packetString)) {
-                                    //d.setAddressType(address_type);
-                                    LOG.debug("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
-                                    LOG.debug("Found Filtered Device: {}", packetString);
-                                    LOG.debug("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
-                                    //blueBirdDriver.getDeviceEndian(name, d);
-                                    //blueBirdDriver.setDeviceFancyName(name,d);
-                                    //System.out.println("Updating Deivce Name List with name: " + name + " endian: " + deviceEndianMap.get(name));
-                                    d.setRssi(rssi);
-                                    d.setName(name);
-                                    devList.add(d);
-                                    devList.changed(d);
-
-                                    /*
-                                    // Iterate through the device list and repopulate the filtered device list
-                                    LOG.debug("#############################################################");
-                                    LOG.debug("Current Device List:");
-                                    for (int i = 0; i < devList.getSize(); i++) {
-                                        LOG.debug("Device " + i + ": " + devList.getElementAt(i).toString());
-
-                                        ActiveDeviceInfo activeDevice = new ActiveDeviceInfo();
-                                        activeDevice.name = devList.getElementAt(i).getName();
-                                        activeDevice.fancyName = devList.getElementAt(i).getFancyName();
-                                        activeDevice.address = devList.getElementAt(i).getAddress();
-                                        activeDevice.rssi = devList.getElementAt(i).getRssi();
-                                        activeDeviceList.deviceList.add(activeDevice);
-
-                                    }
-                                    LOG.debug("#############################################################");
-
-                                    //Send updated filtered advertising device list to web client.
-                                    sendStatus(activeDeviceList);*/
-                                }
-                                else LOG.debug("Device was placed in list ??? !!!!");
-                            }
-                            else LOG.debug("Device name not pure ascii");
-
-                            //listener.receiveScanResponse(activeDevice);
-                            JSONObject scanResponse = new JSONObject("{'packetType': 'discovery', 'name': "+ name +", 'rssi': "+ rssi +"}");
-                            frontendServer.receiveScanResponse(name, scanResponse);
-                        } else LOG.debug("Device is not in supported device list. Name: {}, DevList entry:{}", name.toLowerCase(), devString.toLowerCase());
-                    }
-                    LOG.debug("Supported device check complete");
+                    devList.add(d);
                 }
-                else LOG.debug("Device already in list, skipping.");
-            }
-            catch (Exception e) {
-                e.printStackTrace();
+                boolean nameChanged = !name.equals(d.getName());
+                boolean rssiChanged = !(rssi < d.getRssi() + RSSI_THRESHOLD && rssi > d.getRssi() - RSSI_THRESHOLD);
+                if (nameChanged || rssiChanged) {
+                    LOG.debug("Setting {}. new name = {}, old rssi = {}, new rssi = {}.", d.getName(), name, d.getRssi(), rssi);
+                    d.setRssi(rssi);
+                    d.setName(name);
+                    devList.changed(d); //TODO: what does this do?
+
+                    JSONObject scanResponse = new JSONObject("{'packetType': 'discovery', 'name': "+ name +", 'rssi': "+ rssi +"}");
+                    frontendServer.receiveScanResponse(name, scanResponse);
+                }
             }
         }
-
     }
     public void receive_gap_mode_changed(int discover, int connect) {
         LOG.debug("receive_gap_mode_changed: " + discover + "  " + connect);
@@ -1216,7 +1150,9 @@ public class DongleBLE extends RobotCommunicator implements BGAPIListener {//, S
     public void receive_test_phy_reset() {}
     public void receive_test_get_channel_map(byte[] channel_map) {}
 
-
+    public void serialError() {
+        robotManager.updateCommunicatorStatus(false);
+    }
     //******** end BGAPIListener methods ********//
 
     public class AttHandleService{
@@ -1273,9 +1209,7 @@ public class DongleBLE extends RobotCommunicator implements BGAPIListener {//, S
         //System.out.println(((Hashtable)table.get(primaryUUID)).get(secondaryUUID));
     }*/
 
-    public void serialError() {
-        robotManager.updateCommunicatorStatus(false);
-    }
+
 
 ////////******** SerialErrorListener Method ********////////
 

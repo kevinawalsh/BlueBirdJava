@@ -20,6 +20,7 @@ public class FrontendServer {
     static final Logger LOG = LoggerFactory.getLogger(FrontendServer.class);
 
     private static FrontendServer sharedInstance;
+    private RobotManager robotManager = RobotManager.getSharedInstance();
     private JSObject callbackManager;
     private Hashtable<String, String> availableRobots;
 
@@ -142,10 +143,10 @@ public class FrontendServer {
                         //mDict.TryGetValue("scanState", out scanState);
                         switch (scanState) {
                             case "on":
-                                RobotManager.getSharedInstance().startDiscovery();
+                                robotManager.startDiscovery();
                                 break;
                             case "off":
-                                RobotManager.getSharedInstance().stopDiscovery();
+                                robotManager.stopDiscovery();
                                 break;
                             default:
                                 LOG.debug("UNHANDLED SCAN MESSAGE: " + json.toString());
@@ -157,18 +158,18 @@ public class FrontendServer {
                         LOG.debug("Requesting connection to " + nameToConnect);
                         availableRobots.remove(nameToConnect.substring(2));
                         updateGuiDeviceList();
-                        RobotManager.getSharedInstance().connectToRobot(nameToConnect);
+                        robotManager.connectToRobot(nameToConnect);
                         //mDict.TryGetValue("address", out address);
                         //MainPage.Current.RobotManager.ConnectToRobot(addressToConnect);
                         break;
                     case "disconnect":
                         String addressToDisconnect = json.getMember("address").toString();
-                        RobotManager.getSharedInstance().disconnectFromRobot(addressToDisconnect);
+                        robotManager.disconnectFromRobot(addressToDisconnect);
                         //MainPage.Current.RobotManager.DisconnectFromRobot(addressToDisconnect);
                         break;
                     case "calibrate":
                         String deviceLetter = json.getMember("devLetter").toString();
-                        RobotManager.getSharedInstance().calibrate(deviceLetter);
+                        robotManager.calibrate(deviceLetter);
                         break;
                     case "openSnap":
                         String projectName = json.getMember("project").toString();

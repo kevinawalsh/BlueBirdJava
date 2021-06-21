@@ -43,6 +43,7 @@ public class BlueBirdConnector extends Application{
     private Double screen_height = 700.0;
 
     private FrontendServer frontendServer = FrontendServer.getSharedInstance();
+    private RobotManager robotManager = RobotManager.getSharedInstance();
     private Thread webServerThread;
 
 
@@ -80,7 +81,7 @@ public class BlueBirdConnector extends Application{
                         frontendServer.setTranslationTable(language);
 
                         //callbackManager.call("scanStarted");
-                        RobotManager.getSharedInstance().startDiscovery();
+                        robotManager.startDiscovery();
                     }
                 });
 
@@ -88,7 +89,7 @@ public class BlueBirdConnector extends Application{
                 stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
                     @Override
                     public void handle(WindowEvent event) {
-                        RobotManager.getSharedInstance().close();
+                        robotManager.close();
                         Platform.exit();
                         System.exit(0);
                     }
