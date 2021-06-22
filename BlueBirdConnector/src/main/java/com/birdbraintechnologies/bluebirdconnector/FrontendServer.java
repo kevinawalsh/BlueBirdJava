@@ -198,6 +198,7 @@ public class FrontendServer {
     }
 
     private static void openURLinBrowser (String urlString) {
+        LOG.info("Opening " + urlString);
         //Snap is best used in chrome. Try to open chrome first.
         try {
             final String dir = System.getProperty("user.dir");
@@ -205,7 +206,7 @@ public class FrontendServer {
             LOG.debug("OS = {}; user dir = {}" , osName, dir);
 
             if (osName.contains("Win")) {
-                Runtime.getRuntime().exec(new String[]{"cmd", "/c","start chrome " + urlString});
+                Runtime.getRuntime().exec(new String[]{"cmd", "/c","start chrome \"" + urlString + "\""});
             } else { //Linux
                 Runtime.getRuntime().exec(new String[] { "chromium-browser", urlString });
             }
