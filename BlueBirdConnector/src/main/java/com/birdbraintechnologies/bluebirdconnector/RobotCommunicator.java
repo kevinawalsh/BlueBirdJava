@@ -3,30 +3,31 @@ package com.birdbraintechnologies.bluebirdconnector;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
-public abstract class RobotCommunicator { //TODO: turn into interface
+//public abstract class RobotCommunicator { //TODO: turn into interface
+public interface RobotCommunicator {
 
     //public RobotCommListener listener;
-    protected RobotManager robotManager;
-    protected FrontendServer frontendServer = FrontendServer.getSharedInstance();
+    //protected RobotManager robotManager;
+    //protected FrontendServer frontendServer = FrontendServer.getSharedInstance();
 
     //public CommType type;
-    long notificationStartTime;
+    //long notificationStartTime;
     //protected ObjectMapper mapper = new ObjectMapper();
 
     //is a robot currently in the process of connecting?
-    protected boolean deviceConnecting;
+    //protected boolean deviceConnecting;
     //queue of robots waiting to connect
     //protected Deque<ConnectionRequestObj> connectionQueue = new ArrayDeque<ConnectionRequestObj>();
     //protected Deque<RobotInfo> connectionQueue = new ArrayDeque<RobotInfo>();
-    protected Deque<String> connectionQueue = new ArrayDeque<String>();
+    //protected Deque<String> connectionQueue = new ArrayDeque<String>();
 
     /*public RobotCommunicator(RobotCommListener listener) {
         this.listener = listener;
         notificationStartTime = 0;
     }*/
-    public RobotCommunicator(RobotManager manager) {
+    /*public RobotCommunicator(RobotManager manager) {
         robotManager = manager;
-    }
+    }*/
 
     abstract void requestConnection(String name); //connect to specified robot
     abstract void requestDisconnect(String address); //disconnect from specified robot

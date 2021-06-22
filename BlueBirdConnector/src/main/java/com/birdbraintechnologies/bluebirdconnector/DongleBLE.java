@@ -16,9 +16,15 @@ import java.util.*;
 import static com.birdbraintechnologies.bluebirdconnector.Utilities.*;
 
 //TODO: implement RobotCommunicator and extend BGAPIDefaultListener
-public class DongleBLE extends RobotCommunicator implements BGAPIListener {
+public class DongleBLE extends BGAPIDefaultListener implements RobotCommunicator {
 
     static final Logger LOG = LoggerFactory.getLogger(DongleBLE.class);
+
+    private RobotManager robotManager = RobotManager.getSharedInstance();
+    private FrontendServer frontendServer = FrontendServer.getSharedInstance();
+    private long notificationStartTime; //TODO: remove?
+    //private boolean deviceConnecting;
+    private Deque<String> connectionQueue = new ArrayDeque<String>();
 
     protected BGAPI bgapi = null;
     private SerialPort port = null;
@@ -66,7 +72,7 @@ public class DongleBLE extends RobotCommunicator implements BGAPIListener {
     protected boolean [] characteristicDiscover = new boolean [16];
     protected boolean descriptorsDiscover = false;
     protected int serviceCount = 0;
-    Hashtable primaryServiceTable;
+    //Hashtable primaryServiceTable;
     List<Integer> serviceAttHandleList = new ArrayList<Integer>();
     protected boolean buildingTable = false;
     protected boolean firstServiceAddress = false;
@@ -75,7 +81,7 @@ public class DongleBLE extends RobotCommunicator implements BGAPIListener {
     static String SERVICE_UUID = "6e4001b5a3f393e0a9e5e24dcca9e";
     static String WRITE_CHARACTERISTIC_UUID  = "6e4002b5a3f393e0a9e5e24dcca9e";
     static String NOTIFY_CHARACTERISTIC_UUID = "6e4003b5a3f393e0a9e5e24dcca9e";
-    static int   HB_NOTIFY_CTL_CHAR = 0x2902;
+    static int HB_NOTIFY_CTL_CHAR = 0x2902;
     static int RSSI_THRESHOLD = 20;
 
     //Information about the device that is currently being connected
@@ -84,8 +90,8 @@ public class DongleBLE extends RobotCommunicator implements BGAPIListener {
     BLEDevice[] connectedDevices = new BLEDevice[10]; //TODO: initialize to 3?
     private Hashtable<String, Integer> robotIndexes = new Hashtable<>();
 
-    public DongleBLE(RobotManager manager) {
-        super(manager);
+    public DongleBLE() {
+        //super(manager);
 
         //Initialize characteristic discovery table
         for (int i = 0; i < characteristicDiscover.length; i++)
@@ -125,7 +131,7 @@ public class DongleBLE extends RobotCommunicator implements BGAPIListener {
     //**** RobotCommunicator Methods ****
 
     @Override
-    void requestConnection(String name) {
+    public void requestConnection(String name) {
         if (bgapi == null) {
             LOG.error("requestConnection: bgapi is null.");
             return;
@@ -134,26 +140,17 @@ public class DongleBLE extends RobotCommunicator implements BGAPIListener {
         bledConnecting = devList.getFromName(name);
         if (bledConnecting != null) {
             LOG.info("Do_Connect_address: Device found");
-            deviceConnecting = true;
+            //deviceConnecting = true;
         }else {
             LOG.error("Device " + name + " NOT FOUND");
-            deviceConnecting = false;
+            //deviceConnecting = false;
         }
 
-        //LOG.info("-----NEW CONNECTION START: connectToDevice sending INITIAL parameters: device: " + devInfo.deviceFancyName +" : " + devInfo.deviceName +" :  "+ interval_min + ", " + interval_max+ ", " + latency + ", " + timeout);
-        //int addrType = devInfo.deviceAddressType;
-        //LOG.info("BLEDevice: name: " + devInfo.deviceName + "  address: " + BDAddr.fromString(devInfo.deviceAddress) + "address Type = " + addrType);
-        //new Thread(() -> bgapi.send_gap_connect_direct(BDAddr.fromString(devInfo.deviceAddress), addrType, interval_min, interval_max, latency,timeout)).start();
-        //try { Thread.sleep(8000);} catch (Exception e) {}
-
-        //bgapi.send_gap_connect_direct(BDAddr.fromString(devInfo.deviceAddress), addrType, interval_min, interval_max, latency,timeout);
-        //LOG.info("-----NEW CONNECTION INITIATED. connectToDevice : {}", devInfo.deviceName);
         bgapi.send_gap_connect_direct(BDAddr.fromString(bledConnecting.getAddress()), addr_type, interval_min, interval_max, latency,timeout);
-        //LOG.info("-----NEW CONNECTION INITIATED. connectToDevice : {}", devInfo.deviceName);
     }
 
     @Override
-    void requestDisconnect(String address) {
+    public void requestDisconnect(String address) {
         Integer index = robotIndexes.get(address);
         if (index != null) {
             bgapi.send_connection_disconnect(index);
@@ -166,49 +163,6 @@ public class DongleBLE extends RobotCommunicator implements BGAPIListener {
     public boolean isRunning() {
         return (bgapi != null);
     }
-
-    /**
-     * connect to specified robot
-     * @param devInfo - info about the device to connect
-     */
-    /*public void requestConnection(DeviceInfo devInfo) {
-        if (bgapi == null) {
-            LOG.error("requestConnection: bgapi is null.");
-            return;
-        }
-        // Find device by address from the scan list
-        bledConnecting = findDeviceByAddress(devInfo.deviceAddress);
-        if (bledConnecting != null) {
-            LOG.info("Do_Connect_address: Device found");
-            deviceConnecting = true;
-            bledConnecting.setDevLetter(devInfo.devLetter);
-            devInfo.deviceFancyName = bledConnecting.getFancyName();
-            devInfo.deviceName = bledConnecting.getName();
-            devInfo.deviceAddressType = bledConnecting.getAddressType();
-        }else {
-            LOG.error("Device " + devInfo.deviceName + " NOT FOUND");
-            deviceConnecting = false;
-            //blueBirdDriver.deviceConnecting = false;
-        }
-
-        LOG.info("-----NEW CONNECTION START: connectToDevice sending INITIAL parameters: device: " + devInfo.deviceFancyName +" : " + devInfo.deviceName +" :  "+ interval_min + ", " + interval_max+ ", " + latency + ", " + timeout);
-        int addrType = devInfo.deviceAddressType;
-        LOG.info("BLEDevice: name: " + devInfo.deviceName + "  address: " + BDAddr.fromString(devInfo.deviceAddress) + "address Type = " + addrType);
-        //new Thread(() -> bgapi.send_gap_connect_direct(BDAddr.fromString(devInfo.deviceAddress), addrType, interval_min, interval_max, latency,timeout)).start();
-        //try { Thread.sleep(8000);} catch (Exception e) {}
-        bgapi.send_gap_connect_direct(BDAddr.fromString(devInfo.deviceAddress), addrType, interval_min, interval_max, latency,timeout);
-        LOG.info("-----NEW CONNECTION INITIATED. connectToDevice : {}", devInfo.deviceName);
-    }*/
-
-    /**
-     * Disconnect from specified robot
-     //* @param address
-     */
-    /*public void requestDisconnect(String address, int connection) {
-        sendNotificationSetup(connection, false);
-        blueBirdDriver.setHummingbirdNotifications(connection, false); // disable notifications on device before disconnecting
-        bgapi.send_connection_disconnect(connection);
-    }*///
 
     @Override
     public void startDiscovery() {
@@ -234,7 +188,7 @@ public class DongleBLE extends RobotCommunicator implements BGAPIListener {
 
         bgapi.send_gap_discover(1);
         frontendServer.updateGUIScanStatus(true);
-    } //Start looking for robots
+    }
 
     //Stop looking for robots
     @Override
@@ -261,7 +215,7 @@ public class DongleBLE extends RobotCommunicator implements BGAPIListener {
     }
 
     @Override
-    void sendCommand(String robotName, byte[] command) {
+    public void sendCommand(String robotName, byte[] command) {
         Integer index = robotIndexes.get(robotName);
         if (index != null) {
             sendCommand(command, index);
@@ -274,7 +228,7 @@ public class DongleBLE extends RobotCommunicator implements BGAPIListener {
      * shut down the communicator
      */
     @Override
-    void kill() {
+    public void kill() {
         if (bgapi != null) {
             bgapi.removeListener(this);
             //bgapi.getLowLevelDriver().removeListener(logger);
@@ -480,30 +434,30 @@ public class DongleBLE extends RobotCommunicator implements BGAPIListener {
     //******** BGAPIListener Methods ********//
 
     // Callbacks for class system (index = 0)
-    public void receive_system_reset() {}
+    /*public void receive_system_reset() {}
     public void receive_system_hello() {}
     public void receive_system_address_get(BDAddr address) {}
     public void receive_system_reg_write(int result) {}
     public void receive_system_reg_read(int address, int value) {}
     public void receive_system_get_counters(int txok, int txretry, int rxok, int rxfail) {}
     public void receive_system_get_connections(int maxconn) {}
-    public void receive_system_read_memory(int address, byte[] data) {}
+    public void receive_system_read_memory(int address, byte[] data) {}*/
     public void receive_system_get_info(int major, int minor, int patch, int build, int ll_version, int protocol_version, int hw) {
         LOG.info("Connected. BLED112:" + major + "." + minor + "." + patch + " (" + build + ") " + "ll=" + ll_version + " hw=" + hw);
     }
-    public void receive_system_endpoint_tx() {}
+    /*public void receive_system_endpoint_tx() {}
     public void receive_system_whitelist_append(int result) {}
     public void receive_system_whitelist_remove(int result) {}
     public void receive_system_whitelist_clear() {}
     public void receive_system_boot(int major, int minor, int patch, int build, int ll_version, int protocol_version, int hw) {}
-    public void receive_system_debug(byte[] data) {}
+    public void receive_system_debug(byte[] data) {}*/
     public void receive_system_endpoint_rx(int endpoint, byte[] data) {
         LOG.debug("receive_system_endpoint_rx");
     }
 
 
     // Callbacks for class flash (index = 1)
-    public void receive_flash_ps_defrag() {}
+    /*public void receive_flash_ps_defrag() {}
     public void receive_flash_ps_dump() {}
     public void receive_flash_ps_erase_all() {}
     public void receive_flash_ps_save(int result) {}
@@ -511,18 +465,18 @@ public class DongleBLE extends RobotCommunicator implements BGAPIListener {
     public void receive_flash_ps_erase() {}
     public void receive_flash_erase_page(int result) {}
     public void receive_flash_write_words() {}
-    public void receive_flash_ps_key(int key, byte[] value) {}
+    public void receive_flash_ps_key(int key, byte[] value) {}*/
 
 
     // Callbacks for class attributes (index = 2)
-    public void receive_attributes_write(int result) {}
+    //public void receive_attributes_write(int result) {}
     public void receive_attributes_read(int handle, int offset, int result, byte[] value) {
         LOG.debug("receive_attributes_read value: " + bytesToString(value));
     }
     public void receive_attributes_read_type(int handle, int result, byte[] value) {
         LOG.debug("receive_attributes_read_type att= " + Integer.toHexString(handle) + " val = " + bytesToString(value));
     }
-    public void receive_attributes_user_response() {}
+    //public void receive_attributes_user_response() {}
     public void receive_attributes_value(int connection, int reason, int handle, int offset, byte[] value) {
         LOG.debug("receive_attributes_value att=" + Integer.toHexString(handle) + " val = " + bytesToString(value));
     }
@@ -539,15 +493,15 @@ public class DongleBLE extends RobotCommunicator implements BGAPIListener {
         removeConnectionInfo(connection);
     }
 
-    public void receive_connection_get_rssi(int connection, int rssi) {}
+    //public void receive_connection_get_rssi(int connection, int rssi) {}
     public void receive_connection_update(int connection, int result) {
         LOG.debug("receive_connection_update: connection: " + connection + " result: 0x" + Integer.toHexString(result));
     }
 
-    public void receive_connection_version_update(int connection, int result) {}
+    /*public void receive_connection_version_update(int connection, int result) {}
     public void receive_connection_channel_map_get(int connection, byte[] map) {}
     public void receive_connection_channel_map_set(int connection, int result) {}
-    public void receive_connection_features_get(int connection, int result) {}
+    public void receive_connection_features_get(int connection, int result) {}*/
     public void receive_connection_get_status(int connection) {
         LOG.debug("receive_connection_get_status: Connection: " + connection);
     }
@@ -559,33 +513,15 @@ public class DongleBLE extends RobotCommunicator implements BGAPIListener {
     public void receive_connection_status(int conn, int flags, BDAddr address, int address_type, int conn_interval, int timeout, int latency, int bonding) {
         LOG.info("receive_connection_status " + "[" + address.toString() + "] Conn = " + conn + " Flags = " + flags + " address type = " + address_type + " interval = " + conn_interval + " timeout = " + timeout + " latency = " + latency + " bonding = " + bonding);
 
-        if (!deviceConnecting) {
+        /*if (!deviceConnecting) {
             LOG.error("!!!! Device is not in connecting state. Aborting connection attempt.");
             return;
-        }
+        }*/
 
         try{
             if (flags == 0x05) {
-                //this.connection = conn;
                 LOG.info("Connection made. Connection number= " + conn);
 
-                // Send device connection Event - all zeroes
-                byte [] header = new byte[5];  //header with secondary address set to 1 means connection update.
-                header[0] = (byte)0x00;
-                header[1] = (byte)0x00;
-                header[2] = (byte)0x00;
-                header[3] = (byte)0x00;
-                header[4] = (byte)0x00;
-                //session.getRemote().sendBytes(ByteBuffer.wrap(header), null);
-
-                //TODO: what is this?
-                //Relay.getInstance().scratchWriteBytes(header, 0, 0);
-
-                //sendNotificationSetup(conn, true);
-                //listener.receiveConnectionEvent(conn, "", bledConnecting.getDevLetter());
-                /*DeviceInfo deviceInfo = new DeviceInfo(bledConnecting);
-                deviceInfo.deviceConnection = conn;
-                listener.receiveConnectionEvent(deviceInfo);*/
                 if (connectedDevices[conn] != null) {
                     LOG.error("DEVICE ALREADY CONNECTED?");
                 } else {
@@ -594,9 +530,7 @@ public class DongleBLE extends RobotCommunicator implements BGAPIListener {
                     bledConnecting = null;
                 }
 
-
                 LOG.info("Discovering Services........");
-                //discovery_state = SERVICES;
 
                 byte [] uuid = new byte[2];
                 uuid[0] = 0x03;
@@ -604,30 +538,16 @@ public class DongleBLE extends RobotCommunicator implements BGAPIListener {
 
                 characteristicDiscover[conn] = true;
                 //Allocate hastable for this connection.
-                primaryServiceTable = new Hashtable();
-                //Associate address with connection
-
-                //debug
-                //LOG.debug("BP 1");
+                //primaryServiceTable = new Hashtable();
 
                 descriptorsDiscover =false;
                 serviceCount = 0;
                 serviceAttHandleList.removeAll(serviceAttHandleList);
 
-                //debug
-                //LOG.debug("BP 2");
-
-                //debug note
-                // The new connection disconnects before it gets to here.
-                // Sleeping before the next device IO did not matter
-                // Conclusion: the device is disconnecting itself because of the connection condition.
-                //try { Thread.sleep(5000);} catch (Exception e) {}
-
                 bgapi.send_attclient_read_by_type(conn, 0x1, 0xffff, uuid);
 
-                //bgapi.send_attclient_find_information (conn, 0x12, 0x14);
                 LOG.info("receive_connection_status  function completed.");
-                deviceConnecting = false;
+                //deviceConnecting = false;
 
             } else if (flags == 0x09) {
                 LOG.info("Connection Update: Address: "  + "[" + address.toString() + "] Conn = " + conn + " connection_interval = " + conn_interval);
@@ -640,16 +560,15 @@ public class DongleBLE extends RobotCommunicator implements BGAPIListener {
                 } else {
                     removeConnectionInfo(conn);
                 }
-                deviceConnecting = false;
-                //blueBirdDriver.receiveConnectionLost(conn);
+                //deviceConnecting = false;
 
             }
         }catch (Exception e){
             LOG.error("Connection Error: {}",  stackTraceToString(e));
         }
     }
-    public void receive_connection_version_ind(int connection, int vers_nr, int comp_id, int sub_vers_nr) {}
-    public void receive_connection_feature_ind(int connection, byte[] features) {}
+    /*public void receive_connection_version_ind(int connection, int vers_nr, int comp_id, int sub_vers_nr) {}
+    public void receive_connection_feature_ind(int connection, byte[] features) {}*/
     public void receive_connection_raw_rx(int connection, byte[] data) {
         LOG.debug("receive_connection_raw_rx");
     }
@@ -667,8 +586,8 @@ public class DongleBLE extends RobotCommunicator implements BGAPIListener {
 
 
     // Callbacks for class attclient (index = 4)
-    public void receive_attclient_find_by_type_value(int connection, int result) {}
-    public void receive_attclient_read_by_group_type(int connection, int result) {}
+    /*public void receive_attclient_find_by_type_value(int connection, int result) {}
+    public void receive_attclient_read_by_group_type(int connection, int result) {}*/
 
     //Third response after a connection is requested
     public void receive_attclient_read_by_type(int connection, int result) {
@@ -696,17 +615,17 @@ public class DongleBLE extends RobotCommunicator implements BGAPIListener {
             LOG.error("receive_attclient_write_command Async: {}: Write error: busy" , Integer.toString(result));
         }  else LOG.debug("receive_attclient_write_command Async: SUCCESS");
     }
-    public void receive_attclient_reserved() {}
+    /*public void receive_attclient_reserved() {}
     public void receive_attclient_read_long(int connection, int result) {}
     public void receive_attclient_prepare_write(int connection, int result) {}
     public void receive_attclient_execute_write(int connection, int result) {}
     public void receive_attclient_read_multiple(int connection, int result) {}
-    public void receive_attclient_indicated(int connection, int attrhandle) {}
+    public void receive_attclient_indicated(int connection, int attrhandle) {}*/
 
-    //Fifth response after connection is requested
+    //Fifth response after connection is requested. Once for each characteristic
     public void receive_attclient_procedure_completed(int connection, int result, int chrhandle) {
 
-        LOG.debug("\n receive_attclient_procedure_completed Result: " + Integer.toHexString(result) + " chrhandle: " + Integer.toHexString(result));
+        LOG.debug("receive_attclient_procedure_completed Result: " + Integer.toHexString(result) + " chrhandle: " + Integer.toHexString(result));
 
         if (characteristicDiscover[connection]) { // Get list of services
             //if (serviceCount < serviceAttHandleList.size() -1) {
@@ -732,7 +651,7 @@ public class DongleBLE extends RobotCommunicator implements BGAPIListener {
                 serviceCount = 0;
                 serviceAttHandleList.removeAll(serviceAttHandleList);
 
-                TreeMap<Integer, AttHandleService> attHandles = new TreeMap<Integer, AttHandleService>();
+                /*TreeMap<Integer, AttHandleService> attHandles = new TreeMap<Integer, AttHandleService>();
 
                 // Print out hashtable to check values
                 Enumeration services = primaryServiceTable.keys();
@@ -779,7 +698,7 @@ public class DongleBLE extends RobotCommunicator implements BGAPIListener {
                     //System.out.println("\t\t" +Integer.toHexString(atthndl.primaryUUID) + "     \t\t" + Integer.toHexString(atthndl.secondaryUUID));
                     LOG.debug("\t\t" + atthndl.primaryUUID + "     \t\t" + Integer.toHexString(atthndl.secondaryUUID));
                     //System.out.println((AttHandleService)me.get().secondaryUUID);
-                }
+                }*/
 
 
                 //Connection is complete, update the data structures
@@ -817,7 +736,7 @@ public class DongleBLE extends RobotCommunicator implements BGAPIListener {
             // Reset everthing
             descriptorsDiscover =false;
             characteristicDiscover[connection] =false;
-            deviceConnecting = false;
+            //deviceConnecting = false;
             //blueBirdDriver.deviceConnecting = false;
             //blueBirdDriver.deviceReconnecting = false;//TODO: replace
 
@@ -888,17 +807,17 @@ public class DongleBLE extends RobotCommunicator implements BGAPIListener {
                 //primaryAddress = ((uuid[1] & 0xFF) << 8) + (uuid[0] & 0xFF);   //Unsigned Int SHift
                 //System.out.println("First Service Address : " + Integer.toHexString(primaryAddress));
                 LOG.debug("First Service Address : "  + primaryAddress);
-                Hashtable secondaryServiceTable = new Hashtable();
+                /*Hashtable secondaryServiceTable = new Hashtable();
                 secondaryServiceTable.put(0, chrhandle);
-                primaryServiceTable.put(primaryAddress, secondaryServiceTable);
+                primaryServiceTable.put(primaryAddress, secondaryServiceTable);*/
                 //primaryServiceTable.put(connection, new Hashtable());  //This appears to be unused.
                 firstServiceAddress = false;
             } else {
                 //System.out.println("Primary address: " + Integer.toHexString(primaryAddress));
                 LOG.debug("Primary address: " + primaryAddress);
                 int secondaryAddress = ((uuid[1] & 0xFF) << 8) + (uuid[0] & 0xFF);   //Unsigned Int SHift
-                Hashtable table = (Hashtable) primaryServiceTable.get(primaryAddress);
-                table.put(secondaryAddress, chrhandle);
+                /*Hashtable table = (Hashtable) primaryServiceTable.get(primaryAddress);
+                table.put(secondaryAddress, chrhandle);*/
                 if (primaryAddress.equals(NOTIFY_CHARACTERISTIC_UUID) && secondaryAddress == HB_NOTIFY_CTL_CHAR && connectedDevices[connection] != null) {
                     LOG.debug("Setting RX handle to {}", chrhandle);
                     connectedDevices[connection].setRxHandle(chrhandle);
@@ -906,7 +825,7 @@ public class DongleBLE extends RobotCommunicator implements BGAPIListener {
             }
         }
     }
-    //Fourth response after a connection is requested - characteristicDiscover
+    //Fourth response after a connection is requested - characteristicDiscover called once for each characteristic
     public void receive_attclient_attribute_value(int connection, int atthandle, int type, byte[] value) {
         //System.out.println(System.currentTimeMillis());
         //System.out.println("Attclient Value atthandle= " + Integer.toHexString(atthandle) + " val = " + bytesToString(value) + " connection = " + Integer.toString(connection) + " type = " + Integer.toString(type));
@@ -921,7 +840,7 @@ public class DongleBLE extends RobotCommunicator implements BGAPIListener {
 
         if (characteristicDiscover[connection]) {
             if (value.length > 0) {
-                LOG.debug("Service found: " + bytesToString(value) + " AttHandle: " + atthandle + "\n");
+                LOG.debug("Service found: " + bytesToString(value) + " AttHandle: " + atthandle);
 
                 //It seems only service table data is little endian on the microbit
                 /*if (!devInfo.bigEndian) {
@@ -944,7 +863,7 @@ public class DongleBLE extends RobotCommunicator implements BGAPIListener {
                 readLock.notify();
             }
         } else {  //Incoming Notifications
-            byte [] header = new byte[5];
+            /*byte [] header = new byte[5];
             byte [] data;
 
             //Send connection and att handle. CLient will calculate devType and devId
@@ -957,7 +876,7 @@ public class DongleBLE extends RobotCommunicator implements BGAPIListener {
             // 0x55555555 is chosen for the generic notification magic number. This is not used - yet
             header[3] = (byte)((0x5555 >> 8) & 0xFF);
             header[4] = (byte)(0x5555 & 0xFF);
-            data = Utilities.concatBytes(header, value);
+            data = Utilities.concatBytes(header, value);*/
 
             // Notification timer. Used for Calibration.
             //blueBirdDriver.observedNotificationInterval[connection] = System.currentTimeMillis() - blueBirdDriver.startTime[connection]; //timer
@@ -1021,10 +940,10 @@ public class DongleBLE extends RobotCommunicator implements BGAPIListener {
 
         }
     }
-    public void receive_attclient_read_multiple_response(int connection, byte[] handles) {}
+    //public void receive_attclient_read_multiple_response(int connection, byte[] handles) {}
 
     // Callbacks for class sm (index = 5)
-    public void receive_sm_encrypt_start(int handle, int result) {}
+    /*public void receive_sm_encrypt_start(int handle, int result) {}
     public void receive_sm_set_bondable_mode() {}
     public void receive_sm_delete_bonding(int result) {}
     public void receive_sm_set_parameters() {}
@@ -1035,11 +954,11 @@ public class DongleBLE extends RobotCommunicator implements BGAPIListener {
     public void receive_sm_bonding_fail(int handle, int result) {}
     public void receive_sm_passkey_display(int handle, int passkey) {}
     public void receive_sm_passkey_request(int handle) {}
-    public void receive_sm_bond_status(int bond, int keysize, int mitm, int keys) {}
+    public void receive_sm_bond_status(int bond, int keysize, int mitm, int keys) {}*/
 
 
     // Callbacks for class gap (index = 6)
-    public void receive_gap_set_privacy_flags() {}
+    //public void receive_gap_set_privacy_flags() {}
     public void receive_gap_set_mode(int result) {
         LOG.debug("receive_gap_set_mode. Result: " + result + "  " + Integer.toString(result));
     }
@@ -1060,7 +979,8 @@ public class DongleBLE extends RobotCommunicator implements BGAPIListener {
 
         //TODO: What is supposed to be happening here??
         if (result != 0)  {
-            deviceConnecting = false;  // clear global flag
+            //deviceConnecting = false;  // clear global flag
+            bledConnecting = null;
             //blueBirdDriver.deviceConnecting = false;
             /*blueBirdDriver.deviceReconnecting = false;
 
@@ -1079,12 +999,12 @@ public class DongleBLE extends RobotCommunicator implements BGAPIListener {
         //listener.updateGUIScanStatus(false);
         frontendServer.updateGUIScanStatus(false);
     }
-    public void receive_gap_connect_selective(int result, int connection_handle) {}
+    /*public void receive_gap_connect_selective(int result, int connection_handle) {}
     public void receive_gap_set_filtering(int result) {}
     public void receive_gap_set_scan_parameters(int result) {}
     public void receive_gap_set_adv_parameters(int result) {}
     public void receive_gap_set_adv_data(int result) {}
-    public void receive_gap_set_directed_connectable_mode(int result) {}
+    public void receive_gap_set_directed_connectable_mode(int result) {}*/
     public void receive_gap_scan_response(int rssi, int packet_type, BDAddr sender, int address_type, int bond, byte[] data) {
 
         //frontendServer.updateGUIScanStatus(true);
@@ -1126,7 +1046,7 @@ public class DongleBLE extends RobotCommunicator implements BGAPIListener {
         LOG.debug("receive_gap_mode_changed: " + discover + "  " + connect);
     }
     // Callbacks for class hardware (index = 7)
-    public void receive_hardware_io_port_config_irq(int result) {}
+    /*public void receive_hardware_io_port_config_irq(int result) {}
     public void receive_hardware_set_soft_timer(int result) {}
     public void receive_hardware_adc_read(int result) {}
     public void receive_hardware_io_port_config_direction(int result) {}
@@ -1141,25 +1061,26 @@ public class DongleBLE extends RobotCommunicator implements BGAPIListener {
     public void receive_hardware_set_txpower() {}
     public void receive_hardware_io_port_status(int timestamp, int port, int irq, int state) {}
     public void receive_hardware_soft_timer(int handle) {}
-    public void receive_hardware_adc_result(int input, int value) {}
+    public void receive_hardware_adc_result(int input, int value) {}*/
 
     // Callbacks for class test (index = 8)
-    public void receive_test_phy_tx() {}
+    /*public void receive_test_phy_tx() {}
     public void receive_test_phy_rx() {}
     public void receive_test_phy_end(int counter) {}
     public void receive_test_phy_reset() {}
-    public void receive_test_get_channel_map(byte[] channel_map) {}
+    public void receive_test_get_channel_map(byte[] channel_map) {}*/
 
     public void serialError() {
+        LOG.info("Serial Error. Dongle disconnected.");
         robotManager.updateCommunicatorStatus(false);
     }
     //******** end BGAPIListener methods ********//
 
-    public class AttHandleService{
+    /*public class AttHandleService{
         //int primaryUUID;
         public String primaryUUID;
         public int secondaryUUID;
-    }
+    }*/
 
     /**
      *

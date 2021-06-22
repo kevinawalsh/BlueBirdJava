@@ -5,7 +5,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.net.URL;
+import java.util.ArrayDeque;
 import java.util.Base64;
+import java.util.Deque;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -13,9 +15,15 @@ import org.json.JSONObject;
 
 import static com.birdbraintechnologies.bluebirdconnector.Utilities.stackTraceToString;
 
-public class WinBLE extends RobotCommunicator {
+public class WinBLE implements RobotCommunicator {
 
     static final Logger LOG = LoggerFactory.getLogger(WinBLE.class);
+
+    private RobotManager robotManager = RobotManager.getSharedInstance();
+    private FrontendServer frontendServer = FrontendServer.getSharedInstance();
+    private long notificationStartTime; //TODO: remove?
+    //private boolean deviceConnecting;
+    private Deque<String> connectionQueue = new ArrayDeque<String>();
 
     private final ProcessBuilder processBuilder = new ProcessBuilder();
     private Process process;
@@ -29,8 +37,8 @@ public class WinBLE extends RobotCommunicator {
     //private static final int DATA_PACKET_SIZE = 14;
     //byte [] incomingDataPacket = new byte[DATA_PACKET_SIZE];
 
-    public WinBLE(RobotManager manager) {
-        super(manager);
+    public WinBLE() {
+        //super(manager);
         LOG.info("WinBLE Constructor");
         //this.deviceConnecting = false;
 

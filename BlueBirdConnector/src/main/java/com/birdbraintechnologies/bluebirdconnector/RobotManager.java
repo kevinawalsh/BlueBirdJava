@@ -35,10 +35,10 @@ public class RobotManager {
         }
         //TODO: Find best communications option...
 
-        robotCommunicator = new DongleBLE(this);
+        robotCommunicator = new DongleBLE();
         if (!robotCommunicator.isRunning()) {
             robotCommunicator.kill();
-            robotCommunicator = new WinBLE(this);
+            robotCommunicator = new WinBLE();
         }
 
         if (shouldScanWhenReady) {
