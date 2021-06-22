@@ -45,6 +45,7 @@ public class FrontendServer {
 
     public void updateBleStatus(boolean isAvailable, boolean isOn) {
         if(isAvailable && !isOn) {
+            availableRobots.clear();
             sendToGUI("bleDisabled");
         }
 
@@ -177,7 +178,7 @@ public class FrontendServer {
                         boolean local = json.getMember("online").toString().equals("false");
                         String url;
                         if (local) {
-                            url = "http://127.0.0.1:30061/snap/snap.html#open:/snap/snapProjects/" + projectName + ".xml&editMode&noRun&lang=" + lang;
+                            url = "http://127.0.0.1:30061/snap.html#open:/snapProjects/" + projectName + ".xml&editMode&noRun&lang=" + lang;
                         } else {
                             url = "https://snap.berkeley.edu/snapsource/snap.html#present:Username=birdbraintech&ProjectName=" + projectName + "&editMode&noRun&lang=" + lang;
                         }

@@ -53,7 +53,10 @@ public class BGAPI implements BGAPITransportListener {
     }
 
     public void serialError() {
-
+		Iterator i = listeners.iterator();
+		while(i.hasNext()) {
+			((BGAPIListener)(i.next())).serialError();
+		}
 	}
 
     public void packetSent(BGAPIPacket packet) {}

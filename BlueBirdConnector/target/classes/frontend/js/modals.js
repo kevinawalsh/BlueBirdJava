@@ -56,6 +56,10 @@ function launchNativeMacOSBLEvideo() {
     launchVideo("NativeMacBLEon.mp4");
 }
 
+function launchPlugInDongleVideo() {
+    launchVideo("Plug_in_Dongle.mp4")
+}
+
  /**
   * getDeviceVideo - Get the correct calibration video for the given device
   *
@@ -135,6 +139,7 @@ function launchVideo(videoName) {
             animation.appendChild(status);
             break;
         case "NativeMacBLEon.mp4":
+        case "Plug_in_Dongle.mp4":
             sendMessageToBackend(msgTypes.CONSOLE_LOG, {
               consoleLog: "launching native mac video"
             })

@@ -93,8 +93,6 @@ public class BLED112 {
         if (osName.contains("Win")) {
             for (int i = 0; i < commPorts.length; i++) {
                 if (commPorts[i].getDescriptivePortName().contains("Bluegiga")) {
-                    System.out.println("Port found: " + commPorts[i].getDescriptivePortName());
-                    //return commPorts[i].getSystemPortName();
                     return commPorts[i];
                 }
             }
@@ -145,7 +143,7 @@ public class BLED112 {
     		
             //CommPortIdentifier portIdentifier = CommPortIdentifier.getPortIdentifier(portName);
             //SerialPort port = SerialPort.getCommPort(portName);
-            System.out.println("Connecting to " + port.getDescriptivePortName());
+            //System.out.println("Connecting to " + port.getDescriptivePortName());
 
             /*if (portIdentifier.isCurrentlyOwned()) {
                 System.err.println("Error: Port " + portName + " is currently in use");

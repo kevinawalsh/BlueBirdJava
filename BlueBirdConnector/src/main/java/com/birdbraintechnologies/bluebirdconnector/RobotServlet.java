@@ -94,7 +94,7 @@ public class RobotServlet extends HttpServlet {
                 Thread.sleep(http_delay);
                 LOG.debug("http_delay = {}", http_delay);
             } catch (InterruptedException e) {
-                // TODO Auto-generated catch block
+                LOG.error("doGet sleep interrupted: {}", e.getMessage());
                 e.printStackTrace();
             }
 

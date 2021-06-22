@@ -99,6 +99,7 @@ CallbackManager.bleDisabled = function() {
   $.connectedDevListRefresh();
   //TODO: windows video
   //launchNativeMacOSBLEvideo();
+  launchPlugInDongleVideo();
 }
 
 /**

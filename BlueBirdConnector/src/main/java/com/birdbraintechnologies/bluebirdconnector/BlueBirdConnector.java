@@ -117,7 +117,6 @@ public class BlueBirdConnector extends Application{
 
                 URL indexUrl = this.getClass().getResource("/frontend/index.html");
                 LOG.debug("resource url " + indexUrl);
-                LOG.debug("resource url " + indexUrl.toString());
                 webView.getEngine().load(indexUrl.toString());
 
                 stage.setTitle("Bluebird Connector");
@@ -139,11 +138,12 @@ public class BlueBirdConnector extends Application{
     }
 
     public void startHttpServer() {
+
         webServerThread = new Thread() {
             public Server server;
             @Override
             public void run() {
-                Thread thisThread = Thread.currentThread();
+                //Thread thisThread = Thread.currentThread();
                 try {
                     LOG.info("Starting Web Server");
                     server = new Server();
@@ -182,8 +182,8 @@ public class BlueBirdConnector extends Application{
                     ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
                     context.setContextPath("/");
                     //context.setResourceBase(".");
-                    URL snapUrl = this.getClass().getResource("Snap-6.1.4/");
-                    LOG.debug("snapURL: {}", snapUrl.toString());
+                    URL snapUrl = this.getClass().getResource("/Snap-6.1.4");
+                    LOG.debug("snapURL: {}", snapUrl);
                     context.setResourceBase(snapUrl.toString());
 
                     FilterHolder filterHolder = new FilterHolder(CrossOriginFilter.class);
@@ -253,7 +253,7 @@ public class BlueBirdConnector extends Application{
                         LOG.info("Web Server started on ports 30061 and 22179");
                     }
                 } catch (Exception e) {
-                    System.out.println(e.toString());
+                    LOG.error("startHTTPServer exception: ", e);
                 }
             }
 
