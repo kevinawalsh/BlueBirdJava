@@ -4,6 +4,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Hashtable;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class RobotManager {
 
@@ -33,8 +35,9 @@ public class RobotManager {
             LOG.error("Tried to set up communicator while one is already running");
             return;
         }
-        //TODO: Find best communications option...
 
+        LOG.info("Attempting to set up bluetooth communications.");
+        //TODO: Find best communications option...
         robotCommunicator = new DongleBLE();
         if (!robotCommunicator.isRunning()) {
             robotCommunicator.kill();
@@ -44,10 +47,25 @@ public class RobotManager {
         if (shouldScanWhenReady) {
             startDiscovery();
         }
+
+        if (!robotCommunicator.isRunning()) {
+            Timer timer = new Timer();
+            timer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    LOG.debug("automatically calling setUpRobotCommunicator...");
+                    setUpRobotCommunicator();
+                }
+            }, 2000);
+        }
     }
     public void updateCommunicatorStatus(boolean connected) {
+        LOG.debug("updateCommunicatorStatus {}", connected);
         if (!connected) {
+            if (robotCommunicator != null) { robotCommunicator.kill(); }
             robotCommunicator = null;
+            FrontendServer.getSharedInstance().updateGUIScanStatus(false);
+            FrontendServer.getSharedInstance().updateBleStatus(true, false);
             setUpRobotCommunicator();
         }
     }

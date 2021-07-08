@@ -21,11 +21,11 @@ public class WinBLE implements RobotCommunicator {
 
     private RobotManager robotManager = RobotManager.getSharedInstance();
     private FrontendServer frontendServer = FrontendServer.getSharedInstance();
-    private long notificationStartTime; //TODO: remove?
+    //private long notificationStartTime; //TODO: remove?
     //private boolean deviceConnecting;
     private Deque<String> connectionQueue = new ArrayDeque<String>();
 
-    private final ProcessBuilder processBuilder = new ProcessBuilder();
+    private final ProcessBuilder processBuilder;
     private Process process;
     private BufferedReader notificationPipe;
     private BufferedWriter send;
@@ -34,8 +34,7 @@ public class WinBLE implements RobotCommunicator {
     //boolean deviceConnecting;
     String deviceConnecting;
 
-    //private static final int DATA_PACKET_SIZE = 14;
-    //byte [] incomingDataPacket = new byte[DATA_PACKET_SIZE];
+    private boolean bleIsOn = true;
 
     public WinBLE() {
         //super(manager);
@@ -45,6 +44,7 @@ public class WinBLE implements RobotCommunicator {
         String userDir = System.getProperty("user.dir");
         LOG.info("Working dir: {}", userDir);
 
+        processBuilder = new ProcessBuilder();
         processBuilder.command(userDir + "\\BlueBirdWindowsCL.exe");
         processBuilder.redirectErrorStream(true);
         processBuilder.redirectOutput(ProcessBuilder.Redirect.PIPE); // Manage IO streams
@@ -67,9 +67,13 @@ public class WinBLE implements RobotCommunicator {
 
                     LOG.info("-------------------- Output of notification pipe: -------------------------");
                     notificationPipe = new BufferedReader(new InputStreamReader(process.getInputStream()));
-                    notificationPipe.lines().forEach(line -> blePacketReceived(line));
+                    try {
+                        notificationPipe.lines().forEach(line -> blePacketReceived(line));
+                    } catch (Exception e) {
+                        LOG.error("Failed to read from WinBLE. Exception: " + e.getMessage());
+                    }
 
-                    LOG.error("!!! NativeBLE Notification Receive thread quit !!!");
+                    LOG.info("WinBLE notification thread is shutting down.");
                 }
             };
             notificationThread.start();
@@ -81,7 +85,7 @@ public class WinBLE implements RobotCommunicator {
     }
 
     public boolean isRunning() {
-        return (process != null && process.isAlive());
+        return (process != null && process.isAlive() && bleIsOn);
     }
 
     public void startDiscovery(){
@@ -132,26 +136,29 @@ public class WinBLE implements RobotCommunicator {
             writeBLE("quit\n");
             Thread.sleep(1000); //Give the process a chance to quit normally
         } catch (InterruptedException e) {
+            LOG.error("sleep interrupted: {}", e.getMessage());
             e.printStackTrace();
         }
 
         if (process.isAlive()) { process.destroy(); }
 
         try {
-            LOG.info("killNativeBLEDriver(): closing IO streams...");
+            LOG.info("kill(): closing IO streams...");
             notificationPipe.close();
             send.close();
+        } catch (IOException e) {
+            LOG.error("kill(): Exception closing IO streams {}", stackTraceToString(e));
         }
-        catch (IOException e) {
-            LOG.error("killNativeBLEDriver(): Exception closing IO streams {}", stackTraceToString(e));
-        }
+
+        LOG.debug("kill(): everything is closed");
     }
 
     // Receives communications from the BlueBirdNative driver
     private void blePacketReceived(String packetData){
-        long notification_ms = System.currentTimeMillis() - notificationStartTime;
+        LOG.debug("PACKET: " + packetData);
+        //long notification_ms = System.currentTimeMillis() - notificationStartTime;
         //LOG.debug("Time since last notification: {} ms", notification_ms);
-        notificationStartTime = System.currentTimeMillis();  // reset timer to now for next iteration
+        //notificationStartTime = System.currentTimeMillis();  // reset timer to now for next iteration
         try {
             //Parse JSON
             JSONObject root = new JSONObject(packetData);
@@ -186,8 +193,11 @@ public class WinBLE implements RobotCommunicator {
                     String bleStatus = root.getString("status");
                     LOG.info("blePacketReceived(): bluetoothStatus: {}", bleStatus);
                     boolean isAvailable = !bleStatus.equals("unavailable");
-                    boolean isOn = bleStatus.equals("on");
-                    FrontendServer.getSharedInstance().updateBleStatus(isAvailable, isOn);
+                    bleIsOn = bleStatus.equals("on");
+                    FrontendServer.getSharedInstance().updateBleStatus(isAvailable, bleIsOn);
+                    if (!bleIsOn) {
+                        robotManager.updateCommunicatorStatus(false);
+                    }
                     break;
                 case  "connection" :
                     String status = root.getString("status");

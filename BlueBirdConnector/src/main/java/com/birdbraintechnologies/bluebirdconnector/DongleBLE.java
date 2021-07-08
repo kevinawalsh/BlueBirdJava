@@ -20,8 +20,8 @@ public class DongleBLE extends BGAPIDefaultListener implements RobotCommunicator
 
     static final Logger LOG = LoggerFactory.getLogger(DongleBLE.class);
 
-    private RobotManager robotManager = RobotManager.getSharedInstance();
-    private FrontendServer frontendServer = FrontendServer.getSharedInstance();
+    private final RobotManager robotManager = RobotManager.getSharedInstance();
+    private final FrontendServer frontendServer = FrontendServer.getSharedInstance();
     private long notificationStartTime; //TODO: remove?
     //private boolean deviceConnecting;
     private Deque<String> connectionQueue = new ArrayDeque<String>();
@@ -41,24 +41,18 @@ public class DongleBLE extends BGAPIDefaultListener implements RobotCommunicator
     //List of discovered devices
     protected BLEDeviceList devList = new BLEDeviceList();
     //List of supported device types
-    //List<String> deviceList;
     List<String> supportedRobotTypes;
 
-    static CharsetEncoder asciiEncoder =
-            Charset.forName("US-ASCII").newEncoder(); // or "ISO-8859-1" for ISO Latin 1
-
     //Connection Parameters
-    protected  int interval_min = 100;
-    protected  int interval_max = 120;
-    protected  int latency = 900;
-    protected  int timeout = 0;
+    protected final int interval_min;
+    protected final int interval_max;
+    protected final int latency;
+    protected final int timeout;
+    protected final int scan_interval;
+    protected final int scan_window;
+    protected final int active;
 
-    protected  int scan_interval = 500;
-    protected  int scan_window = 500;
-    protected  int active = 1;
-
-    protected int addr_type = 1;
-
+    protected final int addr_type = 1;
 
     //Synchronized Read support
     private static final class ReadLock { }
@@ -91,8 +85,6 @@ public class DongleBLE extends BGAPIDefaultListener implements RobotCommunicator
     private Hashtable<String, Integer> robotIndexes = new Hashtable<>();
 
     public DongleBLE() {
-        //super(manager);
-
         //Initialize characteristic discovery table
         for (int i = 0; i < characteristicDiscover.length; i++)
             characteristicDiscover[i] = false;
@@ -105,10 +97,9 @@ public class DongleBLE extends BGAPIDefaultListener implements RobotCommunicator
         scan_interval=500;
         scan_window=  250;
         active =      1;
-        //supportedRobotTypes = new ArrayList<String>(Arrays.asList("BBC micro:bit,MB,BB,FN".split(",")));
         supportedRobotTypes = new ArrayList<String>(List.of("MB","BB","FN"));
 
-        if (supportedRobotTypes!=null){
+        /*if (supportedRobotTypes!=null){
             try {
                 LOG.info("\n==> Supported Devices");
                 Iterator<String> deviceListIterator = supportedRobotTypes.iterator();
@@ -124,7 +115,7 @@ public class DongleBLE extends BGAPIDefaultListener implements RobotCommunicator
             }
         } else
             System.out.println ("ERROR: Could not load device list from properties file!!");
-
+*/
         startBLEDongle();
     }
 
@@ -140,22 +131,21 @@ public class DongleBLE extends BGAPIDefaultListener implements RobotCommunicator
         bledConnecting = devList.getFromName(name);
         if (bledConnecting != null) {
             LOG.info("Do_Connect_address: Device found");
-            //deviceConnecting = true;
+            bgapi.send_gap_connect_direct(BDAddr.fromString(bledConnecting.getAddress()), addr_type, interval_min, interval_max, latency,timeout);
         }else {
             LOG.error("Device " + name + " NOT FOUND");
-            //deviceConnecting = false;
+            //TODO: Let the robot manager know about the failure?
         }
-
-        bgapi.send_gap_connect_direct(BDAddr.fromString(bledConnecting.getAddress()), addr_type, interval_min, interval_max, latency,timeout);
     }
 
     @Override
-    public void requestDisconnect(String address) {
-        Integer index = robotIndexes.get(address);
+    public void requestDisconnect(String name) {
+        Integer index = robotIndexes.get(name);
         if (index != null) {
             bgapi.send_connection_disconnect(index);
         } else {
-            LOG.error("Request to disconnect " + address + ". Robot not found.");
+            LOG.error("Request to disconnect " + name + ". Robot not found.");
+            //TODO: Let the robot manager know about the failure?
         }
     }
 
@@ -231,7 +221,6 @@ public class DongleBLE extends BGAPIDefaultListener implements RobotCommunicator
     public void kill() {
         if (bgapi != null) {
             bgapi.removeListener(this);
-            //bgapi.getLowLevelDriver().removeListener(logger);
             LOG.info("BLE: Reset BLED112 Dongle");
             bgapi.send_system_reset(0);
             bgapi.disconnect();
@@ -254,7 +243,6 @@ public class DongleBLE extends BGAPIDefaultListener implements RobotCommunicator
             }
             finally {
                 LOG.info("Closing port");
-                //port.close();
                 port.closePort();
                 LOG.info("Port closed");
             }
@@ -268,7 +256,6 @@ public class DongleBLE extends BGAPIDefaultListener implements RobotCommunicator
 
     //Send command to specified device
     private void sendCommand(byte[] command, int connection) {
-        //int attHandle = getAttHandleStr(connection, HB_WRITE_SVC_UUID, 0);
         int attHandle = connectedDevices[connection].getTxHandle();
         LOG.debug("Writing to connection {} using handle {}", connection, attHandle);
         sendAsyncCommandWithHandle(command, connection, attHandle);
@@ -291,7 +278,6 @@ public class DongleBLE extends BGAPIDefaultListener implements RobotCommunicator
         //Async for speed
     }
 
-    //private void sendNotificationSetup(int connection, boolean enable) {
     private void sendNotificationSetup(BLEDevice robot, int connection, boolean enable) {
         try {
             byte op;
@@ -319,12 +305,6 @@ public class DongleBLE extends BGAPIDefaultListener implements RobotCommunicator
             //Write hummingbird specific enable packet
             if (enable) {
                 Thread.sleep(sleepTime);
-                //we will do the following in sethummingbirdnotifications
-                //attHandle = getAttHandleStr(connection, HB_WRITE_SVC_UUID,  0);
-                //data[0] = 0x62;
-                //data[1] = 0x67;
-                //LOG.info("Channel {}: Write to Att Handle Sync 0x{}, payload: {}", connection,  Integer.toHexString(attHandle), bytesToString(data));
-                //doWriteHandle((byte)connection, attHandle, data);
 
                 //Send a get firmware command to determine which type of microbit this is.
                 byte[] getFirmwareCmd = new byte[] { (byte)0xCF };
@@ -350,8 +330,7 @@ public class DongleBLE extends BGAPIDefaultListener implements RobotCommunicator
     }
 
     /**
-     * Proceedure for starting up a ble dongle. Called from within connect() which
-     * is called within the WaitForConnection thread.
+     * Proceedure for starting up a ble dongle.
      * @return
      */
     private boolean startBLEDongle () {
@@ -361,7 +340,6 @@ public class DongleBLE extends BGAPIDefaultListener implements RobotCommunicator
         //TODO: make sure another instance isn't already running?
 
         LOG.debug("disconnection complete, starting bluetooth dongle connection attempt");
-        //String blueGigaPort = BLED112.selectSerialPort();//BLED112.selectSerialPort(true);
         SerialPort blueGigaPort = BLED112.selectSerialPort();
         if (blueGigaPort!=null){
             port = BLED112.connectSerial(blueGigaPort);
@@ -389,7 +367,6 @@ public class DongleBLE extends BGAPIDefaultListener implements RobotCommunicator
 
         if (port != null) {
             try {
-                //System.out.println("Connected on " + port);
                 LOG.info("Connected on {}", port);
                 port.setComPortTimeouts(SerialPort.TIMEOUT_READ_SEMI_BLOCKING, 0, 0);
                 BGAPITransport bgapiTransport = new BGAPITransport(port.getInputStream(), port.getOutputStream());
@@ -896,19 +873,7 @@ public class DongleBLE extends BGAPIDefaultListener implements RobotCommunicator
                 e.printStackTrace();
             }
 
-            // The incoming notification triggers the  SetAll write back to the device
-            //if ((!blueBirdDriver.set_all_timer) && (blueBirdDriver.observedNotificationInterval[connection] > 2))
-            //if (blueBirdDriver.observedNotificationInterval[connection] > 2)
-            //    blueBirdDriver.sendSetAllConnection(connection);
-
-            // Update GUI, the next ping timer will send status
-            //blueBirdDriver.updateDongleConnected(true); //TODO: ?
-            //blueBirdDriver.dataSending = true;
-
-            //Snap! HTTP support  just copy the data into the global notificationData array
-            //blueBirdDriver.updateNotificationData(connection, value);
-            //listener.receiveNotification(connection, value);
-            LOG.debug("Receive notification for {} with value {}.", connection, bytesToString(value));
+            //LOG.debug("Receive notification for {} with value {}.", connection, bytesToString(value));
             BLEDevice robot = connectedDevices[connection];
             if (robot != null) {
                 if (value.length < 10 && value.length > 3 && robot.getMicrobitVersion() == 0) {
@@ -1072,6 +1037,9 @@ public class DongleBLE extends BGAPIDefaultListener implements RobotCommunicator
 
     public void serialError() {
         LOG.info("Serial Error. Dongle disconnected.");
+        bgapi.disconnect();
+        bgapi = null;
+        this.kill();
         robotManager.updateCommunicatorStatus(false);
     }
     //******** end BGAPIListener methods ********//
