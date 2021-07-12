@@ -4,13 +4,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.net.URL;
 import java.util.ArrayDeque;
 import java.util.Base64;
 import java.util.Deque;
 
-import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import static com.birdbraintechnologies.bluebirdconnector.Utilities.stackTraceToString;
@@ -18,6 +15,9 @@ import static com.birdbraintechnologies.bluebirdconnector.Utilities.stackTraceTo
 public class WinBLE implements RobotCommunicator {
 
     static final Logger LOG = LoggerFactory.getLogger(WinBLE.class);
+
+    private static String START_SCAN = "startScan\n";
+    private static String STOP_SCAN = "stopScan\n";
 
     private RobotManager robotManager = RobotManager.getSharedInstance();
     private FrontendServer frontendServer = FrontendServer.getSharedInstance();
@@ -68,9 +68,10 @@ public class WinBLE implements RobotCommunicator {
                     LOG.info("-------------------- Output of notification pipe: -------------------------");
                     notificationPipe = new BufferedReader(new InputStreamReader(process.getInputStream()));
                     try {
-                        notificationPipe.lines().forEach(line -> blePacketReceived(line));
+                        notificationPipe.lines().forEach(line -> new Thread(() -> blePacketReceived(line)).start());
                     } catch (Exception e) {
                         LOG.error("Failed to read from WinBLE. Exception: " + e.getMessage());
+                        new Thread(() -> kill()).start();
                     }
 
                     LOG.info("WinBLE notification thread is shutting down.");
@@ -82,6 +83,14 @@ public class WinBLE implements RobotCommunicator {
         }
 
         LOG.info("WinBLE Process started");
+
+        writeBLE(START_SCAN);
+        try {
+            Thread.sleep(500);
+        } catch (Exception e) {
+            LOG.error("Sleep exception: {}; {}", e.getMessage(), stackTraceToString(e));
+        }
+        writeBLE(STOP_SCAN);
     }
 
     public boolean isRunning() {
@@ -89,18 +98,12 @@ public class WinBLE implements RobotCommunicator {
     }
 
     public void startDiscovery(){
-        // Assemble the command.
-        String command = "startScan" + "\n";
-        LOG.info("startDiscovery command: {}", command);
-        writeBLE(command);
+        writeBLE(START_SCAN);
         frontendServer.updateGUIScanStatus(true);
     }
 
     public void stopDiscovery(){
-        // Assemble the command.
-        String command = "stopScan\n";
-        LOG.info("stopDiscovery command: {}", command);
-        writeBLE(command);
+        writeBLE(STOP_SCAN);
         frontendServer.updateGUIScanStatus(false);
     }
 
@@ -115,6 +118,10 @@ public class WinBLE implements RobotCommunicator {
     }
 
     private void writeBLE(String str){
+        if (send == null) {
+            LOG.debug("writeBLE: send is null. Cannot send '{}'.", str);
+            return;
+        }
         //LOG.debug("writeBLE: writing: {}", str);
         try {
             send.write(str);
@@ -136,19 +143,25 @@ public class WinBLE implements RobotCommunicator {
             writeBLE("quit\n");
             Thread.sleep(1000); //Give the process a chance to quit normally
         } catch (InterruptedException e) {
-            LOG.error("sleep interrupted: {}", e.getMessage());
-            e.printStackTrace();
+            LOG.error("sleep interrupted: {} - {}", e.getMessage(), stackTraceToString(e));
         }
 
         if (process.isAlive()) { process.destroy(); }
 
         try {
             LOG.info("kill(): closing IO streams...");
-            notificationPipe.close();
-            send.close();
+            if (notificationPipe != null) {
+                notificationPipe.close();
+                notificationPipe = null;
+            }
+            if (send != null) {
+                send.close();
+                send = null;
+            }
         } catch (IOException e) {
             LOG.error("kill(): Exception closing IO streams {}", stackTraceToString(e));
         }
+
 
         LOG.debug("kill(): everything is closed");
     }

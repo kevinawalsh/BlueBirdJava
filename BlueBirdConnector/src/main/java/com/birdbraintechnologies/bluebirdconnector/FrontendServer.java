@@ -23,6 +23,7 @@ public class FrontendServer {
     private RobotManager robotManager = RobotManager.getSharedInstance();
     private JSObject callbackManager;
     private Hashtable<String, String> availableRobots;
+    private boolean autoconnectRequested = false;
 
     private FrontendServer(){
         availableRobots = new Hashtable<>();
@@ -55,6 +56,7 @@ public class FrontendServer {
 
     public void updateGUIScanStatus(boolean scanning) {
         if (scanning) {
+            autoconnectRequested = false;
             sendToGUI("scanStarted");
         } else {
             sendToGUI("scanEnded");
@@ -67,7 +69,7 @@ public class FrontendServer {
     public void updateGUIConnection(Robot robot, int index) {
         //deviceDidConnect = function(address, name, fancyName, devLetter, hasV2) {
         if (robot.isConnected()) {
-            String devLetter = Character.toString((char)(index + 65));
+            String devLetter = Utilities.indexToDevLetter(index);
             String[] args = new String[] {robot.name, robot.name, robot.fancyName, devLetter, String.valueOf(robot.hasV2) };
             sendToGUI("deviceDidConnect", args);
         } else {
@@ -77,6 +79,10 @@ public class FrontendServer {
     }
 
     public void receiveScanResponse(String name, JSONObject discoveryInfo){
+        if (robotManager.autoConnect && !autoconnectRequested) {
+            autoconnectRequested = true;
+            requestConnection(name);
+        }
         discoveryInfo.put("fancyName", FancyNames.getDeviceFancyName(name));
         //Remove first 2 characters so that the name can change while advertising...
         availableRobots.put(name.substring(2), discoveryInfo.toString());
@@ -103,12 +109,23 @@ public class FrontendServer {
         sendToGUI("deviceBatteryUpdate", args);
     }
 
+    public void setGuiTts(boolean tts) {
+        LOG.debug("setting gui tts to " + tts);
+        sendToGUI("setTTS", tts);
+    }
+
     private void sendToGUI(String methodName, Object... args) {
         Platform.runLater(() -> {
             callbackManager.call(methodName, args);
         });
     }
 
+    private void requestConnection(String nameToConnect) {
+        LOG.debug("Requesting connection to " + nameToConnect);
+        availableRobots.remove(nameToConnect.substring(2));
+        updateGuiDeviceList();
+        robotManager.connectToRobot(nameToConnect);
+    }
 
     public void handleMessage(JSObject json) {
 
@@ -156,10 +173,7 @@ public class FrontendServer {
                         break;
                     case "connect":
                         String nameToConnect = json.getMember("name").toString();
-                        LOG.debug("Requesting connection to " + nameToConnect);
-                        availableRobots.remove(nameToConnect.substring(2));
-                        updateGuiDeviceList();
-                        robotManager.connectToRobot(nameToConnect);
+                        requestConnection(nameToConnect);
                         //mDict.TryGetValue("address", out address);
                         //MainPage.Current.RobotManager.ConnectToRobot(addressToConnect);
                         break;
@@ -189,6 +203,10 @@ public class FrontendServer {
                         LOG.debug("UNHANDLED COMMAND: '" + command + "'.");
                         break;
                 }
+                break;
+            case "tts":
+                String message = json.getMember("say").toString();
+                RobotManager.getSharedInstance().tts.say(message);
                 break;
             default:
                 LOG.debug("Message of type '" + type + "' not implemented. ");

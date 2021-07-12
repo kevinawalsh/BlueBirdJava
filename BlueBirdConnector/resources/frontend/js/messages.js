@@ -19,7 +19,20 @@ const msgTypes = {
   CONSOLE_LOG: "console log",
   ERROR: "error",
   DOCUMENT_STATUS: "document status",
-  COMMAND: "command"
+  COMMAND: "command",
+  TTS: "tts"
+}
+
+function sendConsoleLog(message) {
+    sendMessageToBackend(msgTypes.CONSOLE_LOG, {
+        consoleLog: message
+    })
+}
+function tts(message) {
+    if (ttsDisabled) { return; }
+    sendMessageToBackend(msgTypes.TTS, {
+        say: message
+    })
 }
 
 /**
@@ -61,6 +74,10 @@ CallbackManager = {}
 
 CallbackManager.setTranslationTable = function(language) {
     setLanguage(language);
+}
+CallbackManager.setTTS = function(enable) {
+    sendConsoleLog("setTTS: " + enable + " is a " + (typeof enable))
+    ttsDisabled = !enable
 }
 
 /**

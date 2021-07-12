@@ -4,6 +4,7 @@ var scanDeviceList = [];
 //Table to use for translations
 var translationTable = null;
 var language = "en";
+var ttsDisabled = true;
 
 //HTML code to string conversion tool:  http://pojo.sodhanalibrary.com/string.html
 var connectButton =
@@ -98,11 +99,13 @@ $.scanListRefresh = function() {
   //Loop through and populate row items
   $.each(scanDeviceList, function(i, item) {
     var name = (item.fancyName == null ? item.name : item.fancyName);
+    var ttsName = (item.fancyName == null ? item.name : item.fancyName.substring(0, item.fancyName.lastIndexOf(" ")));
+    var ttsContent = "connect to " + ttsName
     var deviceImage = getDeviceImage(item.name);
     var btn = (connectedDeviceList.length < 3 ? connectButton : "");
 
     var el = $(
-      "<div class=\"row robot-item\"><a href=\"#\"> " +
+      "<div class=\"row robot-item\" onmouseenter=\"tts(\'" + ttsContent + "\')\"><a href=\"#\"> " +
       "<div class=\"row robot-item\">" +
       "<div class=\"col-xs-2 img\"><img src=\"img/" + deviceImage + "\" alt=\"Bit\" /></div>" +
       "<div class=\"col-xs-8 name\">" + name + "</div>" +
@@ -189,11 +192,14 @@ $.connectedDevListRefresh = function() {
     var devLetter = item.devLetter;
     var deviceImage = getDeviceImage(deviceName);
 
+    var ttsName = (item.deviceFancyName == null ? item.deviceName : item.deviceFancyName.substring(0, item.deviceFancyName.lastIndexOf(" ")));
+    var ttsCalibrate = "calibrate " + ttsName
+    var ttsDisconnect = "disconnect " + ttsName
 
     var el = $(
       "             <div class=\"row robot-item\">" +
       "               <div class=\"col-xs-2 img\">" + devLetter + " <img src=\"img/" + deviceImage + "\" alt=\"Hummingbird Bit\" /></div>" +
-      "               <div class=\"col-xs-6 name\">" + name + "</div>" +
+      "               <div class=\"col-xs-6 name\" onmouseenter=\"tts(\'" + ttsName + "\')\">" + name + "</div>" +
       "               <div class=\"col-xs-4 buttons\">" +
 
       //Battery for Hummingbits and Finches only
@@ -201,14 +207,14 @@ $.connectedDevListRefresh = function() {
       "                   <span style=\"display:inline-block\" class=\"button button-battery button-battery-" + devLetter + " fa-stack fa-2x\"><i class=\"fas /*fa-battery-full fa-battery-half*/ /*fa-battery-quarter*/ fa-stack-2x\"></i></span> " +
 
       // Calibration button
-      "                   <a class=\"button\" href=\"#\" onclick=\"return launchCalibrate(\'" + devLetter + "\', \'" + deviceName + "\', \'" + item.hasV2 + "\');\"><span class=\"button-calibrate fa-stack fa-2x\">" +
+      "                   <a class=\"button\" href=\"#\" onmouseenter=\"tts(\'" + ttsCalibrate + "\')\" onclick=\"return launchCalibrate(\'" + devLetter + "\', \'" + deviceName + "\', \'" + item.hasV2 + "\');\"><span class=\"button-calibrate fa-stack fa-2x\">" +
       "                     <i class=\"fas fa-square fa-stack-2x\"></i>" +
       "                     <i class=\"fas fa-compass fa-stack-1x fa-inverse\"></i>" +
       "                   </span></a>" +
       "                  </div>" +
 
       //Disconnect Button
-      "                 <a class=\"button\" href=\"#\"><span class=\"button-disconnect fa-stack fa-2x\">" +
+      "                 <a class=\"button\" href=\"#\" onmouseenter=\"tts(\'" + ttsDisconnect + "\')\"><span class=\"button-disconnect fa-stack fa-2x\">" +
       "                   <i class=\"fas fa-circle fa-stack-2x\"></i>" +
       "                   <i class=\"fas fa-minus fa-stack-1x fa-inverse\"></i>" +
       "                 </span></a>" +

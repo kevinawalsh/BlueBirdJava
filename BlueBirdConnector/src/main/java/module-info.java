@@ -10,6 +10,7 @@ module BlueBirdConnector {
     requires java.desktop;
     requires com.fazecast.jSerialComm;
     requires java.logging;
+    requires jsapi;
 
     exports com.birdbraintechnologies.bluebirdconnector;
 }

@@ -1,0 +1,11 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="BlueBirdTTS" type="Application" factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="com.birdbraintechnologies.bluebirdconnector.BlueBirdConnector" />
+    <module name="BlueBirdConnector" />
+    <option name="PROGRAM_PARAMETERS" value="tts autoCalib" />
+    <option name="VM_PARAMETERS" value="-cp $Classpath$" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

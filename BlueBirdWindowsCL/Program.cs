@@ -33,7 +33,8 @@ namespace BlueBirdWindowsCL
                     await HandleCommand(userInput);
                 }
             }
-            
+
+            Utilities.WriteOut("quit", new string[] { "reason", "The program has ended" });
         }
 
         static async Task HandleCommand(string userInput)

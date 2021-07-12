@@ -27,10 +27,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 
 import netscape.javascript.JSObject;
 
@@ -39,21 +36,40 @@ import static com.birdbraintechnologies.bluebirdconnector.Utilities.stackTraceTo
 public class BlueBirdConnector extends Application{
 
     static final Logger LOG = LoggerFactory.getLogger(BlueBirdConnector.class);
+    //static final Properties prop = new Properties();
+
     private Double screen_width = 700.0;
     private Double screen_height = 700.0;
+    private boolean useTTS = false;
 
     private FrontendServer frontendServer = FrontendServer.getSharedInstance();
     private RobotManager robotManager = RobotManager.getSharedInstance();
     private Thread webServerThread;
 
 
+
+
     public static void main(String[] args) {
-        LOG.info("Ready to launch");
+        String argString = "no arguments";
+        if (args.length > 0) {
+            argString = "with arguments ";
+            for (int i = 0; i < args.length; i++){
+                argString += args[i] + " ";
+            }
+        }
+
+        LOG.info("Ready to launch - " + argString);
         launch(args);
     }
 
     @Override
     public void start(Stage stage) throws Exception {
+        String[] args = getParameters().getRaw().toArray(new String[0]);
+        if (args.length > 0) {
+            robotManager.setupTTS(args);
+            useTTS = true;
+        }
+
         startGUI(stage);
         startHttpServer();
     }
@@ -76,11 +92,23 @@ public class BlueBirdConnector extends Application{
                         JSObject callbackManager = (JSObject) webEngine.executeScript("getCallbackManager()");
                         LOG.debug("callbackManager = " + callbackManager.toString());
                         frontendServer.setCallbackManager(callbackManager);
+                        frontendServer.setGuiTts(useTTS);
 
-                        String language = Locale.getDefault().getLanguage();
+                        //String language = Locale.getDefault().getLanguage();
+                        String countryCode = System.getProperty("user.country");
+                        String language = System.getProperty("user.language");
+                        // Get Chinese variant. Must end up being either "zh-Hant" or "zh-Hans"
+                        if (language.startsWith("zh")) {
+                            if (countryCode.equals("TW"))
+                                language = "zh-Hant"; // Taiwan: set traditional Chinese
+                            else
+                                language = "zh-Hans"; // Default to simplified chinese for any other variant
+                        }
+                        // Mac representation of Hebrew, convert to "he"
+                        if (language.equals("iw"))
+                            language = "he";
                         frontendServer.setTranslationTable(language);
 
-                        //callbackManager.call("scanStarted");
                         robotManager.startDiscovery();
                     }
                 });
@@ -150,31 +178,12 @@ public class BlueBirdConnector extends Application{
 
                     // HTTPS Configuration
                     HttpConfiguration http_config = new HttpConfiguration();
-                    //http_config.setSecureScheme("https");
-                    //http_config.setSecurePort(22179);
-                    //http_config.setPersistentConnectionsEnabled(true);
 
                     ServerConnector http = new ServerConnector(server,
                             new HttpConnectionFactory(http_config));
                     http.setPort(30061);
                     http.setIdleTimeout(-1);
 
-
-                    /*SslContextFactory sslContextFactory = new SslContextFactory();
-                    File keystoreFile = new File("birdbrain.jks");
-                    sslContextFactory.setKeyStorePath(keystoreFile.getAbsolutePath());
-                    sslContextFactory.setKeyStorePassword("Asdqwe123");
-
-                    HttpConfiguration https = new HttpConfiguration(http_config);
-                    https.addCustomizer(new SecureRequestCustomizer());
-
-                    ServerConnector httpsConnector = new ServerConnector(server,
-                            new SslConnectionFactory(sslContextFactory, HttpVersion.HTTP_1_1.asString()),
-                            new HttpConnectionFactory(https));
-                    httpsConnector.setPort(22179);
-                    httpsConnector.setIdleTimeout(500000);
-
-                    server.setConnectors(new Connector[] {http, httpsConnector });*/
                     server.setConnectors(new Connector[] {http});
 
                     // Setup the basic application "context" for this application at "/"
@@ -196,30 +205,6 @@ public class BlueBirdConnector extends Application{
                     //ServletHolder hummingbird = new ServletHolder("hummingbird", hummingbirdServelet.class);
                     ServletHolder hummingbird = new ServletHolder("hummingbird", RobotServlet.class);
                     context.addServlet(hummingbird, "/hummingbird/*");
-
-                    // Command
-                    /*ServletHolder holderCommand = new ServletHolder("command", commandServlet.class);
-                    context.addServlet(holderCommand, "/command/*");
-
-                    // Websockets
-                    // Add a websocket to a specific path spec
-                    ServletHolder holderEvents = new ServletHolder("scratch", ScratchServlet.class);
-                    context.addServlet(holderEvents, "/scratch/*");
-
-                    ServletHolder holderDev = new ServletHolder("dev", devServlet.class);
-                    context.addServlet(holderDev, "/dev/*");
-
-                    // Add a websocket to a specific path spec
-                    ServletHolder holderControl = new ServletHolder("control", ControlServlet.class);
-                    context.addServlet(holderControl, "/control/*");
-
-                    //From: https://stackoverflow.com/questions/20207477/serving-static-files-from-alternate-path-in-embedded-jetty
-                    // add special pathspec of "/" content mapped to the root dir
-                    ServletHolder holderHome = new ServletHolder("static-home", DefaultServlet.class);
-                    holderHome.setInitParameter("resourceBase","./scratchx");
-                    holderHome.setInitParameter("dirAllowed","true");
-                    holderHome.setInitParameter("pathInfoOnly","true");
-                    context.addServlet(holderHome,"/*");*/
 
                     // Lastly, the default servlet for root content (always needed, to satisfy servlet spec)
                     // It is important that this is last.

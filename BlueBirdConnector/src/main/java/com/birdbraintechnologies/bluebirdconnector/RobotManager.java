@@ -25,15 +25,24 @@ public class RobotManager {
     private RobotCommunicator robotCommunicator;
     private boolean shouldScanWhenReady = false;
 
+    //Text to speech
+    public TextToSpeech tts = null;
+    public boolean autoConnect = false;
+    private boolean autoCalibrate = false;
+
     private RobotManager() {
         Thread managerThread = new Thread(this::setUpRobotCommunicator);
         managerThread.start();
     }
 
     private void setUpRobotCommunicator() {
-        if (robotCommunicator != null && robotCommunicator.isRunning()) {
-            LOG.error("Tried to set up communicator while one is already running");
-            return;
+        if (robotCommunicator != null) {
+            if (robotCommunicator.isRunning()) {
+                LOG.error("Tried to set up communicator while one is already running");
+                return;
+            } else {
+                robotCommunicator.kill();
+            }
         }
 
         LOG.info("Attempting to set up bluetooth communications.");
@@ -53,7 +62,6 @@ public class RobotManager {
             timer.schedule(new TimerTask() {
                 @Override
                 public void run() {
-                    LOG.debug("automatically calling setUpRobotCommunicator...");
                     setUpRobotCommunicator();
                 }
             }, 2000);
@@ -62,8 +70,8 @@ public class RobotManager {
     public void updateCommunicatorStatus(boolean connected) {
         LOG.debug("updateCommunicatorStatus {}", connected);
         if (!connected) {
-            if (robotCommunicator != null) { robotCommunicator.kill(); }
-            robotCommunicator = null;
+            //if (robotCommunicator != null) { robotCommunicator.kill(); }
+            //robotCommunicator = null;
             FrontendServer.getSharedInstance().updateGUIScanStatus(false);
             FrontendServer.getSharedInstance().updateBleStatus(true, false);
             setUpRobotCommunicator();
@@ -76,6 +84,13 @@ public class RobotManager {
         }
         //LOG.debug("returning robotmanager instance...");
         return sharedInstance;
+    }
+
+    public void setupTTS(String[] args) {
+        tts = new TextToSpeech("Starting BlueBird Connector");
+        autoConnect = true;
+        if (args.length > 1) { autoCalibrate = true; }//prop.setProperty("TTS", "autoCalibrate"); }
+
     }
 
     public void startDiscovery(){
@@ -240,6 +255,10 @@ public class RobotManager {
         robot.setConnected(true);
         LOG.debug("receiveConnectionEvent {} {}", robotName, hasV2);
         FrontendServer.getSharedInstance().updateGUIConnection(robot, index);
+
+        if (autoCalibrate) {
+            calibrate(Utilities.indexToDevLetter(index));
+        }
     }
     public void receiveDisconnectionEvent(String robotName, boolean userInitiated) {
         //TODO: autoreconnect if not userinitialted

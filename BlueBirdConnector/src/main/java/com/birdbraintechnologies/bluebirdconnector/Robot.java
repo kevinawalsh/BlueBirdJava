@@ -11,9 +11,11 @@ import static com.birdbraintechnologies.bluebirdconnector.RobotManager.*;
 
 public abstract class Robot {
     static final Logger LOG = LoggerFactory.getLogger(Robot.class);
+    private TextToSpeech tts;
 
     public final String name;
     public final String fancyName;
+    public final String ttsName;
     public final String type;
     private final RobotCommunicator communicator;
     private boolean isConnected;
@@ -73,8 +75,11 @@ public abstract class Robot {
     public Robot(String robotName, RobotCommunicator rc) {
         name = robotName;
         fancyName = FancyNames.getDeviceFancyName(name);
+        ttsName = fancyName.substring(0, fancyName.lastIndexOf(" "));
         type = robotName.substring(0, 2);
         communicator = rc;
+
+        tts = RobotManager.getSharedInstance().tts;
 
         isConnected = false;
         hasV2 = false;
@@ -151,6 +156,11 @@ public abstract class Robot {
     }
 
     public void setConnected(boolean connected) {
+        if (tts != null) {
+            String msg = connected ? " connected" : " disconnected";
+            tts.say(ttsName + msg);
+        }
+
         isConnected = connected;
         if (connected) {
             initializeSetAllChannel();
@@ -164,6 +174,11 @@ public abstract class Robot {
 
     public void startCalibration() {
         sendCommand(CALIBRATE_CMD);
+
+        if (tts != null) {
+            tts.say("Beginning calibration of " + ttsName);
+        }
+
         LOG.debug("setCalibrating");
         Timer timer = new Timer();
         timer.schedule(new TimerTask() {
@@ -377,11 +392,13 @@ public abstract class Robot {
             switch (calibrationStatus) {
                 case 4:
                     LOG.info("Calibration Successful");
+                    if (tts != null) { tts.say("calibration successful"); }
                     isCalibrating = false;
                     FrontendServer.getSharedInstance().showCalibrationResult(true);
                     break;
                 case 8:
                     LOG.info("Calibration Failed");
+                    if (tts != null) { tts.say("calibration failed"); }
                     isCalibrating = false;
                     FrontendServer.getSharedInstance().showCalibrationResult(false);
                     break;
@@ -439,17 +456,15 @@ public abstract class Robot {
         if (!battLevel.equals(currentBattery)) {
             currentBattery = battLevel;
             FrontendServer.getSharedInstance().updateBatteryState(name, battLevel);
+
+            if (tts != null) {
+                tts.say(ttsName + " battery " + battLevel);
+            }
         }
 
 
         //hashtable.put(devLetter, battLevel);
         //LOG.debug("getBatteryData for {}: {} -> {} -> {}", i, battUInt, battData, battLevel);
-
-        /* TODO:
-        if (tts != null && (getConnectionFromDevLetter(devLetter) != -1) && (currentBatteryTable == null || currentBatteryTable.get(devLetter) != battLevel)) {
-            LOG.info("Battery level for device " + devLetter + "(" + i + ") is " + battLevel + "; total connections: " + connectionTable.size());
-            tts.say("Battery level " + battLevel);
-        }*/
     }
 
     public void startPrint (char[] charBuf) {

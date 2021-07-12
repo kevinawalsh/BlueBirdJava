@@ -11,6 +11,9 @@ public final class Utilities {
         e.printStackTrace(pw);
         return sw.toString(); // stack trace as a string
     }
+    public static String indexToDevLetter(int index) {
+        return Character.toString((char)(index + 65));
+    }
     public static String bytesToString(byte[] bytes) {
         StringBuffer result = new StringBuffer();
         result.append("[ ");

@@ -35,5 +35,6 @@
     <orderEntry type="library" name="Maven: org.eclipse.jetty:jetty-util:11.0.3" level="project" />
     <orderEntry type="library" name="Maven: org.slf4j:slf4j-api:1.7.29" level="project" />
     <orderEntry type="library" name="Maven: com.fazecast:jSerialComm:2.7.0" level="project" />
+    <orderEntry type="library" name="tts" level="project" />
   </component>
 </module>

@@ -57,7 +57,9 @@ function launchNativeMacOSBLEvideo() {
 }
 
 function launchPlugInDongleVideo() {
-    launchVideo("Plug_in_Dongle.mp4")
+    if (!document.getElementById("BLE-modal")) {
+        launchVideo("Plug_in_Dongle.mp4")
+    }
 }
 
  /**
@@ -141,9 +143,9 @@ function launchVideo(videoName) {
         case "NativeMacBLEon.mp4":
         case "Plug_in_Dongle.mp4":
             sendMessageToBackend(msgTypes.CONSOLE_LOG, {
-              consoleLog: "launching native mac video"
+              consoleLog: "launching ble video " + videoName
             })
-            section.setAttribute("id", "nativeMacOSBLE-modal");
+            section.setAttribute("id", "BLE-modal");
             icon.setAttribute("class", "fab fa-bluetooth-b");
             span.setAttribute("id", "Connection_Failure");
             span.textContent=" " + translationTable["Connection_Failure"] + " ";
