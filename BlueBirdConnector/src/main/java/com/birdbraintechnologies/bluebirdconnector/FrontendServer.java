@@ -115,6 +115,10 @@ public class FrontendServer {
     }
 
     private void sendToGUI(String methodName, Object... args) {
+        if (callbackManager == null) {
+            LOG.error("Cannot call {}, callback manager not set up.", methodName);
+            return;
+        }
         Platform.runLater(() -> {
             callbackManager.call(methodName, args);
         });

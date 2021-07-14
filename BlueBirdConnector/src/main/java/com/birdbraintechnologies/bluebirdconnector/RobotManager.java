@@ -156,17 +156,6 @@ public class RobotManager {
     }
 
     public void calibrate(String deviceLetter) {
-        /*int index = ((int)deviceLetter.charAt(0) - 65);
-        LOG.debug("Calibrating device {} at index {}", deviceLetter, index);
-        if (index < 0 || index >= selectedRobots.length || selectedRobots[index] == null) {
-            LOG.error("Calibrate: invalid robot selection.");
-            return;
-        }
-
-        Robot robot = selectedRobots[index];
-        robotCommunicator.sendCommand(robot.name, CALIBRATE_CMD);
-        robot.setCalibrating();*/
-
         Robot robot = getConnectedRobot(deviceLetter.charAt(0), "Cannot calibrate.");
         if (robot != null) { robot.startCalibration(); }
     }
@@ -257,7 +246,14 @@ public class RobotManager {
         FrontendServer.getSharedInstance().updateGUIConnection(robot, index);
 
         if (autoCalibrate) {
-            calibrate(Utilities.indexToDevLetter(index));
+            Timer timer = new Timer();
+            timer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    LOG.debug("auto calibrating " + robotName);
+                    calibrate(Utilities.indexToDevLetter(index));
+                }
+            }, 1000);
         }
     }
     public void receiveDisconnectionEvent(String robotName, boolean userInitiated) {

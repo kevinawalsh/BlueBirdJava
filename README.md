@@ -4,6 +4,11 @@ This repo is for the new java version of BlueBird Connector. It consists of 2 pr
 1. [BlueBirdConnector](#bbc)
 2. [BlueBirdWindowsCL](#bbWinCL)
 
+#### Running the application:
+Create a .jar from BlueBirdConnector and an .exe from BlueBirdWindowsCL. Copy both into the same directory and run the following command (modifiying the path for the location of your javafx libraries):
+```
+java -p "C:\Program Files\javafx-sdk-11.0.2\lib" --add-modules javafx.controls,javafx.web -jar BlueBirdConnector.jar
+```
 
 ## <a name="bbc"></a>BlueBirdConnector
 

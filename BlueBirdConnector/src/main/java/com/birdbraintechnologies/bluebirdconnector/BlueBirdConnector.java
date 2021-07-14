@@ -214,7 +214,7 @@ public class BlueBirdConnector extends Application{
 
                     server.setHandler(context);
 
-                    LOG.info("Starting Web Server on ports 30061 and 22179");
+                    LOG.info("Starting Web Server on port 30061");
                     try {
                         server.start();
                     } catch (Exception e) {
@@ -223,7 +223,7 @@ public class BlueBirdConnector extends Application{
                         String message = "Only one instance of the Bluebird Connector can be running at a time.\n"
                                 + "Shut down the currently running instance before starting a new one.\n\n"
                                 + "If you are sure this is the only instance of Bluebird Connector running then "
-                                + "check to see if another application is using port 30061 or 22179";
+                                + "check to see if another application is using port 30061";
                         LOG.error(message);
                         LOG.error("{}", stackTraceToString(e));
 
@@ -235,7 +235,7 @@ public class BlueBirdConnector extends Application{
                             //startGUI(stage);
                             //server.join();
                         }*/
-                        LOG.info("Web Server started on ports 30061 and 22179");
+                        LOG.info("Web Server started on port 30061");
                     }
                 } catch (Exception e) {
                     LOG.error("startHTTPServer exception: ", e);
