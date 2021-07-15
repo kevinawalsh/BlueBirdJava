@@ -15,7 +15,7 @@ BlueBirdWindowsCL/bin/*
 *.zip
 *.tar.gz
 *.rar
-
+*.msi
 
 
 # Sensitive or high-churn files

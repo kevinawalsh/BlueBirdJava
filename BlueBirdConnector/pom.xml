@@ -40,6 +40,13 @@
             <artifactId>json</artifactId>
             <version>20210307</version>
         </dependency>
+        <!-- another json -->
+        <!--<dependency>
+            <groupId>org.glassfish</groupId>
+            <artifactId>javax.json</artifactId>
+            <version>1.1.4</version>
+        </dependency>-->
+
 
         <dependency>
             <groupId>org.eclipse.jetty</groupId>
@@ -63,6 +70,11 @@
             <version>1.7.29</version>
         </dependency>
 
+        <dependency>
+            <groupId>net.sf.sociaal</groupId>
+            <artifactId>freetts</artifactId>
+            <version>1.2.2</version>
+        </dependency>
 
         <!-- https://fazecast.github.io/jSerialComm/ -->
         <dependency>
@@ -102,9 +114,6 @@
                 <version>3.8.1</version>
                 <configuration>
                     <release>${maven.compiler.release}</release>
-                    <compilerArgs>
-                        <arg>--add-exports=javafx.web/com.sun.javafx.webkit=BlueBirdConnector</arg>
-                    </compilerArgs>
                 </configuration>
             </plugin>
             <plugin>
@@ -112,6 +121,8 @@
                 <artifactId>javafx-maven-plugin</artifactId>
                 <version>${javafx.maven.plugin.version}</version>
                 <configuration>
+                    <jlinkImageName>BlueBirdConnector</jlinkImageName>
+                    <launcher>launcher</launcher>
                     <mainClass>com.birdbraintechnologies.bluebirdconnector.BlueBirdConnector</mainClass>
                 </configuration>
             </plugin>

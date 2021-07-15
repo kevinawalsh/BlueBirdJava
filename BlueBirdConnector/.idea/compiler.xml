@@ -15,7 +15,7 @@
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
-      <module name="BlueBirdConnector" options="--add-exports=javafx.web/com.sun.javafx.webkit=BlueBirdConnector" />
+      <module name="BlueBirdConnector" options="" />
     </option>
   </component>
 </project>

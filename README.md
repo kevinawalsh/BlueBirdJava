@@ -7,8 +7,17 @@ This repo is for the new java version of BlueBird Connector. It consists of 2 pr
 #### Running the application:
 Create a .jar from BlueBirdConnector and an .exe from BlueBirdWindowsCL. Copy both into the same directory and run the following command (modifiying the path for the location of your javafx libraries):
 ```
-java -p "C:\Program Files\javafx-sdk-11.0.2\lib" --add-modules javafx.controls,javafx.web -jar BlueBirdConnector.jar
+java -p "C:\Program Files\javafx-sdk-16\lib" --add-modules javafx.controls,javafx.web -jar BlueBirdConnector.jar
 ```
+
+#### Packaging
+
+To create a Windows msi:
+* You will need to have [wix](https://wixtoolset.org/) installed.
+* You will need to download the javafx [jmods](https://gluonhq.com/products/javafx/).
+* In the Package directory, run ```CreateWinMsi.bat```. You will need to edit the variables on the first few lines for your specific situation.
+
+
 
 ## <a name="bbc"></a>BlueBirdConnector
 

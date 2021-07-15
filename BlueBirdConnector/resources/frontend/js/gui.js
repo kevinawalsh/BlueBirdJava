@@ -309,9 +309,9 @@ function setConnectingState(state) {
  * @return {string}            Image file name
  */
 function getDeviceImage(deviceName) {
-  var deviceImage = "img-hummingbird-bit.svg" // default hummingbird image
-  if (deviceName.startsWith("MB")) deviceImage = "img-bit.svg";
-  if (deviceName.startsWith("FN")) deviceImage = "img-finch.svg";
+  var deviceImage = "img-hummingbird-bit.png" // default hummingbird image
+  if (deviceName.startsWith("MB")) deviceImage = "img-bit.png";
+  if (deviceName.startsWith("FN")) deviceImage = "img-finch.png";
   return deviceImage;
 }
 
