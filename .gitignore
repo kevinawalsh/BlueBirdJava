@@ -3,6 +3,9 @@ temp/
 BlueBirdConnector/target/*
 BlueBirdWindowsCL/obj/*
 BlueBirdWindowsCL/bin/*
+Package/BlueBird Connector/*
+Package/BIRDBRAIN.pfx
+Package/command.txt
 
 # Compiled class file
 *.class
