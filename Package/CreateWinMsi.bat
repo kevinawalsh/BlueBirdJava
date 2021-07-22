@@ -47,12 +47,12 @@ copy ..\BlueBirdWindowsCL\bin\Release\BlueBirdWindowsCL.exe "BlueBird Connector\
 copy %SUPPORTDIR%\usbserial.cat "BlueBird Connector\usbserial.cat"
 copy %SUPPORTDIR%\usbserial.inf "BlueBird Connector\usbserial.inf"
 
-::echo Signing BlueBirdConnector.jar, BlueBird Connector.exe, and BlueBirdWindowsCL.exe...
-::jarsigner -storetype pkcs12 -keystore BIRDBRAIN.pfx -storepass %1 "BlueBird Connector\app\BlueBirdConnector.jar" 73cfaf53eaee4153b44e02ca7b2a7e76
-::attrib -r "BlueBird Connector\BlueBird Connector.exe"
-::signtool sign /fd SHA256 /f BIRDBRAIN.pfx /p %1 "BlueBird Connector\BlueBird Connector.exe"
-::attrib +r "BlueBird Connector\BlueBird Connector.exe"
-::signtool sign /fd SHA256 /f BIRDBRAIN.pfx /p %1 "BlueBird Connector\BlueBirdWindowsCL.exe"
+echo Signing BlueBirdConnector.jar, BlueBird Connector.exe, and BlueBirdWindowsCL.exe...
+jarsigner -storetype pkcs12 -keystore BIRDBRAIN.pfx -storepass %1 "BlueBird Connector\app\BlueBirdConnector.jar" 73cfaf53eaee4153b44e02ca7b2a7e76
+attrib -r "BlueBird Connector\BlueBird Connector.exe"
+signtool sign /fd SHA256 /f BIRDBRAIN.pfx /p %1 "BlueBird Connector\BlueBird Connector.exe"
+attrib +r "BlueBird Connector\BlueBird Connector.exe"
+signtool sign /fd SHA256 /f BIRDBRAIN.pfx /p %1 "BlueBird Connector\BlueBirdWindowsCL.exe"
 
 ::goto :eof
 
@@ -75,8 +75,8 @@ jpackage ^
 ::  --temp tempFiles ^
 ::
 
-::echo Signing the .msi...
-::signtool sign /fd SHA256 /f BIRDBRAIN.pfx /p %1 "BlueBird Connector-%ver%.msi"
+echo Signing the .msi...
+signtool sign /fd SHA256 /f BIRDBRAIN.pfx /p %1 "BlueBird Connector-%ver%.msi"
 
 :: Cleanup
 echo Cleaning up...

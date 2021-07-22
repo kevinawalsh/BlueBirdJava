@@ -1,6 +1,7 @@
 *.DS_Store
 temp/
 BlueBirdConnector/target/*
+BlueBirdConnector/out/artifacts/BlueBirdConnector_jar/BlueBirdWindowsCL.exe
 BlueBirdWindowsCL/obj/*
 BlueBirdWindowsCL/bin/*
 Package/BlueBird Connector/*

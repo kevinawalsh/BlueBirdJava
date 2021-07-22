@@ -146,7 +146,7 @@ public class WinBLE implements RobotCommunicator {
             LOG.error("sleep interrupted: {} - {}", e.getMessage(), stackTraceToString(e));
         }
 
-        if (process.isAlive()) { process.destroy(); }
+        if (process != null && process.isAlive()) { process.destroy(); }
 
         try {
             LOG.info("kill(): closing IO streams...");
