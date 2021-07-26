@@ -89,6 +89,7 @@ public class FrontendServer {
         LOG.debug("blePacketReceived():discovery: {} {}", name, discoveryInfo.toString());
 
         updateGuiDeviceList();
+        robotManager.receiveScanResponse(name);
     }
     private void updateGuiDeviceList() {
         LOG.debug("updateGuiDeviceList() availableRobots.values(): " + availableRobots.values());
@@ -124,7 +125,7 @@ public class FrontendServer {
         });
     }
 
-    private void requestConnection(String nameToConnect) {
+    public void requestConnection(String nameToConnect) {
         LOG.debug("Requesting connection to " + nameToConnect);
         availableRobots.remove(nameToConnect.substring(2));
         updateGuiDeviceList();

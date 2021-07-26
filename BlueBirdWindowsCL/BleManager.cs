@@ -113,7 +113,7 @@ namespace BlueBirdWindowsCL
         }
 
         /// <summary>
-        /// Connect to the specific device by name or number, and make this device current
+        /// Connect to the specific device by name 
         /// </summary>
         /// <param name="deviceName"></param>
         /// <returns></returns>
@@ -161,7 +161,8 @@ namespace BlueBirdWindowsCL
             if (robotFound)
             {
                 robot.CloseDevice(userDisconnect);
-                if (userDisconnect)
+                connectedRobots.Remove(name);
+                /*if (userDisconnect)
                 {
                     connectedRobots.Remove(name);
                 }
@@ -169,7 +170,7 @@ namespace BlueBirdWindowsCL
                 {
                     //TODO: Autoreconnect?
                 }
-                //Console.WriteLine("Should be disconnected");
+                //Console.WriteLine("Should be disconnected");*/
             }
             else
             {

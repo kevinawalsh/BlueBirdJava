@@ -38,7 +38,7 @@ public class BlueBirdConnector extends Application{
     static final Logger LOG = LoggerFactory.getLogger(BlueBirdConnector.class);
     //static final Properties prop = new Properties();
 
-    private Double screen_width = 700.0;
+    private Double screen_width = 800.0;
     private Double screen_height = 700.0;
     private boolean useTTS = false;
 

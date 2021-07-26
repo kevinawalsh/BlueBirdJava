@@ -168,7 +168,7 @@ public class WinBLE implements RobotCommunicator {
 
     // Receives communications from the BlueBirdNative driver
     private void blePacketReceived(String packetData){
-        LOG.debug("PACKET: " + packetData);
+        //LOG.debug("PACKET: " + packetData);
         //long notification_ms = System.currentTimeMillis() - notificationStartTime;
         //LOG.debug("Time since last notification: {} ms", notification_ms);
         //notificationStartTime = System.currentTimeMillis();  // reset timer to now for next iteration

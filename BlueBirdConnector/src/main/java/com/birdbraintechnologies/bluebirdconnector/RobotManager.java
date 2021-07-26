@@ -3,9 +3,7 @@ package com.birdbraintechnologies.bluebirdconnector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Hashtable;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 
 public class RobotManager {
 
@@ -20,6 +18,7 @@ public class RobotManager {
     //public Hashtable connectionTable = new Hashtable();
     private Robot[] selectedRobots = new Robot[3]; //Limit to 3 connections at a time.
     private Hashtable<String, Integer> robotIndexes = new Hashtable<>();
+    private Hashtable<String, Boolean> autoreconnectList = new Hashtable<>();
 
     private static RobotManager sharedInstance;
     private RobotCommunicator robotCommunicator;
@@ -113,6 +112,8 @@ public class RobotManager {
 
     public void connectToRobot(String name){
         LOG.debug("connectToRobot {}", name);
+        LOG.debug("currently connected robots: {}, {}, {}", selectedRobots[0], selectedRobots[1], selectedRobots[2]);
+        autoreconnectList.put(name, true);
         stopDiscovery();
         if (robotCommunicator == null || !robotCommunicator.isRunning()) {
             LOG.error("Requesting robot connection while no communicator is running");
@@ -226,8 +227,10 @@ public class RobotManager {
         Robot robot = getRobotByName(robotName);
         if (robot != null) { robot.receiveNotification(bytes); }
     }
-    public void receiveScanResponse(RobotInfo activeDevice) {
-
+    public void receiveScanResponse(String robotName) {
+        if(autoreconnectList.get(robotName) != null) {
+            FrontendServer.getSharedInstance().requestConnection(robotName);
+        }
     }
     public void updateBleStatus(String bleStatus) {
 
@@ -257,19 +260,21 @@ public class RobotManager {
         }
     }
     public void receiveDisconnectionEvent(String robotName, boolean userInitiated) {
-        //TODO: autoreconnect if not userinitialted
-
         Integer index = robotIndexes.get(robotName);
         if (index == null) {
             LOG.error("{} not found in selectedRobots.", robotName);
             return;
         }
         Robot robot = selectedRobots[index];
+        selectedRobots[index] = null;
         robot.setConnected(false);
         if (userInitiated) {
-            selectedRobots[index] = null;
+            autoreconnectList.remove(robotName);
         }
         FrontendServer.getSharedInstance().updateGUIConnection(robot, index);
+        if (!userInitiated){
+            startDiscovery();
+        }
     }
     //The communicator has been unintentionally disconnected
     public void receiveCommDisconnectionEvent() {
