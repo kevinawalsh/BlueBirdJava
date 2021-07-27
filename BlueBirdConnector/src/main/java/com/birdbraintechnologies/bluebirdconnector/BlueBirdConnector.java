@@ -47,8 +47,6 @@ public class BlueBirdConnector extends Application{
     private Thread webServerThread;
 
 
-
-
     public static void main(String[] args) {
         String argString = "no arguments";
         if (args.length > 0) {
@@ -109,7 +107,7 @@ public class BlueBirdConnector extends Application{
                             language = "he";
                         frontendServer.setTranslationTable(language);
 
-                        robotManager.startDiscovery();
+                        //robotManager.startDiscovery();
                     }
                 });
 

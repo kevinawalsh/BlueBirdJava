@@ -24,6 +24,7 @@ public class FrontendServer {
     private JSObject callbackManager;
     private Hashtable<String, String> availableRobots;
     private boolean autoconnectRequested = false;
+    private Queue<Runnable> pendingMessages = new LinkedList<>();
 
     private FrontendServer(){
         availableRobots = new Hashtable<>();
@@ -37,15 +38,21 @@ public class FrontendServer {
     }
 
     public void setCallbackManager(JSObject cbManager) {
+        LOG.debug("Setting callbackManager. There are {} pending messages.", pendingMessages.size());
         callbackManager = cbManager;
+        Runnable update = pendingMessages.poll();
+        while (update != null) {
+            update.run();
+            update = pendingMessages.poll();
+        }
     }
 
     public void setTranslationTable(String language) {
         sendToGUI("setTranslationTable", language);
     }
 
-    public void updateBleStatus(boolean isAvailable, boolean isOn) {
-        if(isAvailable && !isOn) {
+    public void updateBleStatus(boolean isOn) {
+        if(!isOn) {
             availableRobots.clear();
             sendToGUI("bleDisabled");
         }
@@ -118,9 +125,11 @@ public class FrontendServer {
     private void sendToGUI(String methodName, Object... args) {
         if (callbackManager == null) {
             LOG.error("Cannot call {}, callback manager not set up.", methodName);
+            pendingMessages.add(() -> sendToGUI(methodName, args));
             return;
         }
         Platform.runLater(() -> {
+            LOG.debug("Calling callbackManager." + methodName);
             callbackManager.call(methodName, args);
         });
     }

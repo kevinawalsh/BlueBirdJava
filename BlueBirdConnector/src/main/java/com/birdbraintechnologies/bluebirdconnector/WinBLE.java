@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.util.ArrayDeque;
 import java.util.Base64;
+import java.util.Date;
 import java.util.Deque;
 
 import org.json.JSONObject;
@@ -34,7 +35,8 @@ public class WinBLE implements RobotCommunicator {
     //boolean deviceConnecting;
     String deviceConnecting;
 
-    private boolean bleIsOn = true;
+    private boolean setupComplete = false;
+    private boolean bleIsOn = false;
 
     public WinBLE() {
         //super(manager);
@@ -82,15 +84,18 @@ public class WinBLE implements RobotCommunicator {
             LOG.error("startWinBLEProcess() Exception: {} {}", e.toString(), stackTraceToString(e));
         }
 
-        LOG.info("WinBLE Process started");
-
         writeBLE(START_SCAN);
-        try {
-            Thread.sleep(500);
-        } catch (Exception e) {
-            LOG.error("Sleep exception: {}; {}", e.getMessage(), stackTraceToString(e));
+        Long startTime = System.currentTimeMillis();
+        while (!setupComplete && (System.currentTimeMillis() < startTime + 5000)) {
+            try {
+                Thread.sleep(500);
+            } catch (Exception e) {
+                LOG.error("Sleep exception: {}; {}", e.getMessage(), stackTraceToString(e));
+            }
         }
         writeBLE(STOP_SCAN);
+
+        LOG.info("WinBLE Process started");
     }
 
     public boolean isRunning() {
@@ -146,17 +151,23 @@ public class WinBLE implements RobotCommunicator {
             LOG.error("sleep interrupted: {} - {}", e.getMessage(), stackTraceToString(e));
         }
 
-        if (process != null && process.isAlive()) { process.destroy(); }
+        if (process != null) { //&& process.isAlive()) { process.destroy(); }
+            process.destroy();
+            process = null;
+            LOG.debug("process destroyed.");
+        }
 
         try {
             LOG.info("kill(): closing IO streams...");
             if (notificationPipe != null) {
                 notificationPipe.close();
                 notificationPipe = null;
+                LOG.debug("notification pipe closed.");
             }
             if (send != null) {
                 send.close();
                 send = null;
+                LOG.debug("send closed.");
             }
         } catch (IOException e) {
             LOG.error("kill(): Exception closing IO streams {}", stackTraceToString(e));
@@ -207,10 +218,8 @@ public class WinBLE implements RobotCommunicator {
                     LOG.info("blePacketReceived(): bluetoothStatus: {}", bleStatus);
                     boolean isAvailable = !bleStatus.equals("unavailable");
                     bleIsOn = bleStatus.equals("on");
-                    FrontendServer.getSharedInstance().updateBleStatus(isAvailable, bleIsOn);
-                    if (!bleIsOn) {
-                        robotManager.updateCommunicatorStatus(false);
-                    }
+                    setupComplete = true;
+                    robotManager.updateCommunicatorStatus(bleIsOn, isAvailable);
                     break;
                 case  "connection" :
                     String status = root.getString("status");

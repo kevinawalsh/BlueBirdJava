@@ -15,29 +15,52 @@ public class RobotManager {
     static final double FINCH_SPEED_SCALING = 0.36; //0.45;// 45/100;
     static final int MAX_LED_PRINT_WORD_LEN = 10;
 
-    //public Hashtable connectionTable = new Hashtable();
     private Robot[] selectedRobots = new Robot[3]; //Limit to 3 connections at a time.
+    //Keep a list of where the robot is located. Set to -1 if the robot has disconnected and should reconnect automatically.
     private Hashtable<String, Integer> robotIndexes = new Hashtable<>();
-    private Hashtable<String, Boolean> autoreconnectList = new Hashtable<>();
 
     private static RobotManager sharedInstance;
     private RobotCommunicator robotCommunicator;
-    private boolean shouldScanWhenReady = false;
+    private boolean shouldScanWhenReady = true;
+    private boolean nativeBleAvailable = true;
+    private long lastSetupAttempt = 0;
+    private boolean setupInProgress = false;
 
-    //Text to speech
+    //Accessibility options
     public TextToSpeech tts = null;
     public boolean autoConnect = false;
     private boolean autoCalibrate = false;
 
     private RobotManager() {
-        Thread managerThread = new Thread(this::setUpRobotCommunicator);
-        managerThread.start();
+        //Thread managerThread = new Thread(this::setUpRobotCommunicator);
+        //managerThread.start();
+
+        Timer timer = new Timer();
+        timer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                if (!setupInProgress && System.currentTimeMillis() > lastSetupAttempt + 5000) {
+                    LOG.debug("Attempting setup...");
+                    if (robotCommunicator == null || !robotCommunicator.isRunning()) {
+                        setUpRobotCommunicator();
+                    }
+                }
+            }
+        }, 0, 5000);
     }
 
     private void setUpRobotCommunicator() {
+        if (setupInProgress) {
+            LOG.debug("Setup already in progress");
+            return;
+        }
+        setupInProgress = true;
+        lastSetupAttempt = System.currentTimeMillis();
+
         if (robotCommunicator != null) {
             if (robotCommunicator.isRunning()) {
                 LOG.error("Tried to set up communicator while one is already running");
+                setupInProgress = false;
                 return;
             } else {
                 robotCommunicator.kill();
@@ -47,16 +70,18 @@ public class RobotManager {
         LOG.info("Attempting to set up bluetooth communications.");
         //TODO: Find best communications option...
         robotCommunicator = new DongleBLE();
-        if (!robotCommunicator.isRunning()) {
+        if (!robotCommunicator.isRunning() && nativeBleAvailable) {
+            LOG.debug("No dongle. Trying Windows native ble...");
             robotCommunicator.kill();
             robotCommunicator = new WinBLE();
         }
 
-        if (shouldScanWhenReady) {
+        LOG.debug("ROBOT COMMUNICATOR SETUP " + robotCommunicator.isRunning());
+        if (robotCommunicator.isRunning() && shouldScanWhenReady) {
             startDiscovery();
         }
 
-        if (!robotCommunicator.isRunning()) {
+        /*if (!robotCommunicator.isRunning()) {
             Timer timer = new Timer();
             timer.schedule(new TimerTask() {
                 @Override
@@ -64,15 +89,19 @@ public class RobotManager {
                     setUpRobotCommunicator();
                 }
             }, 2000);
-        }
+        }*/
+        setupInProgress = false;
     }
-    public void updateCommunicatorStatus(boolean connected) {
+    public void updateCommunicatorStatus(boolean connected, boolean available) {
         LOG.debug("updateCommunicatorStatus {}", connected);
+        //Currently, the only communicator that can be marked unavailable is native ble
+        if (!available) { nativeBleAvailable = false; }
+
+        FrontendServer.getSharedInstance().updateBleStatus(connected);
         if (!connected) {
-            //if (robotCommunicator != null) { robotCommunicator.kill(); }
+            if (robotCommunicator != null) { robotCommunicator.kill(); }
             //robotCommunicator = null;
             FrontendServer.getSharedInstance().updateGUIScanStatus(false);
-            FrontendServer.getSharedInstance().updateBleStatus(true, false);
             setUpRobotCommunicator();
         }
     }
@@ -113,7 +142,7 @@ public class RobotManager {
     public void connectToRobot(String name){
         LOG.debug("connectToRobot {}", name);
         LOG.debug("currently connected robots: {}, {}, {}", selectedRobots[0], selectedRobots[1], selectedRobots[2]);
-        autoreconnectList.put(name, true);
+
         stopDiscovery();
         if (robotCommunicator == null || !robotCommunicator.isRunning()) {
             LOG.error("Requesting robot connection while no communicator is running");
@@ -228,17 +257,15 @@ public class RobotManager {
         if (robot != null) { robot.receiveNotification(bytes); }
     }
     public void receiveScanResponse(String robotName) {
-        if(autoreconnectList.get(robotName) != null) {
+        Integer index = robotIndexes.get(robotName);
+        if(index != null && index == -1) {
             FrontendServer.getSharedInstance().requestConnection(robotName);
         }
-    }
-    public void updateBleStatus(String bleStatus) {
-
     }
 
     public void receiveConnectionEvent(String robotName, boolean hasV2) {
         Integer index = robotIndexes.get(robotName);
-        if (index == null) {
+        if (index == null || index == -1) {
             LOG.error("{} not found in selectedRobots.", robotName);
             return;
         }
@@ -261,7 +288,7 @@ public class RobotManager {
     }
     public void receiveDisconnectionEvent(String robotName, boolean userInitiated) {
         Integer index = robotIndexes.get(robotName);
-        if (index == null) {
+        if (index == null || index == -1) {
             LOG.error("{} not found in selectedRobots.", robotName);
             return;
         }
@@ -269,25 +296,19 @@ public class RobotManager {
         selectedRobots[index] = null;
         robot.setConnected(false);
         if (userInitiated) {
-            autoreconnectList.remove(robotName);
+            robotIndexes.remove(robotName);
+        } else {
+            robotIndexes.put(robotName, -1); //autoreconnect
         }
         FrontendServer.getSharedInstance().updateGUIConnection(robot, index);
         if (!userInitiated){
             startDiscovery();
         }
     }
-    //The communicator has been unintentionally disconnected
-    public void receiveCommDisconnectionEvent() {
-
-    }
-    //calibration is finished
-    void receiveCalibrationDone(boolean gotResult) {
-
-    }
 
     private Robot getRobotByName(String name) {
         Integer index = robotIndexes.get(name);
-        if (index == null) {
+        if (index == null || index == -1) {
             LOG.error("{} not found in selectedRobots.", name);
             return null;
         }
