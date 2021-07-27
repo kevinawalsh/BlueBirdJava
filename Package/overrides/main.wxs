@@ -66,12 +66,20 @@
     <?endif?>
 
     <!-- Standard required root -->
-    <Directory Id="TARGETDIR" Name="SourceDir"/>
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="BLE_DIR" Name="BluetoothDriver">
+        <Component Id="BlueGigaDriver" Guid="b359b382-d204-428d-b5cf-e80b881ccc9a">
+          <File Id="usbuserINF" Name="usbserial.inf"  Source="BluetoothDriver\usbserial.inf" />
+          <File Id="usbuserCAT" Name="usbserial.cat"  Source="BluetoothDriver\usbserial.cat" />
+        </Component>
+      </Directory>
+    </Directory>
 
     <Feature Id="DefaultFeature" Title="!(loc.MainFeatureTitle)" Level="1">
       <ComponentGroupRef Id="Shortcuts"/>
       <ComponentGroupRef Id="Files"/>
       <ComponentGroupRef Id="FileAssociations"/>
+      <ComponentRef Id='BlueGigaDriver'/>
     </Feature>
 
     <?ifdef JpInstallDirChooser ?>
@@ -81,8 +89,9 @@
 
     <CustomAction Id="JpSetARPINSTALLLOCATION" Property="ARPINSTALLLOCATION" Value="[INSTALLDIR]" />
 
-    <Property Id="WixQuietExecCmdLine" Value="pnputil -i -a usbserial.inf"/>
-    <CustomAction Id="InstallBlueGiga" BinaryKey="WixCA" DllEntry="WixQuietExec" Execute="deferred" Impersonate="no" Return="ignore"/>
+    <!--<Property Id="InstallBlueGiga" Value="&quot;pnputil&quot; -i -a usbserial.inf"/>
+    <CustomAction Id="InstallBlueGiga" BinaryKey="WixCA" DllEntry="WixQuietExec" Execute="deferred" Impersonate="no" Return="ignore"/>-->
+    <CustomAction Id="InstallBlueGiga" Directory="BLE_DIR" ExeCommand="pnputil -i -a usbserial.inf" Execute="deferred" Impersonate="no" Return="asyncWait"/>
 
     <?ifdef JpIcon ?>
     <Property Id="ARPPRODUCTICON" Value="JpARPPRODUCTICON"/>
@@ -146,7 +155,7 @@
       <Custom Action="JpDisallowDowngrade" After="FindRelatedProducts">JP_DOWNGRADABLE_FOUND</Custom>
       <?endif?>
       <RemoveExistingProducts Before="CostInitialize"/>
-      <Custom Action="InstallBlueGiga" Before="InstallFinalize">NOT Installed</Custom>
+      <Custom Action="InstallBlueGiga" Before="InstallFinalize">Not Installed</Custom>
     </InstallExecuteSequence>
 
   </Product>

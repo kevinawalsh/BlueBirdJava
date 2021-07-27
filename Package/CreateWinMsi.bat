@@ -44,11 +44,12 @@ jpackage ^
 :: copy in the windows native bluetooth utility. This needs to be in the same folder as the launcher.
 echo Copying the command line utility...
 copy ..\BlueBirdWindowsCL\bin\Release\BlueBirdWindowsCL.exe "BlueBird Connector\BlueBirdWindowsCL.exe"
-copy %SUPPORTDIR%\usbserial.cat "BlueBird Connector\usbserial.cat"
-copy %SUPPORTDIR%\usbserial.inf "BlueBird Connector\usbserial.inf"
+mkdir "BlueBird Connector\BluetoothDriver"
+copy %SUPPORTDIR%\usbserial.cat "BlueBird Connector\BluetoothDriver\usbserial.cat"
+copy %SUPPORTDIR%\usbserial.inf "BlueBird Connector\BluetoothDriver\usbserial.inf"
 
 echo Signing BlueBirdConnector.jar, BlueBird Connector.exe, and BlueBirdWindowsCL.exe...
-jarsigner -storetype pkcs12 -keystore BIRDBRAIN.pfx -storepass %1 "BlueBird Connector\app\BlueBirdConnector.jar" 73cfaf53eaee4153b44e02ca7b2a7e76
+jarsigner -tsa http://timestamp.digicert.com -storetype pkcs12 -keystore BIRDBRAIN.pfx -storepass %1 "BlueBird Connector\app\BlueBirdConnector.jar" 73cfaf53eaee4153b44e02ca7b2a7e76
 attrib -r "BlueBird Connector\BlueBird Connector.exe"
 signtool sign /fd SHA256 /f BIRDBRAIN.pfx /p %1 "BlueBird Connector\BlueBird Connector.exe"
 attrib +r "BlueBird Connector\BlueBird Connector.exe"
@@ -110,3 +111,6 @@ echo DONE
 ::
 :: To verify that the jar is signed, you can run
 :: jarsigner -verify "BlueBird Connector\app\BlueBirdConnector.jar"
+::
+:: To capture a log of msi installation, you can install from command line:
+:: msiexec /i "BlueBird Connector-3.0.msi" /L*V msiLog.log
