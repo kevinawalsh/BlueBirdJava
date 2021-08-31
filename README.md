@@ -15,6 +15,8 @@ java -p "C:\Program Files\javafx-sdk-16\lib" --add-modules javafx.controls,javaf
 To create a Windows msi:
 * You will need to have [wix](https://wixtoolset.org/) installed.
 * You will need to download the javafx [jmods](https://gluonhq.com/products/javafx/).
+* Create the jar artifact from the [BlueBirdConnector](#bbc) project.
+* If modifications have been made to the [BlueBirdWindowsCL](#bbWinCL) project, build a new exe.
 * In the Package directory, run ```CreateWinMsi.bat```. You will need to edit the variables on the first few lines for your specific situation.
 
 

@@ -68,13 +68,13 @@ jpackage ^
   --vendor "BirdBrain Technologies" ^
   --app-image "BlueBird Connector" ^
   --verbose ^
-  --resource-dir overrides ^
   --win-menu ^
   --win-shortcut
 :: Additional useful flags:
 :: * see copies of the temp files being used with
 ::  --temp tempFiles ^
-::
+:: * add bluegiga driver install (results still need to be tested) with
+::  --resource-dir overrides ^
 
 echo Signing the .msi...
 signtool sign /fd SHA256 /f BIRDBRAIN.pfx /p %1 "BlueBird Connector-%ver%.msi"

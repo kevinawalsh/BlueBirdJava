@@ -245,6 +245,10 @@ public class WinBLE implements RobotCommunicator {
                     String message = root.getString("message");
                     LOG.error("Error received from BlueBirdWindowsCL: " + message);
                     break;
+                case "DEBUG":
+                    String debugMsg = root.getString("message");
+                    LOG.debug("Message from BlueBirdWindowsCL: " + debugMsg);
+                    break;
                 default:
                     LOG.error ("Invalid packet type '{}' received from BlueBirdWindowsCL", packetType);
             }

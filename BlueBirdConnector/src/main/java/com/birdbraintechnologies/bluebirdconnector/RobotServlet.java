@@ -20,6 +20,8 @@ import static com.birdbraintechnologies.bluebirdconnector.RobotManager.MAX_LED_P
 public class RobotServlet extends HttpServlet {
     static final Logger LOG = LoggerFactory.getLogger(RobotServlet.class);
 
+    private RobotManager robotManager = RobotManager.getSharedInstance();
+
     //Hummingbird specific service UUIDs and characteristics
     /*static final String  HB_WRITE_SVC_UUID  = "6e4002b5a3f393e0a9e5e24dcca9e";
     static final String  HB_NOTIFY_SVC_UUID = "6e4003b5a3f393e0a9e5e24dcca9e";
@@ -116,7 +118,7 @@ public class RobotServlet extends HttpServlet {
 
             devType = ScratchME.blueBirdDriver.getConnectionType(ScratchME.blueBirdDriver.getConnectionFromDevLetter(devLetter));
 */
-            Robot robot = RobotManager.getSharedInstance().getConnectedRobot(devLetter, "Cannot get " + params[0]);
+            Robot robot = robotManager.getConnectedRobot(devLetter, "Cannot get " + params[0]);
             if (robot == null) {
                 out.print("Not Connected");
                 return;
@@ -645,7 +647,7 @@ public class RobotServlet extends HttpServlet {
                         if (connection > -1) {
                             ScratchME.blueBirdDriver.updateSetAll(connection, index, level);
                         } else LOG.error("HummingbirdServelet: Nothing connected");*/
-                        RobotManager.getSharedInstance().updateSetAll(devLetter, index, level);
+                        robotManager.updateSetAll(devLetter, index, level);
                     } catch (Exception e) {
                         LOG.error("HummingbirdServelet Error: {}" + e.toString());
                     }
@@ -672,7 +674,7 @@ public class RobotServlet extends HttpServlet {
                         //rgb levels
                         ScratchME.blueBirdDriver.updateSetAllLED(connection, params[1], (byte) (Integer.parseInt(params[2])), (byte) (Integer.parseInt(params[3])), (byte) (Integer.parseInt(params[4])));
                     } else LOG.error("HummingbirdServelet: tri-LED Nothing connected");*/
-                    RobotManager.getSharedInstance().updateSetAllLED(devLetter, params[1], (byte) (Integer.parseInt(params[2])), (byte) (Integer.parseInt(params[3])), (byte) (Integer.parseInt(params[4])));
+                    robotManager.updateSetAllLED(devLetter, params[1], (byte) (Integer.parseInt(params[2])), (byte) (Integer.parseInt(params[3])), (byte) (Integer.parseInt(params[4])));
                     break;
                 case "servo":
                 case "motor":
@@ -710,7 +712,7 @@ public class RobotServlet extends HttpServlet {
                     if (connection > -1) {
                         ScratchME.blueBirdDriver.updateSetAll(connection, index, (byte) (Integer.parseInt(params[2])));
                     } else LOG.error("HummingbirdServelet: Servo: Nothing connected");*/
-                    RobotManager.getSharedInstance().updateSetAll(devLetter, index, (byte) (Integer.parseInt(params[2])));
+                    robotManager.updateSetAll(devLetter, index, (byte) (Integer.parseInt(params[2])));
                     break;
                 case "playnote":
                     try {
@@ -730,7 +732,7 @@ public class RobotServlet extends HttpServlet {
                         note = Integer.parseInt(params[1]);
                         ms = Integer.parseInt(params[2]);
 
-                        RobotManager.getSharedInstance().updateBuzzer(devLetter, note, ms);
+                        robotManager.updateBuzzer(devLetter, note, ms);
 
 /*                        byte period_msb = 0;
                         byte period_lsb = 0;
@@ -815,7 +817,7 @@ public class RobotServlet extends HttpServlet {
                         LOG.debug("Input Length = {}", cArray.length);
 
                         //startPrint(cArray, connection);
-                        RobotManager.getSharedInstance().startPrint(devLetter, cArray);
+                        robotManager.startPrint(devLetter, cArray);
 
                     } catch (Exception e) {
                         LOG.error("HummingbirdServelet print Error: {}", e.toString());
@@ -869,7 +871,7 @@ public class RobotServlet extends HttpServlet {
                             /*LOG.debug("Microbit Symbol bytes: {}", ScratchME.blueBirdDriver.bytesToString(symbolCommand));
                             ScratchME.blueBirdDriver.displayToHummingbird(connection, symbolCommand);  // Independent  command*/
 
-                        RobotManager.getSharedInstance().setSymbol(devLetter, symbolCommand);
+                        robotManager.setSymbol(devLetter, symbolCommand);
                         //}
 
                     } catch (Exception e) {
@@ -901,7 +903,7 @@ public class RobotServlet extends HttpServlet {
                             ScratchME.blueBirdDriver.sendStopAllCommand(connection);
                             killPrintThreadDelay(200);
                         }*/
-                        RobotManager.getSharedInstance().robotStopAll(devLetter);
+                        robotManager.robotStopAll(devLetter);
 
                     } catch (Exception e) {
                         LOG.error("HummingbirdServelet stopAll Error: {}", e.toString());
@@ -911,7 +913,7 @@ public class RobotServlet extends HttpServlet {
                 case "resetEncoders":
                     devLetter = params[1].charAt(0);
                     //ScratchME.blueBirdDriver.sendResetEncodersCommand(devLetter);
-                    RobotManager.getSharedInstance().resetEncoders(devLetter);
+                    robotManager.resetEncoders(devLetter);
                     break;
                 case "turn":
                     devLetter = params[1].charAt(0);
@@ -930,10 +932,10 @@ public class RobotServlet extends HttpServlet {
                         }
                         if (shouldTurnRight) {
                             //ScratchME.blueBirdDriver.updateMotors(devLetter, speed, ticks, -speed, ticks);
-                            RobotManager.getSharedInstance().updateMotors(devLetter, speed, ticks, -speed, ticks);
+                            robotManager.updateMotors(devLetter, speed, ticks, -speed, ticks);
                         } else {
                             //ScratchME.blueBirdDriver.updateMotors(devLetter, -speed, ticks, speed, ticks);
-                            RobotManager.getSharedInstance().updateMotors(devLetter, -speed, ticks, speed, ticks);
+                            robotManager.updateMotors(devLetter, -speed, ticks, speed, ticks);
                         }
                     }
                     break;
@@ -953,7 +955,7 @@ public class RobotServlet extends HttpServlet {
                     LOG.debug("move {} {}", spd, tks);
                     if (tks != 0) { //tks=0 is the command for continuous motion
                         //ScratchME.blueBirdDriver.updateMotors(devLetter, spd, tks, spd, tks);
-                        RobotManager.getSharedInstance().updateMotors(devLetter, spd, tks, spd, tks);
+                        robotManager.updateMotors(devLetter, spd, tks, spd, tks);
                     }
                     break;
                 case "wheels":
@@ -962,12 +964,12 @@ public class RobotServlet extends HttpServlet {
                     int right = (int) Math.round(Double.parseDouble(params[3]));//Integer.parseInt(params[3]);
 
                     //ScratchME.blueBirdDriver.updateMotors(devLetter, left, 0, right, 0);
-                    RobotManager.getSharedInstance().updateMotors(devLetter, left, 0, right, 0);
+                    robotManager.updateMotors(devLetter, left, 0, right, 0);
                     break;
                 case "stopFinch":
                     devLetter = params[1].charAt(0);
                     //ScratchME.blueBirdDriver.updateMotors(devLetter, 0, 0, 0, 0);
-                    RobotManager.getSharedInstance().updateMotors(devLetter, 0, 0, 0, 0);
+                    robotManager.updateMotors(devLetter, 0, 0, 0, 0);
                     break;
             }
             // No response to process. Return 200 anyway.
@@ -981,7 +983,7 @@ public class RobotServlet extends HttpServlet {
     }
 
     public short bytes2short (int msb_index, int lsb_index, char devLetter) {
-        Robot robot = RobotManager.getSharedInstance().getConnectedRobot(devLetter, "Cannot get bytes2short value.");
+        Robot robot = robotManager.getConnectedRobot(devLetter, "Cannot get bytes2short value.");
         if (robot == null) {  return 0; }
 
         byte msb, lsb = 0;
@@ -1027,7 +1029,7 @@ public class RobotServlet extends HttpServlet {
     Z-finch = y-micro:bit*sin 40° + z-micro:bit* cos 40°
     */
     public double getFinchAcceleration(String axis, char devLetter) {
-        Robot robot = RobotManager.getSharedInstance().getConnectedRobot(devLetter, "Cannot get acceleration value.");
+        Robot robot = robotManager.getConnectedRobot(devLetter, "Cannot get acceleration value.");
         if (robot == null) { return 0; }
 
         switch (axis) {
@@ -1062,7 +1064,7 @@ public class RobotServlet extends HttpServlet {
     Z-finch = z-micro:bit* cos 40° - y-micro:bit*sin 40°
     */
     public double getFinchMagnetometer(String axis, char devLetter) {
-        Robot robot = RobotManager.getSharedInstance().getConnectedRobot(devLetter, "Cannot get magnetometer value.");
+        Robot robot = robotManager.getConnectedRobot(devLetter, "Cannot get magnetometer value.");
         if (robot == null) { return 0; }
 
         switch (axis) {
@@ -1094,7 +1096,7 @@ public class RobotServlet extends HttpServlet {
 
 
     public double rawToCompass(char devLetter, String devType, boolean finchReference) {
-        Robot robot = RobotManager.getSharedInstance().getConnectedRobot(devLetter, "Cannot get compass value.");
+        Robot robot = robotManager.getConnectedRobot(devLetter, "Cannot get compass value.");
         if (robot == null) {
             LOG.error("Cannot get compass value. Device {} not connected.", devLetter);
             return 0;

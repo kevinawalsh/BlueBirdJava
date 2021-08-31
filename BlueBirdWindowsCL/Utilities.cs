@@ -24,6 +24,10 @@ namespace BlueBirdWindowsCL
         {
             Utilities.WriteOut("ERROR", new string[] { "message", errorMessage });
         }
+        public static void WriteDebug(string debugMessage)
+        {
+            Utilities.WriteOut("DEBUG", new string[] { "message", debugMessage });
+        }
         public static void WriteConnectionUpdate(string status, Robot robot)
         {
             var args = new string[] { "status", status, "peripheral", robot.Name, "hasV2", robot.hasV2.ToString() };

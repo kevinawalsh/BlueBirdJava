@@ -20,7 +20,6 @@ namespace BlueBirdWindowsCL
         private List<GattDeviceService> Services = new List<GattDeviceService>();
 
         private BluetoothLEDevice bleDevice;
-        private string devLetter;
         private string deviceType;
         private int microBitVersionNumber = 0;
         public bool hasV2
@@ -180,6 +179,8 @@ namespace BlueBirdWindowsCL
 
         private async void Write(byte[] bytes)
         {
+            //Utilities.WriteDebug($"About to write {BitConverter.ToString(bytes)}");
+
             if (tx == null)
             {
                 Utilities.WriteError($"Cannot write to {Name}, tx not set.");
@@ -189,14 +190,14 @@ namespace BlueBirdWindowsCL
             var writer = new DataWriter();
             writer.WriteBytes(bytes);
 
-            GattCommunicationStatus result = await tx.WriteValueAsync(writer.DetachBuffer());
+            GattCommunicationStatus result = await tx.WriteValueAsync(writer.DetachBuffer(), GattWriteOption.WriteWithoutResponse);
             if (result == GattCommunicationStatus.Success)
             {
-
+                //Utilities.WriteDebug($"Successfully wrote {BitConverter.ToString(bytes)}");
             }
             else
             {
-
+                Utilities.WriteError($"Failed to write {BitConverter.ToString(bytes)}");
             }
         }
 
@@ -222,8 +223,7 @@ namespace BlueBirdWindowsCL
                     var arguments = new string[]
                     {
                         "peripheral", Name,
-                        "data", BitConverter.ToString(data),
-                        "devLetter", devLetter
+                        "data", BitConverter.ToString(data)
                     };
                     Utilities.WriteOut("notification", arguments);
                 }

@@ -40,7 +40,7 @@ public class RobotManager {
             @Override
             public void run() {
                 if (!setupInProgress && System.currentTimeMillis() > lastSetupAttempt + 5000) {
-                    LOG.debug("Attempting setup...");
+                    //LOG.debug("Attempting setup...");
                     if (robotCommunicator == null || !robotCommunicator.isRunning()) {
                         setUpRobotCommunicator();
                     }
@@ -143,25 +143,38 @@ public class RobotManager {
         LOG.debug("connectToRobot {}", name);
         LOG.debug("currently connected robots: {}, {}, {}", selectedRobots[0], selectedRobots[1], selectedRobots[2]);
 
-        stopDiscovery();
         if (robotCommunicator == null || !robotCommunicator.isRunning()) {
             LOG.error("Requesting robot connection while no communicator is running");
             return;
         }
 
-        //TODO: lock or something to protect from multiple requests?
-        int index = -1;
-        for (int i = selectedRobots.length; i > 0; i--) {
-            if (selectedRobots[i-1] == null) { index = i-1; }
+        synchronized (this) {
+            //Make sure the requested robot isn't already connected
+            Integer oldIndex = robotIndexes.get(name);
+            if (oldIndex != null && oldIndex >= 0) {
+                LOG.error("{} is already connected or being connected at index {}.", name, oldIndex);
+                return;
+            }
+
+            //Find an open position
+            int index = -1;
+            for (int i = selectedRobots.length; i > 0; i--) {
+                if (selectedRobots[i - 1] == null) {
+                    index = i - 1;
+                }
+            }
+            if (index == -1) {
+                LOG.error("Max connections already reached! Cannot connect {}.", name);
+                return;
+            }
+
+            Robot connecting = Robot.Factory(name, robotCommunicator);
+            selectedRobots[index] = connecting;
+            robotIndexes.put(name, index);
+            LOG.debug("Connecting {} at index {}", name, index);
         }
-        if (index == -1) {
-            LOG.error("Max connections already reached! Cannot connect {}.", name);
-            return;
-        }
-        Robot connecting = Robot.Factory(name, robotCommunicator);
-        selectedRobots[index] = connecting;
-        robotIndexes.put(name, index);
-        LOG.debug("Connecting {} at index {}", name, index);
+
+        stopDiscovery();
         robotCommunicator.requestConnection(name);
     }
 
@@ -259,6 +272,7 @@ public class RobotManager {
     public void receiveScanResponse(String robotName) {
         Integer index = robotIndexes.get(robotName);
         if(index != null && index == -1) {
+            robotIndexes.remove(robotName); //to ensure we do not request reconnection more than once
             FrontendServer.getSharedInstance().requestConnection(robotName);
         }
     }
@@ -287,6 +301,7 @@ public class RobotManager {
         }
     }
     public void receiveDisconnectionEvent(String robotName, boolean userInitiated) {
+        LOG.debug("Disconnection Event {}, {}", robotName, userInitiated ? "user initiated" : "connection failure");
         Integer index = robotIndexes.get(robotName);
         if (index == null || index == -1) {
             LOG.error("{} not found in selectedRobots.", robotName);
@@ -299,6 +314,7 @@ public class RobotManager {
             robotIndexes.remove(robotName);
         } else {
             robotIndexes.put(robotName, -1); //autoreconnect
+            LOG.debug("{} will autoreconnect", robotName);
         }
         FrontendServer.getSharedInstance().updateGUIConnection(robot, index);
         if (!userInitiated){
