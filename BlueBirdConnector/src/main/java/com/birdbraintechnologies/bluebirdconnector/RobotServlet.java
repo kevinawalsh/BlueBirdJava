@@ -144,10 +144,10 @@ public class RobotServlet extends HttpServlet {
                     if (params[1].equals("static"))  {
                         int val;
                         if (robot.hasV2) {
-                            val = robot.getNotificationDataByte(1) & 0xFF; //value already in cm
+                            val = robot.getNotificationDataUInt(1); //value already in cm
                         } else {
-                            int msb = robot.getNotificationDataByte(0) & 0xFF; //convert signed byte to unsigned 8 bit int
-                            int lsb = robot.getNotificationDataByte(1) & 0xFF;
+                            int msb = robot.getNotificationDataUInt(0); //convert signed byte to unsigned 8 bit int
+                            int lsb = robot.getNotificationDataUInt(1);
                             val = (int) Math.round(((msb << 8) + lsb) * 0.0919); //return the value in cm
                         }
                         value = Integer.toString(val);
@@ -208,7 +208,7 @@ public class RobotServlet extends HttpServlet {
                     } else {//Send value of data as response
                         int v = Integer.parseInt(value);*/
 
-                    int v = robot.getNotificationDataByte(index);
+                    int v = robot.getNotificationDataUInt(index);
                     value = String.valueOf(v);
                     if ((v > 230) && (params[0].equals("Dial"))) {
                         out.print("230");
@@ -246,9 +246,9 @@ public class RobotServlet extends HttpServlet {
                     index = 7;
                     if (params[1].equals("Right")) index = 10;
 
-                    int msb = robot.getNotificationDataByte(index) & 0xFF;
-                    int ssb = robot.getNotificationDataByte( (index+1) ) & 0xFF;
-                    int lsb = robot.getNotificationDataByte( (index+2) ) & 0xFF;
+                    int msb = robot.getNotificationDataUInt(index);
+                    int ssb = robot.getNotificationDataUInt( (index+1) );
+                    int lsb = robot.getNotificationDataUInt( (index+2) );
 
                     int unsigned = (msb << 16) + (ssb << 8) + lsb;
                     int signed = (unsigned << 8) >> 8;
@@ -303,11 +303,6 @@ public class RobotServlet extends HttpServlet {
                     out.print(String.valueOf(headingDeg));
                     break;
                 case "Magnetometer" :
-                    //boolean singleDev = false;
-                    //byte msb, lsb = 0;
-                    int msb_index, lsb_index = 0;
-                    //int intValue = 0;
-
                     short magValue = 0;
 
                     if (robot.type.equals("FN")) {
@@ -333,23 +328,14 @@ public class RobotServlet extends HttpServlet {
 
                         switch (params[1]) { //XYZ number to byte mapping
                             case "X":
-                                msb_index = 8;
-                                lsb_index = 9;
-                                //intValue = getMagnetomerValue (msb_index, lsb_index, devLetter);
                                 magValue = bytes2short(8, 9, devLetter);
                                 LOG.debug("Magnetometer X value: {}", magValue);
                                 break;
                             case "Y":
-                                msb_index = 10;
-                                lsb_index = 11;
-                                //intValue = getMagnetomerValue (msb_index, lsb_index, devLetter);
                                 magValue = bytes2short(10, 11, devLetter);
                                 LOG.debug("Magnetometer Y value: {}", magValue);
                                 break;
                             case "Z":
-                                msb_index = 12;
-                                lsb_index = 13;
-                                //intValue = getMagnetomerValue (msb_index, lsb_index, devLetter);
                                 magValue = bytes2short(12, 13, devLetter);
                                 LOG.debug("Magnetometer Z value: {}", magValue);
                                 break;
@@ -428,12 +414,12 @@ public class RobotServlet extends HttpServlet {
                         if (sensor.equals("SOUND")) {
                             index = 14;
                             if (robot.type.equals("FN")) { index = 0; }
-                            int sound = robot.getNotificationDataByte(index) & 0xFF;
+                            int sound = robot.getNotificationDataUInt(index);
                             out.print(String.valueOf(sound));
                         } else if (sensor.equals("TEMPERATURE")) {
-                            int temp = robot.getNotificationDataByte(15) & 0xFF;
+                            int temp = robot.getNotificationDataUInt(15);
                             if (robot.type.equals("FN")) {
-                                temp = robot.getNotificationDataByte(6) & 0xFF;
+                                temp = robot.getNotificationDataUInt(6);
                                 temp = temp >> 2;
                             }
                             out.print(String.valueOf(temp));

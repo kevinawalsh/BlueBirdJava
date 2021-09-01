@@ -201,6 +201,9 @@ public abstract class Robot {
             return 0;
         }
     }
+    public int getNotificationDataUInt(int index) {
+        return (getNotificationDataByte(index) & 0xFF); //convert to unsigned int
+    }
 
     public void updateSetAll(int index, byte value) {
         synchronized (setAllDataChannelLock) {
