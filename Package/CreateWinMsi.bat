@@ -77,7 +77,7 @@ jpackage ^
 ::  --resource-dir overrides ^
 
 echo Signing the .msi...
-signtool sign /fd SHA256 /f BIRDBRAIN.pfx /p %1 "BlueBird Connector-%ver%.msi"
+signtool sign /d "BlueBird Connector" /fd SHA256 /f BIRDBRAIN.pfx /p %1 "BlueBird Connector-%ver%.msi"
 
 :: Cleanup
 echo Cleaning up...
