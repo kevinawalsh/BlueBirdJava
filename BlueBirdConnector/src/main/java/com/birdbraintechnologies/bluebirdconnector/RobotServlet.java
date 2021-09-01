@@ -221,8 +221,7 @@ public class RobotServlet extends HttpServlet {
                         int realVal = 100 - ((val - 6) * 100 / 121);
                         realVal = Math.max(0, Math.min(100, realVal));
                         out.print(Integer.toString(realVal));
-                    } else if (params[0].equals("Light")) {
-                        //byte[] beak = ScratchME.blueBirdDriver.getCurrentBeak(devLetter);
+                    } else if (params[0].equals("Light") && robot.type.equals("FN")) {
                         byte[] beak = robot.getCurrentBeak();
                         long R = Math.round((beak[0] & 0xFF) / 2.55);
                         long G = Math.round((beak[1] & 0xFF) / 2.55);
@@ -240,7 +239,6 @@ public class RobotServlet extends HttpServlet {
                     } else {
                         out.print(value);
                     }
-                    //}
                     break;
                 case "Encoder": //finch only
                     index = 7;
