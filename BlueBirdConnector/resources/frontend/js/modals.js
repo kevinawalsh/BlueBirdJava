@@ -23,6 +23,7 @@ function closeModal() {
             section.parentNode.removeChild(section);
         }
     }
+    closeErrorModal();
 };
 
 /**
@@ -202,3 +203,82 @@ function launchVideo(videoName) {
     /* If overlay of modal window is clicked, close calibration window */
     $(".modal").click(function() { closeModal(); close }).children().click(function(e) { return false; });
 };
+
+/**
+ * showErrorModal - Show a modal displaying an error. This modal cannot be
+ * closed.
+ *
+ * @param  {string} title   Title to display in the modal header
+ * @param  {string} content Text to display in the body of the modal
+ * @param  {boolean} shouldAddCloseBtn True if the user should be able to close this modal
+ * @param  {string} helpUrl  Optional url for help documetation
+ */
+function showErrorModal(title, content, shouldAddCloseBtn, helpUrl) {
+  if (document.getElementById("errorModal") != null) { return; } //only display one error modal at a time.
+   /* basic modal setup */
+  const section = document.createElement('section');
+  section.setAttribute("class", "modal");
+  section.setAttribute("style", "display: none;")
+  //Make a container to hold everything
+  const container = document.createElement('div');
+  container.setAttribute("class", "container")
+  container.setAttribute("style", "position: relative; margin: 0 auto; height: auto; width: 95%; top: 50%; transform: translateY(-50%);");
+  //Create the parts
+  const header = document.createElement('h2');
+  let icon = document.createElement('i');
+  const span = document.createElement('span');
+  //Make a container for content
+  const animation = document.createElement('div');
+  animation.setAttribute("class", "animation");
+  /* end basic modal setup */
+
+  header.appendChild(icon);
+  header.appendChild(span);
+  container.appendChild(header);
+  container.appendChild(animation);
+  section.appendChild(container);
+
+  icon.setAttribute("class", "fas fa-exclamation-circle");
+  span.textContent = title;
+  let div = section.getElementsByTagName('div')[1];
+  if (helpUrl != null) {
+    let helpButton = document.createElement('a');
+    helpButton.href = "#"
+    helpButton.onclick = function() { sendMessageToBackend(msgTypes.COMMAND, { command: "openUrl", url: helpUrl }) }
+    let helpIcon = document.createElement('i');
+    helpIcon.setAttribute("class", "fas fa-question-circle");
+    helpIcon.setAttribute("style", "color: #881199; font-size: 1.25em; position: relative; margin: 0 0 0 0.75em")
+    helpButton.appendChild(helpIcon);
+    let contentSpan = document.createElement('span');
+    contentSpan.innerHTML = content;
+    div.appendChild(contentSpan);
+    div.appendChild(helpButton);
+    sendMessageToBackend(msgTypes.CONSOLE_LOG, {
+        consoleLog: "help div: " + div.outerHTML
+     })
+  } else {
+  //div.textContent = content;
+    div.innerHTML = content;
+  }
+  div.setAttribute("style", "position: relative; opacity: 1; background-color: rgba(255,255,255, 0.75); text-align: center; padding: 2em 2em 2em 2em;")
+
+  section.setAttribute("id", "errorModal")
+  if (shouldAddCloseBtn) {
+    let container = section.getElementsByTagName('div')[0];
+    addCloseBtn(container, "return closeErrorModal();")
+  }
+
+  section.setAttribute("style", "display: block;");
+  document.body.appendChild(section);
+}
+
+/**
+ * closeErrorModal - Function for closing an error modal. Called by clicking
+ * the x on the modal, or automatically when no longer needed.
+ */
+function closeErrorModal() {
+  let modal = document.getElementById("errorModal");
+  if (modal != null) {
+    modal.parentNode.removeChild(modal)
+  }
+}

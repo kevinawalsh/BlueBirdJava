@@ -116,7 +116,10 @@ CallbackManager.bleDisabled = function() {
   $.connectedDevListRefresh();
   //TODO: windows video
   //launchNativeMacOSBLEvideo();
-  launchPlugInDongleVideo();
+  //launchPlugInDongleVideo();
+  let title = " " + translationTable["No_Ble"] + " "
+  let message = translationTable["Ble_Required"]
+  showErrorModal(title, message, false, "https://support.birdbraintechnologies.com/hc/en-us/articles/360042767953-Why-am-I-getting-a-Connection-Failure-message-in-the-BlueBird-Connector-");
 }
 
 /**

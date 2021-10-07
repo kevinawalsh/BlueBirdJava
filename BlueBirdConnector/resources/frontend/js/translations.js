@@ -17,6 +17,8 @@ const fullTranslationTable = {
     connect_dongle: 'Connect Bluetooth Dongle',
     CompassCalibrate: 'Calibrate Compass',
     Update_firmware: 'Update Firmware',
+    No_Ble: 'No Bluetooth Detected',
+    Ble_Required: 'This app requires Bluetooth.',
     Connection_Failure: 'Connection Failure'
   },
   ko: {
@@ -30,6 +32,8 @@ const fullTranslationTable = {
     connect_dongle: '블루투스 동글 연결하기',
     CompassCalibrate: '나침반 센서 보정',
     Update_firmware: '펌웨어 업데이트',
+    No_Ble: '블루투스 장치를 찾을 수 없습니다.',
+    Ble_Required: '이 앱은 블루투스 통신이 필요합니다.',
     Connection_Failure: '연결 실패'
   },
   de: {
@@ -43,6 +47,8 @@ const fullTranslationTable = {
     connect_dongle: 'Verbinde Bluetooth Dongle',
     CompassCalibrate: 'Kompass kalibrieren',
     Update_firmware: 'Firmware Updaten',
+    No_Ble: 'Kein Bluetooth gefunden',
+    Ble_Required: 'Diese App benötigt Bluetooth',
     Connection_Failure: 'Verbindung fehlgeschlagen'
   },
   pt: {
@@ -56,6 +62,8 @@ const fullTranslationTable = {
     connect_dongle: 'Conecte o Dongle Bluetooth',
     CompassCalibrate: 'Calibrar Bússola',
     Update_firmware: 'Atualizar Firmware',
+    No_Ble: 'Nenhum Bluetooth Detectado',
+    Ble_Required: 'Este aplicativo requer Bluetooth.',
     Connection_Failure: 'Falha na Conexão'
   },
   fr: {
@@ -69,6 +77,8 @@ const fullTranslationTable = {
     connect_dongle: 'Connectez le bluetooth dongle',
     CompassCalibrate: 'Calibrer le compas',
     Update_firmware: 'Mettez à Jour le Firmware',
+    No_Ble: 'Aucun Bluetooth détecté',
+    Ble_Required: 'Cette application nécessite Bluetooth.',
     Connection_Failure: 'Échec de connexion'
   },
   nl: {
@@ -82,6 +92,8 @@ const fullTranslationTable = {
     connect_dongle: 'Sluit Bluetooth-dongle aan',
     CompassCalibrate: 'Kompas Kalibreren',
     Update_firmware: 'Update Firmware',
+    No_Ble: 'Bluetooth niet gedetecteerd',
+    Ble_Required: 'Deze app vereist Bluetooth.',
     Connection_Failure: 'Verbindingsfout'
   },
   zh_Hans: {
@@ -95,6 +107,8 @@ const fullTranslationTable = {
     connect_dongle: '连接蓝牙',
     CompassCalibrate: '校准指南针',
     Update_firmware: '更新固件',
+    No_Ble: '未检测到蓝牙。',
+    Ble_Required: '该设备需要链接蓝牙。',
     Connection_Failure: '连接失败'
   },
   zh_Hant: {
@@ -108,6 +122,8 @@ const fullTranslationTable = {
     connect_dongle: '連接藍牙',
     CompassCalibrate: '校準指南針',
     Update_firmware: '更新固件',
+    No_Ble: '未能檢測到藍牙',
+    Ble_Required: '此應用程式需要藍牙',
     Connection_Failure: '連接失敗'
   },
   ar: {
@@ -121,6 +137,8 @@ const fullTranslationTable = {
     connect_dongle: 'اتصال عن طريق البلوتوث',
     CompassCalibrate: 'معايرة البوصلة',
     Update_firmware: 'تحديث البرامج الثابتة',
+    No_Ble: 'No Bluetooth Detected',
+    Ble_Required: 'This app requires Bluetooth.',
     Connection_Failure: 'فشل الاتصال'
   },
   da: {
@@ -134,6 +152,8 @@ const fullTranslationTable = {
     connect_dongle: 'Forbind bluetooth dongle',
     CompassCalibrate: 'Kalibrér kompas',
     Update_firmware: 'Opdatér Firmware',
+    No_Ble: 'No Bluetooth Detected',
+    Ble_Required: 'This app requires Bluetooth.',
     Connection_Failure: 'Forbindelse mislykket'
   },
   he: {
@@ -147,6 +167,8 @@ const fullTranslationTable = {
     connect_dongle: 'מחברים הדונגל לבלוטוס',
     CompassCalibrate: 'כיול מצפן',
     Update_firmware: 'עדכון קשוחה',
+    No_Ble: 'לא זוהה Bluetooth',
+    Ble_Required: 'אפליקציה זו דורשת Bluetooth.',
     Connection_Failure: 'חיבור נכשל'
   },
   es: {
@@ -160,6 +182,8 @@ const fullTranslationTable = {
     connect_dongle: 'Conectar el dongle del bluethoot',
     CompassCalibrate: 'Calibrar la brujula',
     Update_firmware: 'Actualizar Firmware',
+    No_Ble: 'Bluetooth no detectado',
+    Ble_Required: 'Esta aplicación requiere Bluetooth.',
     Connection_Failure: 'Coneccion fallada'
   },
   ca: {
@@ -173,6 +197,8 @@ const fullTranslationTable = {
     connect_dongle: 'Connecta llapis Bluetooth',
     CompassCalibrate: 'Calibratge de la brúixola',
     Update_firmware: 'Actualitza el Firmware',
+    No_Ble: 'Bluetooth no detectat',
+    Ble_Required: 'Aquesta aplicació requereix Bluetooth.',
     Connection_Failure: 'Error de connexió'
   },
   fi: {
@@ -186,6 +212,8 @@ const fullTranslationTable = {
     connect_dongle: 'Yhdistä Bluetooth-palikka',
     CompassCalibrate: 'Kalibroi kompassi',
     Update_firmware: 'Päivitä laiteohjelma',
+    No_Ble: 'No Bluetooth Detected',
+    Ble_Required: 'This app requires Bluetooth.',
     Connection_Failure: 'Virhe yhdistettäessä'
   },
   sv: {
@@ -199,6 +227,8 @@ const fullTranslationTable = {
     connect_dongle: 'Koppla Bluetooth dosa',
     CompassCalibrate: 'Kalibrera kompass',
     Update_firmware: 'Uppdatera Programvara',
+    No_Ble: 'No Bluetooth Detected',
+    Ble_Required: 'This app requires Bluetooth.',
     Connection_Failure: 'Problem med kopplingen'
   }
 };

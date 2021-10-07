@@ -213,6 +213,11 @@ public class FrontendServer {
 
                         openURLinBrowser(url);
                         break;
+                    case "openUrl":
+                        String urlToOpen = json.getMember("url").toString();
+                        LOG.debug("openUrl " + urlToOpen);
+                        openURLinBrowser(urlToOpen);
+                        break;
                     default:
                         LOG.debug("UNHANDLED COMMAND: '" + command + "'.");
                         break;
