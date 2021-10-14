@@ -236,10 +236,10 @@ public class FrontendServer {
 
     private static void openURLinBrowser (String urlString) {
         LOG.info("Opening " + urlString);
+        String osName = System.getProperty("os.name");
         //Snap is best used in chrome. Try to open chrome first.
         try {
             final String dir = System.getProperty("user.dir");
-            String osName = System.getProperty("os.name");
             LOG.debug("OS = {}; user dir = {}" , osName, dir);
 
             if (osName.contains("Win")) {
@@ -248,9 +248,14 @@ public class FrontendServer {
                 Runtime.getRuntime().exec(new String[] { "chromium-browser", urlString });
             }
         } catch (Exception exception) {
-            LOG.info("Could not open url in chrome. Trying the default browser.");
+            LOG.info("Could not open url in chrome. Trying the default browser. Exception: " + exception.getMessage());
             try {
-                Desktop.getDesktop().browse(new URL(urlString).toURI());
+                if (osName.contains("Win")) {
+                    Desktop.getDesktop().browse(new URL(urlString).toURI());
+                } else { //Linux
+                    LOG.debug("using xdg-open");
+                    Runtime.getRuntime().exec(new String[] { "xdg-open", urlString });
+                }
             } catch (Exception e) {
                 LOG.error("Failed to open url {}", urlString);
                 e.printStackTrace();

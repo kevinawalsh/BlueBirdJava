@@ -19,6 +19,16 @@ To create a Windows msi:
 * If modifications have been made to the [BlueBirdWindowsCL](#bbWinCL) project, build a new exe.
 * In the Package directory, run ```CreateWinMsi.bat```. You will need to edit the variables on the first few lines for your specific situation.
 
+#### Linux useage
+
+No access to native ble is implemented on linux, and therefore the use of a bluegiga ble dongle is required. Communication with the dongle uses jSerialComm and the user may need to gain permission to use the serial ports by running the following commands in a terminal:
+```
+sudo usermod -a -G uucp username
+sudo usermod -a -G dialout username
+sudo usermod -a -G lock username
+sudo usermod -a -G tty username
+```
+Where 'username' is the current username. See https://fazecast.github.io/jSerialComm/ for more information.
 
 
 ## <a name="bbc"></a>BlueBirdConnector

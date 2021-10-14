@@ -7,7 +7,7 @@
     <groupId>groupId</groupId>
     <artifactId>BlueBirdConnector</artifactId>
     <!-- versions ending in -SNAPSHOT are meant to be dev versions -->
-    <version>3.0</version>
+    <version>3.1</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

@@ -34,6 +34,8 @@ public class RobotManager {
     private RobotManager() {
         //Thread managerThread = new Thread(this::setUpRobotCommunicator);
         //managerThread.start();
+        String osName = System.getProperty("os.name");
+        if (!osName.contains("Win")) { nativeBleAvailable = false; }
 
         Timer timer = new Timer();
         timer.scheduleAtFixedRate(new TimerTask() {
@@ -70,10 +72,15 @@ public class RobotManager {
         LOG.info("Attempting to set up bluetooth communications.");
         //TODO: Find best communications option...
         robotCommunicator = new DongleBLE();
-        if (!robotCommunicator.isRunning() && nativeBleAvailable) {
-            LOG.debug("No dongle. Trying Windows native ble...");
-            robotCommunicator.kill();
-            robotCommunicator = new WinBLE();
+        if (!robotCommunicator.isRunning()) {
+            if (nativeBleAvailable) {
+                LOG.debug("No dongle. Trying Windows native ble...");
+                robotCommunicator.kill();
+                robotCommunicator = new WinBLE();
+            } else {
+                LOG.debug("Dongle not found and no native ble available.");
+                updateCommunicatorStatus(false,true);
+            }
         }
 
         LOG.debug("ROBOT COMMUNICATOR SETUP " + robotCommunicator.isRunning());

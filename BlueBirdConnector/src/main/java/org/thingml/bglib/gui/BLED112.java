@@ -96,8 +96,15 @@ public class BLED112 {
                     return commPorts[i];
                 }
             }
+        } else if (osName.contains("Linux")) {
+            for (int i = 0; i < commPorts.length; i++) {
+                System.out.println("FOUND serial port: " + commPorts[i].getDescriptivePortName());
+                if (commPorts[i].getDescriptivePortName().contains("Low Energy Dongle")) {
+                    return commPorts[i];
+                }
+            }
         } else {
-            System.out.println("ERROR: NON Windows comm ports not implemented!");
+            System.out.println("ERROR: comm ports not implemented for os: " + osName);
         }
 
         return null;
