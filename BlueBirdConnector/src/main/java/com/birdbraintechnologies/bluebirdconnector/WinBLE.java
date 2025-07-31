@@ -9,7 +9,8 @@ import java.util.Base64;
 import java.util.Date;
 import java.util.Deque;
 
-import org.json.JSONObject;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import static com.birdbraintechnologies.bluebirdconnector.Utilities.stackTraceToString;
 
@@ -185,20 +186,20 @@ public class WinBLE implements RobotCommunicator {
         //notificationStartTime = System.currentTimeMillis();  // reset timer to now for next iteration
         try {
             //Parse JSON
-            JSONObject root = new JSONObject(packetData);
-            String packetType = root.getString("packetType");
+            JsonObject root = JsonParser.parseString(packetData).getAsJsonObject();
+            String packetType = root.get("packetType").getAsString();
 
             switch (packetType) {
                 case "quit":
-                    String reason = root.getString("reason");
+                    String reason = root.get("reason").getAsString();
                     LOG.info("BlueBirdWindowsCL process has quit due to '" + reason + "'.");
                     break;
                 case "ping":
                     LOG.debug("BlueBirdWindowsCL process returned ping.");
                     break;
                 case  "notification" :
-                    String peripheralName = root.getString("peripheral");
-                    String peripheralData = root.getString("data");
+                    String peripheralName = root.get("peripheral").getAsString();
+                    String peripheralData = root.get("data").getAsString();
                     String[] hexArray = peripheralData.split("-");
                     byte[] bytes = new byte[hexArray.length];
                     for (int i = 0; i < hexArray.length; i++){
@@ -207,14 +208,14 @@ public class WinBLE implements RobotCommunicator {
                     robotManager.receiveNotification(peripheralName, bytes);
                     break;
                 case  "discovery" :
-                    peripheralName = root.getString("name");
+                    peripheralName = root.get("name").getAsString();
                     if (!(peripheralName.startsWith("FN") || peripheralName.startsWith("BB") || peripheralName.startsWith("MB"))){
                         break;
                     }
                     frontendServer.receiveScanResponse(peripheralName, root);
                     break;
                 case  "bluetoothState" :
-                    String bleStatus = root.getString("status");
+                    String bleStatus = root.get("status").getAsString();
                     LOG.info("blePacketReceived(): bluetoothStatus: {}", bleStatus);
                     boolean isAvailable = !bleStatus.equals("unavailable");
                     bleIsOn = bleStatus.equals("on");
@@ -222,9 +223,9 @@ public class WinBLE implements RobotCommunicator {
                     robotManager.updateCommunicatorStatus(bleIsOn, isAvailable);
                     break;
                 case  "connection" :
-                    String status = root.getString("status");
-                    peripheralName = root.getString("peripheral");
-                    String hasV2String = root.getString("hasV2");
+                    String status = root.get("status").getAsString();
+                    peripheralName = root.get("peripheral").getAsString();
+                    String hasV2String = root.get("hasV2").getAsString();
                     switch (status) {
                         case "connected":
                             LOG.info("blePacketReceived():Connection: connected, Peripheral: {}, hasV2: {}", peripheralName, hasV2String);
@@ -242,11 +243,11 @@ public class WinBLE implements RobotCommunicator {
                     }
                     break;
                 case "ERROR":
-                    String message = root.getString("message");
+                    String message = root.get("message").getAsString();
                     LOG.error("Error received from BlueBirdWindowsCL: " + message);
                     break;
                 case "DEBUG":
-                    String debugMsg = root.getString("message");
+                    String debugMsg = root.get("message").getAsString();
                     LOG.debug("Message from BlueBirdWindowsCL: " + debugMsg);
                     break;
                 default:

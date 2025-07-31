@@ -1,7 +1,8 @@
 package com.birdbraintechnologies.bluebirdconnector;
 
 import com.fazecast.jSerialComm.SerialPort; //import gnu.rxtx.*; //import javax.comm.*;  //import gnu.io.SerialPort;
-import org.json.JSONObject;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import org.thingml.bglib.*;
 
 //logging
@@ -745,7 +746,7 @@ public class DongleBLE extends BGAPIDefaultListener implements RobotCommunicator
                     d.setName(name);
                     devList.changed(d); //TODO: what does this do?
 
-                    JSONObject scanResponse = new JSONObject("{'packetType': 'discovery', 'name': "+ name +", 'rssi': "+ rssi +"}");
+                    JsonObject scanResponse = JsonParser.parseString("{'packetType': 'discovery', 'name': "+ name +", 'rssi': "+ rssi +"}").getAsJsonObject();
                     frontendServer.receiveScanResponse(name, scanResponse);
                 }
             }

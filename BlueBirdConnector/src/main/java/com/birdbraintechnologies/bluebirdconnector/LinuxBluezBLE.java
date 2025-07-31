@@ -15,7 +15,8 @@ import java.util.Map;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.ReentrantLock;
 
-import org.json.JSONObject;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import org.freedesktop.dbus.DBusPath;
 import org.freedesktop.dbus.annotations.DBusInterfaceName;
@@ -309,7 +310,7 @@ public class LinuxBluezBLE implements RobotCommunicator {
         public void reportTo(FrontendServer frontendServer) {
             if (rssi == null)
                 return; // ignore phantom, distant robots
-            JSONObject scanResponse = new JSONObject("{'packetType': 'discovery', 'name': "+ name +", 'rssi': "+ rssi +"}");
+            JsonObject scanResponse = JsonParser.parseString("{'packetType': 'discovery', 'name': "+ name +", 'rssi': "+ rssi +"}").getAsJsonObject();
             LOG.info("scan: {}", scanResponse.toString());
             frontendServer.receiveScanResponse(name, scanResponse);
         }

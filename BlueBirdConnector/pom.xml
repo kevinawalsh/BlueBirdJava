@@ -50,12 +50,18 @@
         </dependency>
 
         <!-- json -->
-        <!-- https://mvnrepository.com/artifact/org.json/json -->
+        <!-- https://github.com/google/gson -->
         <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.13.1</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.json/json -->
+        <!-- <dependency>
             <groupId>org.json</groupId>
             <artifactId>json</artifactId>
             <version>20210307</version>
-        </dependency>
+        </dependency> -->
         <!-- another json -->
         <!--<dependency>
             <groupId>org.glassfish</groupId>

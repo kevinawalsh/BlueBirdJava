@@ -2,7 +2,8 @@ package com.birdbraintechnologies.bluebirdconnector;
 
 import javafx.application.Platform;
 import netscape.javascript.JSObject;
-import org.json.JSONObject;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -85,12 +86,12 @@ public class FrontendServer {
 
     }
 
-    public void receiveScanResponse(String name, JSONObject discoveryInfo){
+    public void receiveScanResponse(String name, JsonObject discoveryInfo){
         if (robotManager.autoConnect && !autoconnectRequested) {
             autoconnectRequested = true;
             requestConnection(name);
         }
-        discoveryInfo.put("fancyName", FancyNames.getDeviceFancyName(name));
+        discoveryInfo.addProperty("fancyName", FancyNames.getDeviceFancyName(name));
         //Remove first 2 characters so that the name can change while advertising...
         availableRobots.put(name.substring(2), discoveryInfo.toString());
         LOG.debug("blePacketReceived():discovery: {} {}", name, discoveryInfo.toString());
