@@ -177,14 +177,14 @@ public class DongleBLE extends BGAPIDefaultListener implements RobotCommunicator
 
     //Cancel the current connection request
     //TODO: There should be more to this...
-    @Override
-    public void cancelConnectionRequest() {
-        if (bgapi != null) {
-            bgapi.send_gap_end_procedure();
-        } else {
-            LOG.error("cancelConnectionRequest: bgapi is null");
-        }
-    }
+    // @Override
+    // public void cancelConnectionRequest() {
+    //     if (bgapi != null) {
+    //         bgapi.send_gap_end_procedure();
+    //     } else {
+    //         LOG.error("cancelConnectionRequest: bgapi is null");
+    //     }
+    // }
 
     @Override
     public void sendCommand(String robotName, byte[] command) {

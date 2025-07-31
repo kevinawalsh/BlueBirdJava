@@ -276,9 +276,9 @@ public class WinBLE implements RobotCommunicator {
     }
 
     //TODO
-    public void cancelConnectionRequest() {
+    // public void cancelConnectionRequest() {
 
-    }
+    // }
 
     /**
      * Process a request to connect to a robot over MacOS native ble.

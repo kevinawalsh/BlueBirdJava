@@ -22,7 +22,8 @@ public class RobotManager {
     private static RobotManager sharedInstance;
     private RobotCommunicator robotCommunicator;
     private boolean shouldScanWhenReady = true;
-    private boolean nativeBleAvailable = true;
+    private boolean winNativeBleAvailable = false;
+    private boolean linuxNativeBleAvailable = false;
     private long lastSetupAttempt = 0;
     private boolean setupInProgress = false;
 
@@ -35,7 +36,8 @@ public class RobotManager {
         //Thread managerThread = new Thread(this::setUpRobotCommunicator);
         //managerThread.start();
         String osName = System.getProperty("os.name");
-        if (!osName.contains("Win")) { nativeBleAvailable = false; }
+        winNativeBleAvailable = osName.contains("Win");
+        linuxNativeBleAvailable = osName.equals("Linux");
 
         Timer timer = new Timer();
         timer.scheduleAtFixedRate(new TimerTask() {
@@ -73,10 +75,14 @@ public class RobotManager {
         //TODO: Find best communications option...
         robotCommunicator = new DongleBLE();
         if (!robotCommunicator.isRunning()) {
-            if (nativeBleAvailable) {
+            if (winNativeBleAvailable) {
                 LOG.debug("No dongle. Trying Windows native ble...");
                 robotCommunicator.kill();
                 robotCommunicator = new WinBLE();
+            } else if (linuxNativeBleAvailable) {
+                LOG.debug("No dongle. Trying Linux bluez ble...");
+                robotCommunicator.kill();
+                robotCommunicator = new LinuxBluezBLE();
             } else {
                 LOG.debug("Dongle not found and no native ble available.");
                 updateCommunicatorStatus(false,true);
@@ -102,7 +108,10 @@ public class RobotManager {
     public void updateCommunicatorStatus(boolean connected, boolean available) {
         LOG.debug("updateCommunicatorStatus {}", connected);
         //Currently, the only communicator that can be marked unavailable is native ble
-        if (!available) { nativeBleAvailable = false; }
+        if (!available) {
+            winNativeBleAvailable = false;
+            linuxNativeBleAvailable = false;
+        }
 
         FrontendServer.getSharedInstance().updateBleStatus(connected);
         if (!connected) {

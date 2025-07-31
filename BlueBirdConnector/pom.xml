@@ -107,6 +107,19 @@
             <version>2.2.0</version>
         </dependency>-->
 
+	<!-- dbus for linux ble -->
+	<!-- https://github.com/hypfvieh/dbus-java -->
+        <dependency>
+            <groupId>com.github.hypfvieh</groupId>
+            <artifactId>dbus-java-core</artifactId>
+            <version>5.1.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.hypfvieh</groupId>
+            <artifactId>dbus-java-transport-native-unixsocket</artifactId>
+            <version>5.1.1</version>
+        </dependency>
+
     </dependencies>
     <build>
         <resources>
@@ -130,10 +143,21 @@
                 <groupId>org.openjfx</groupId>
                 <artifactId>javafx-maven-plugin</artifactId>
                 <version>${javafx.maven.plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>create-runtime</id>
+                        <phase>package</phase>
+                        <goals><goal>jlink</goal></goals>
+                    </execution>
+                </executions>
                 <configuration>
                     <jlinkImageName>BlueBirdConnector</jlinkImageName>
                     <launcher>launcher</launcher>
                     <mainClass>com.birdbraintechnologies.bluebirdconnector.BlueBirdConnector</mainClass>
+                    <stripDebug>true</stripDebug>
+                    <noHeaderFiles>true</noHeaderFiles>
+                    <noManPages>true</noManPages>
+                    <compress>2</compress>
                 </configuration>
             </plugin>
         </plugins>
