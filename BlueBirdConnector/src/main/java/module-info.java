@@ -1,7 +1,6 @@
 module BlueBirdConnector {
     requires javafx.controls;
     requires javafx.web;
-    requires org.slf4j;
     requires jdk.jsobject;
     requires com.google.gson;
     requires org.eclipse.jetty.server;

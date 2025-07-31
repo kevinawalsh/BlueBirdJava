@@ -4,8 +4,6 @@ import javafx.application.Platform;
 import netscape.javascript.JSObject;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -18,7 +16,7 @@ import java.awt.Desktop;
 
 public class FrontendServer {
 
-    static final Logger LOG = LoggerFactory.getLogger(FrontendServer.class);
+    static final Log LOG = Log.getLogger(FrontendServer.class);
 
     private static FrontendServer sharedInstance;
     private RobotManager robotManager = RobotManager.getSharedInstance();

@@ -1,13 +1,10 @@
 package com.birdbraintechnologies.bluebirdconnector;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.*;
 
 public class RobotManager {
 
-    static final Logger LOG = LoggerFactory.getLogger(RobotManager.class);
+    static final Log LOG = Log.getLogger(RobotManager.class);
 
     static final double FINCH_TICKS_PER_CM = 49.7; //51;
     static final double FINCH_TICKS_PER_DEGREE = 4.335;

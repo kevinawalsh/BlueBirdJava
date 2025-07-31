@@ -22,8 +22,6 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.net.URL;
@@ -35,7 +33,7 @@ import static com.birdbraintechnologies.bluebirdconnector.Utilities.stackTraceTo
 
 public class BlueBirdConnector extends Application{
 
-    static final Logger LOG = LoggerFactory.getLogger(BlueBirdConnector.class);
+    static final Log LOG = Log.getLogger(BlueBirdConnector.class);
     //static final Properties prop = new Properties();
 
     private Double screen_width = 800.0;

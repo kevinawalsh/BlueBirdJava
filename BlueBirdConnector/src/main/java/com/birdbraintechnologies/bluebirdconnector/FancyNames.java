@@ -1,14 +1,11 @@
 package com.birdbraintechnologies.bluebirdconnector;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 public final class FancyNames {
-    static final Logger LOG = LoggerFactory.getLogger(FancyNames.class);
+    static final Log LOG = Log.getLogger(FancyNames.class);
 
     /**
      * Array of names to choose from. One name will be chosen from each column.

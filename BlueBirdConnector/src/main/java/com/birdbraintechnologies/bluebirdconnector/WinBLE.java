@@ -1,8 +1,5 @@
 package com.birdbraintechnologies.bluebirdconnector;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.*;
 import java.util.ArrayDeque;
 import java.util.Base64;
@@ -16,7 +13,7 @@ import static com.birdbraintechnologies.bluebirdconnector.Utilities.stackTraceTo
 
 public class WinBLE implements RobotCommunicator {
 
-    static final Logger LOG = LoggerFactory.getLogger(WinBLE.class);
+    static final Log LOG = Log.getLogger(WinBLE.class);
 
     private static String START_SCAN = "startScan\n";
     private static String STOP_SCAN = "stopScan\n";

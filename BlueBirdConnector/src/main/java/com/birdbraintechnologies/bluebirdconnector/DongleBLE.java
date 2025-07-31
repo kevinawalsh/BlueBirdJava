@@ -5,9 +5,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.thingml.bglib.*;
 
-//logging
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.thingml.bglib.gui.*;
 
 import java.util.*;
@@ -17,7 +14,7 @@ import static com.birdbraintechnologies.bluebirdconnector.Utilities.*;
 
 public class DongleBLE extends BGAPIDefaultListener implements RobotCommunicator {
 
-    static final Logger LOG = LoggerFactory.getLogger(DongleBLE.class);
+    static final Log LOG = Log.getLogger(DongleBLE.class);
 
     private final RobotManager robotManager = RobotManager.getSharedInstance();
     private final FrontendServer frontendServer = FrontendServer.getSharedInstance();

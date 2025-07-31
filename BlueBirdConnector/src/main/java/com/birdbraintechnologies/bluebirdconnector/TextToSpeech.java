@@ -1,8 +1,5 @@
 package com.birdbraintechnologies.bluebirdconnector;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 /*import java.util.Locale;
 import javax.speech.Central;
 import javax.speech.synthesis.Synthesizer;
@@ -23,7 +20,7 @@ import static com.birdbraintechnologies.bluebirdconnector.Utilities.stackTraceTo
 
 public class TextToSpeech {
     //Synthesizer synthesizer = null;
-    static final Logger LOG = LoggerFactory.getLogger(TextToSpeech.class);
+    static final Log LOG = Log.getLogger(TextToSpeech.class);
 
     public TextToSpeech(String text) {
         try {

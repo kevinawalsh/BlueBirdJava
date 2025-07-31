@@ -5,8 +5,6 @@ import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -18,7 +16,7 @@ import java.util.Arrays;
 import static com.birdbraintechnologies.bluebirdconnector.RobotManager.MAX_LED_PRINT_WORD_LEN;
 
 public class RobotServlet extends HttpServlet {
-    static final Logger LOG = LoggerFactory.getLogger(RobotServlet.class);
+    static final Log LOG = Log.getLogger(RobotServlet.class);
 
     private RobotManager robotManager = RobotManager.getSharedInstance();
 

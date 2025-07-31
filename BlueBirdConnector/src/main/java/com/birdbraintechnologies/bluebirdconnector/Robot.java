@@ -1,8 +1,5 @@
 package com.birdbraintechnologies.bluebirdconnector;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.Arrays;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -10,7 +7,7 @@ import java.util.TimerTask;
 import static com.birdbraintechnologies.bluebirdconnector.RobotManager.*;
 
 public abstract class Robot {
-    static final Logger LOG = LoggerFactory.getLogger(Robot.class);
+    static final Log LOG = Log.getLogger(Robot.class);
     private TextToSpeech tts;
 
     public final String name;

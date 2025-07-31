@@ -1,8 +1,5 @@
 package com.birdbraintechnologies.bluebirdconnector;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.*;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -33,7 +30,7 @@ import static com.birdbraintechnologies.bluebirdconnector.Utilities.stackTraceTo
 
 public class LinuxBluezBLE implements RobotCommunicator {
 
-    private static final Logger LOG = LoggerFactory.getLogger(LinuxBluezBLE.class);
+    private static final Log LOG = Log.getLogger(LinuxBluezBLE.class);
 
     private static final String SERVICE_UUID = "6e400001-b5a3-f393-e0a9-e50e24dcca9e";
     private static final String TX_CHAR_UUID = "6e400002-b5a3-f393-e0a9-e50e24dcca9e";
