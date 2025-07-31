@@ -71,10 +71,17 @@
         </dependency>
 
         <!-- text to speech -->
-        <dependency>
+        <!-- <dependency>
             <groupId>net.sf.sociaal</groupId>
             <artifactId>freetts</artifactId>
             <version>1.2.2</version>
+        </dependency> -->
+        <!-- Use a custom modular version of freetts, so jlink accepts it.
+             Usage: mvn install:install-file -Dfile=libs/freetts-1.2.2-modular.jar -DgroupId=com.sun.speech -DartifactId=freetts -Dversion=1.2.2-modular -Dpackaging=jar -->
+        <dependency>
+            <groupId>com.sun.speech</groupId>
+            <artifactId>freetts</artifactId>
+            <version>1.2.2-modular</version>
         </dependency>
 
         <!-- serial communication -->
