@@ -140,7 +140,6 @@ public class BlueBirdConnector extends Application{
                 webView.getEngine().setJavaScriptEnabled(true);
 
                 URL indexUrl = this.getClass().getResource("/frontend/index.html");
-                LOG.debug("resource url " + indexUrl);
                 webView.getEngine().load(indexUrl.toString());
 
                 stage.setTitle("Bluebird Connector");
@@ -187,9 +186,10 @@ public class BlueBirdConnector extends Application{
                     ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
                     context.setContextPath("/");
                     //context.setResourceBase(".");
-                    URL snapUrl = this.getClass().getResource("/Snap-6.1.4");
+                    URL snapUrl = this.getClass().getResource("/Snap-6.1.4"); // BAD here
+                    LOG.info("snapURL is " + snapUrl);
                     LOG.debug("snapURL: {}", snapUrl);
-                    context.setResourceBase(snapUrl.toString());
+                    // context.setResourceBase(snapUrl.toString());
 
                     FilterHolder filterHolder = new FilterHolder(CrossOriginFilter.class);
                     filterHolder.setInitParameter("allowedOrigins", "*");
@@ -212,7 +212,9 @@ public class BlueBirdConnector extends Application{
 
                     LOG.info("Starting Web Server on port 30061");
                     try {
+                        LOG.info("about to call server.start");
                         server.start();
+                        LOG.info("called server.start");
                     } catch (Exception e) {
                         LOG.error(e.toString());
                         //abortLaunch = true;
@@ -234,7 +236,10 @@ public class BlueBirdConnector extends Application{
                         LOG.info("Web Server started on port 30061");
                     }
                 } catch (Exception e) {
-                    LOG.error("startHTTPServer exception: ", e);
+                    LOG.error("startHTTPServer exception: {}", e.getMessage());
+                    LOG.error("{}", stackTraceToString(e));
+                    e.printStackTrace();
+                    System.exit(1);
                 }
             }
 
