@@ -29,7 +29,7 @@ public class Log {
     }
 
     public void debug(String fmt, Object... args) {
-        if (logger.isLoggable(Level.FINE)) logger.info(format(fmt, args));
+        if (logger.isLoggable(Level.FINE)) logger.fine(format(fmt, args));
     }
 
     private String format(String fmt, Object[] args) {
@@ -66,9 +66,23 @@ public class Log {
             if (val >= Level.SEVERE.intValue()) return "ERROR";
             if (val >= Level.WARNING.intValue()) return "WARN";
             if (val >= Level.INFO.intValue()) return "INFO";
-            if (val >= Level.CONFIG.intValue()) return "DEBUG";
+            if (val >= Level.FINE.intValue()) return "DEBUG";
             if (val >= Level.FINEST.intValue()) return "TRACE";
             return level.getName();
+        }
+    }
+
+    private static Level parseLevel(String levelStr) {
+        if (levelStr == null) return Level.INFO;
+        switch (levelStr.toUpperCase()) {
+            case "ERROR": return Level.SEVERE;
+            case "WARN": return Level.WARNING;
+            case "INFO": return Level.INFO;
+            case "DEBUG": return Level.FINE;
+            case "TRACE": return Level.FINEST;
+            case "ALL": return Level.ALL;
+            case "OFF": return Level.OFF;
+            default: return Level.INFO;
         }
     }
 
@@ -76,8 +90,12 @@ public class Log {
 
     static {
         Logger root = Logger.getLogger("");
+        Level level = parseLevel(System.getenv("BLUEBIRD_LOGLEVEL"));
+        root.setLevel(level);
         for (Handler handler : root.getHandlers()) {
             handler.setFormatter(ONE_LINE_FORMATTER);
+            handler.setLevel(level);
         }
     }
+
 }

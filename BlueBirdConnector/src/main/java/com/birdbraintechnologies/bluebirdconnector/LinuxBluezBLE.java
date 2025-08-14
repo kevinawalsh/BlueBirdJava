@@ -292,7 +292,7 @@ public class LinuxBluezBLE implements RobotCommunicator {
             rssi = r;
         }
         public void send(byte[] cmd) throws DBusException {
-            LOG.info("sending to {}: cmd={}", name, Utilities.bytesToString(cmd));
+            LOG.debug("sending to {}: cmd={}", name, Utilities.bytesToString(cmd));
             txChar.WriteValue(toByteList(cmd), Map.of());
         }
         public boolean checkedSend(byte[] cmd) {
@@ -308,7 +308,7 @@ public class LinuxBluezBLE implements RobotCommunicator {
             if (rssi == null)
                 return; // ignore phantom, distant robots
             JsonObject scanResponse = JsonParser.parseString("{'packetType': 'discovery', 'name': "+ name +", 'rssi': "+ rssi +"}").getAsJsonObject();
-            LOG.info("scan: {}", scanResponse.toString());
+            LOG.debug("scan: {}", scanResponse.toString());
             frontendServer.receiveScanResponse(name, scanResponse);
         }
     }
@@ -371,10 +371,10 @@ public class LinuxBluezBLE implements RobotCommunicator {
         private void bluetoothIfaceAdded(String path, Map<String, Map<String, Variant<?>>> ifaces) {
             LOG.info("interfaces added for {}", path);
             for (var entry : ifaces.entrySet()) {
-                LOG.info("  iface: {}: {}", entry.getKey());
+                LOG.debug("  iface: {}: {}", entry.getKey());
                 Map<String, Variant<?>> p = entry.getValue();
                 for (var e2 : p.entrySet())
-                    LOG.info("    key: {}   value: {}", e2.getKey(), e2.getValue().getValue().toString());
+                    LOG.debug("    key: {}   value: {}", e2.getKey(), e2.getValue().getValue().toString());
             }
             Map<String, Variant<?>> props;
             // Check if this is a BirdBrain device, e.g. during discovery
@@ -398,15 +398,15 @@ public class LinuxBluezBLE implements RobotCommunicator {
                 return;
             LOG.info("Device offers BirdBrain services: " + name);
             for (var entry : props.entrySet())
-                LOG.info("  key: {}   value: {}", entry.getKey(), entry.getValue().getValue().toString());
+                LOG.debug("  key: {}   value: {}", entry.getKey(), entry.getValue().getValue().toString());
             Short rssi = null;
             if (props.containsKey("RSSI")) {
                 rssi = (Short)props.get("RSSI").getValue();
-                LOG.info("RSSI: " + rssi + ((rssi > -75) ? "(strong signal)" : "(weak signal)"));
+                LOG.debug("RSSI: " + rssi + ((rssi > -75) ? "(strong signal)" : "(weak signal)"));
             } else {
                 // FIXME: Maybe query dbus to see if RSSI property can be found?
                 // Currently, we get the RSSI on the next PropertiesChanged signal.
-                LOG.info("RSSI: unknown");
+                LOG.debug("RSSI: unknown");
             }
             // Add to list, if needed
             boolean changed = false;
@@ -451,14 +451,14 @@ public class LinuxBluezBLE implements RobotCommunicator {
                         LOG.error("failed to get tx characteristic for " + path);
                     robot.txCharPath = path;
                     robotsByTxPath.put(path, robot);
-                    LOG.info("Found txChar for {}: {}", robot.name, path);
+                    LOG.debug("Found txChar for {}: {}", robot.name, path);
                 } else if (uuid.equalsIgnoreCase(RX_CHAR_UUID) && robot.rxChar == null) {
                     robot.rxChar = conn.getRemoteObject("org.bluez", path, GattCharacteristic1.class);
                     if (robot.rxChar == null)
                         LOG.error("failed to get rx characteristic for " + path);
                     robot.rxCharPath = path;
                     robotsByRxPath.put(path, robot);
-                    LOG.info("Found rxChar for {}: {}", robot.name, path);
+                    LOG.debug("Found rxChar for {}: {}", robot.name, path);
                 }
             } catch (Exception e) {
                 LOG.error("failed to get gatt characteristic for " + path + ": " + e.getMessage());
@@ -476,12 +476,12 @@ public class LinuxBluezBLE implements RobotCommunicator {
         }
 
         private void bluetoothValueChanged(String path, Map<String, Variant<?>> props) {
-            LOG.info("Properties of {} changed...", path);
+            LOG.debug("Properties of {} changed...", path);
             for (var entry : props.entrySet())
-                LOG.info("  key: {}   value: {}", entry.getKey(), entry.getValue().getValue().toString());
+                LOG.debug("  key: {}   value: {}", entry.getKey(), entry.getValue().getValue().toString());
             if (props.containsKey("Value")) {
                 byte[] value = toByteArray((List<Byte>)props.get("Value").getValue());
-                LOG.info("Received from " + path + " : " + Utilities.bytesToString(value));
+                LOG.debug("Received from " + path + " : " + Utilities.bytesToString(value));
                 BLERobotDevice robot;
                 robot = robotsByTxPath.get(path);
                 if (robot != null) {
@@ -509,7 +509,7 @@ public class LinuxBluezBLE implements RobotCommunicator {
         }
 
         private void bluetoothRxResponse(BLERobotDevice robot, byte[] value) {
-            LOG.info("rx response");
+            LOG.debug("rx response");
             if (value.length >= 4 && robot.status == CONNECTING_GETTING_VERSION) {
                 // Response for GET_VERSION command.
                 // Example response data: { 0x2, 0x2, 0x44, 0x22 }
@@ -594,7 +594,7 @@ public class LinuxBluezBLE implements RobotCommunicator {
                     if (ifaces.containsKey("org.bluez.GattCharacteristic1")) {
                         Map<String, Variant<?>> props = ifaces.get("org.bluez.GattCharacteristic1");
                         String uuid = (String) props.get("UUID").getValue();
-                        LOG.info("item is a Gatt characteristic, UUID={}", uuid);
+                        LOG.debug("item is a Gatt characteristic, UUID={}", uuid);
                         updateGatt(path, robot, uuid);
                     }
                 }
@@ -672,7 +672,7 @@ public class LinuxBluezBLE implements RobotCommunicator {
         }
 
         private void send(String robotName, byte[] command) {
-            LOG.info("sending to " + robotName);
+            LOG.debug("sending to " + robotName);
             BLERobotDevice robot = robotsByName.get(robotName);
             if (robot == null) {
                 LOG.error("can't find info for " + robotName);
