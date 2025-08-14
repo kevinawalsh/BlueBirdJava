@@ -189,7 +189,7 @@ public class BlueBirdConnector extends Application{
                     URL snapUrl = this.getClass().getResource("/Snap-6.1.4"); // BAD here
                     LOG.info("snapURL is " + snapUrl);
                     LOG.debug("snapURL: {}", snapUrl);
-                    // context.setResourceBase(snapUrl.toString());
+                    context.setResourceBase(snapUrl.toString());
 
                     FilterHolder filterHolder = new FilterHolder(CrossOriginFilter.class);
                     filterHolder.setInitParameter("allowedOrigins", "*");
@@ -212,9 +212,7 @@ public class BlueBirdConnector extends Application{
 
                     LOG.info("Starting Web Server on port 30061");
                     try {
-                        LOG.info("about to call server.start");
                         server.start();
-                        LOG.info("called server.start");
                     } catch (Exception e) {
                         LOG.error(e.toString());
                         //abortLaunch = true;

@@ -123,7 +123,7 @@ public class FrontendServer {
 
     private void sendToGUI(String methodName, Object... args) {
         if (callbackManager == null) {
-            LOG.error("Cannot call {}, callback manager not set up.", methodName);
+            LOG.error("Cannot call {}, GUI callback manager not yet set up.", methodName);
             pendingMessages.add(() -> sendToGUI(methodName, args));
             return;
         }

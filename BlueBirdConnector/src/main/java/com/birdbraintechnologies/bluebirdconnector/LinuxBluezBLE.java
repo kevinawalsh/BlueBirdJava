@@ -161,7 +161,7 @@ public class LinuxBluezBLE implements RobotCommunicator {
             // Start the worker thread.
             worker.start();
                 
-            LOG.error("dbus/bluez bluetooth initialization finished.");
+            LOG.info("dbus/bluez bluetooth initialization finished.");
 
         } catch (Exception e) {
             LOG.error("Initialization Exception: {} {}", e.toString(), stackTraceToString(e));
@@ -305,8 +305,12 @@ public class LinuxBluezBLE implements RobotCommunicator {
             }
         }
         public void reportTo(FrontendServer frontendServer) {
-            if (rssi == null)
+            if (rssi == null) {
+                LOG.info("Robot {} has undefined RSSI, probably too distant or turned off. Ignoring.", name);
                 return; // ignore phantom, distant robots
+            } else {
+                LOG.info("Robot {} has RSSI level {}", name, rssi);
+            }
             JsonObject scanResponse = JsonParser.parseString("{'packetType': 'discovery', 'name': "+ name +", 'rssi': "+ rssi +"}").getAsJsonObject();
             LOG.debug("scan: {}", scanResponse.toString());
             frontendServer.receiveScanResponse(name, scanResponse);
@@ -349,7 +353,7 @@ public class LinuxBluezBLE implements RobotCommunicator {
                 for (var entry : manager.GetManagedObjects().entrySet())
                     bluetoothIfaceAdded(entry.getKey().getPath(), entry.getValue());
 
-                // Begin main work loop
+                // Main work loop
                 while (!Thread.currentThread().isInterrupted()) {
                     Work work = workQueue.take();
                     work.task.run(work);
@@ -402,11 +406,11 @@ public class LinuxBluezBLE implements RobotCommunicator {
             Short rssi = null;
             if (props.containsKey("RSSI")) {
                 rssi = (Short)props.get("RSSI").getValue();
-                LOG.debug("RSSI: " + rssi + ((rssi > -75) ? "(strong signal)" : "(weak signal)"));
+                LOG.info("RSSI: " + rssi + ((rssi > -75) ? "(strong signal)" : "(weak signal)"));
             } else {
                 // FIXME: Maybe query dbus to see if RSSI property can be found?
                 // Currently, we get the RSSI on the next PropertiesChanged signal.
-                LOG.debug("RSSI: unknown");
+                LOG.info("RSSI: unknown");
             }
             // Add to list, if needed
             boolean changed = false;
@@ -545,7 +549,7 @@ public class LinuxBluezBLE implements RobotCommunicator {
                         () -> {
                             BLERobotDevice robot = robotsByPath.remove(path);
                             if (robot != null) {
-                                disconnect(robot);
+                                disconnect(robot, false);
                                 robotsByName.remove(robot.name);
                             }
             }));
@@ -574,6 +578,7 @@ public class LinuxBluezBLE implements RobotCommunicator {
                 LOG.error("Device " + robotName + " is busy.");
                 return;
             }
+            LOG.info("robot {} is currently IDLE, path is {}", robotName, robot.path);
             try {
                 Device1 device = conn.getRemoteObject("org.bluez", robot.path, Device1.class);
                 if (device == null) {
@@ -607,7 +612,7 @@ public class LinuxBluezBLE implements RobotCommunicator {
                 }
             } catch (Exception e) {
                 LOG.error("can't connect to " + robot.path + ": " + e.getMessage());
-                robot.status = IDLE;
+                disconnect(robot, true /*false*/); // userInitiated=true so frontend doesn't try to reconnect immediately
             }
         }
 
@@ -622,10 +627,10 @@ public class LinuxBluezBLE implements RobotCommunicator {
                 LOG.error("can't find info for " + robotName);
                 return;
             }
-            disconnect(robot);
+            disconnect(robot, true);
         }
 
-        private void disconnect(BLERobotDevice robot) {
+        private void disconnect(BLERobotDevice robot, boolean userInitiated) {
             if (robot.status == CONNECTED) {
                 robot.checkedSend(POLL_STOP);
                 try {
@@ -660,11 +665,12 @@ public class LinuxBluezBLE implements RobotCommunicator {
             }
             robot.status = IDLE;
             workQueue.removeIf((work) -> work.path.equals(robot.name));
+            robotManager.receiveDisconnectionEvent(robot.name, userInitiated);
         }
 
         private void disconnectAll() {
             for (BLERobotDevice robot : robotsByPath.values())
-                disconnect(robot);
+                disconnect(robot, false);
         }
 
         public Work newSendRequest(String robotName, byte[] command) {
