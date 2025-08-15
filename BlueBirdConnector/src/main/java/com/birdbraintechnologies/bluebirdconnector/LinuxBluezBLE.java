@@ -514,7 +514,7 @@ public class LinuxBluezBLE implements RobotCommunicator {
                 if (val == null)
                     return;
                 if (!(val instanceof Short)) {
-                    LOG.error("BLE device {} sent unexpected RSSI type {}", path, val);
+                    LOG.error("BLE device {} sent unexpected RSSI type {}", path, val.getClass());
                     return;
                 }
                 Short rssi = (Short)val;
@@ -523,6 +523,21 @@ public class LinuxBluezBLE implements RobotCommunicator {
                 if (robot != null && rssi != null && (robot.rssi == null || Math.abs(rssi - robot.rssi) > RSSI_THRESHOLD)) {
                     robot.rssi = rssi;
                     robot.reportTo(frontendServer);
+                }
+            } else if (props.containsKey("Connected")) {
+                Object val = props.get("Connected").getValue();
+                if (val == null)
+                    return;
+                if (!(val instanceof Boolean)) {
+                    LOG.error("BLE device {} sent unexpected Connected status type {}", path, val.getClass());
+                    return;
+                }
+                boolean connected = (Boolean)val;
+                BLERobotDevice robot = robotsByPath.get(path);
+                if (robot != null && !connected) {
+                    LOG.info("Device disconnected: " + path);
+                    workQueue.removeIf((work) -> work.path.equals(path) || work.path.startsWith(path + "/"));
+                    disconnect(robot, false);
                 }
             }
         }
