@@ -21,6 +21,7 @@ import org.freedesktop.dbus.connections.impl.DBusConnection;
 import org.freedesktop.dbus.connections.impl.DBusConnectionBuilder;
 import org.freedesktop.dbus.exceptions.DBusException;
 import org.freedesktop.dbus.interfaces.DBusInterface;
+import org.freedesktop.dbus.interfaces.DBusSigHandler;
 import org.freedesktop.dbus.interfaces.ObjectManager;
 import org.freedesktop.dbus.interfaces.Properties;
 import org.freedesktop.dbus.types.UInt32;
@@ -335,9 +336,10 @@ public class LinuxBluezBLE implements RobotCommunicator {
 
                 // Set Bluez handler, used during device discovery and connection
                 conn.addSigHandler(ObjectManager.InterfacesAdded.class,
-                        (sig) -> workQueue.offer(
-                            new Work("dbus device detection", sig.getPath(),
-                                () -> bluetoothIfaceAdded(sig.getPath(), sig.getInterfaces()))));
+                        (sig) ->
+                            workQueue.offer(
+                            new Work("dbus device detection", sig.getSignalSource().getPath(),
+                                () -> bluetoothIfaceAdded(true, sig.getSignalSource().getPath(), sig.getInterfaces()))));
 
                 // Set Bluez handler, used for removed devices
                 conn.addSigHandler(ObjectManager.InterfacesRemoved.class,
@@ -351,7 +353,7 @@ public class LinuxBluezBLE implements RobotCommunicator {
 
                 // Enumerate existing Bluetooth devices
                 for (var entry : manager.GetManagedObjects().entrySet())
-                    bluetoothIfaceAdded(entry.getKey().getPath(), entry.getValue());
+                    bluetoothIfaceAdded(false, entry.getKey().getPath(), entry.getValue());
 
                 // Main work loop
                 while (!Thread.currentThread().isInterrupted()) {
@@ -372,10 +374,11 @@ public class LinuxBluezBLE implements RobotCommunicator {
             LOG.info("worker shutting down.");
         }
 
-        private void bluetoothIfaceAdded(String path, Map<String, Map<String, Variant<?>>> ifaces) {
-            LOG.info("interfaces added for {}", path);
+        private void bluetoothIfaceAdded(boolean viaCallback, String path, Map<String, Map<String, Variant<?>>> ifaces) {
+            LOG.info("interfaces added for {} {}", path, viaCallback ? "via callback" : "during initial enumeration");
+
             for (var entry : ifaces.entrySet()) {
-                LOG.debug("  iface: {}: {}", entry.getKey());
+                LOG.debug("  iface {} contents: ", entry.getKey());
                 Map<String, Variant<?>> p = entry.getValue();
                 for (var e2 : p.entrySet())
                     LOG.debug("    key: {}   value: {}", e2.getKey(), e2.getValue().getValue().toString());
@@ -398,7 +401,7 @@ public class LinuxBluezBLE implements RobotCommunicator {
             String prefix = name.substring(0, 2);
             if (!supportedRobotTypes.contains(prefix))
                 return;
-            if (!containsIgnoreCase((List<String>)props.get("UUIDs").getValue(), SERVICE_UUID))
+            if (!containsIgnoreCase(props.get("UUIDs").getValue(), SERVICE_UUID))
                 return;
             LOG.info("Device offers BirdBrain services: " + name);
             for (var entry : props.entrySet())
@@ -406,7 +409,7 @@ public class LinuxBluezBLE implements RobotCommunicator {
             Short rssi = null;
             if (props.containsKey("RSSI")) {
                 rssi = (Short)props.get("RSSI").getValue();
-                LOG.info("RSSI: " + rssi + ((rssi > -75) ? "(strong signal)" : "(weak signal)"));
+                LOG.info("RSSI: {} {}", rssi, (rssi > -75) ? "(strong signal)" : "(weak signal)");
             } else {
                 // FIXME: Maybe query dbus to see if RSSI property can be found?
                 // Currently, we get the RSSI on the next PropertiesChanged signal.
@@ -441,10 +444,11 @@ public class LinuxBluezBLE implements RobotCommunicator {
                 return;
             String uuid = uuidVar.getValue().toString();
             String service = ((DBusPath)serviceVar.getValue()).getPath();
-            BLERobotDevice robot = robotsByPath.get(service);
+            BLERobotDevice robot = robotByService(service);
+            LOG.debug("GATT update for Robot {}, UUID is {}", robot != null ? robot.name : "<NULL>", uuid);
             updateGatt(path, robot, uuid);
         }
-        
+
         private void updateGatt(String path, BLERobotDevice robot, String uuid) {
             if (robot == null || robot.status != CONNECTING_BEGIN)
                 return;
@@ -463,6 +467,8 @@ public class LinuxBluezBLE implements RobotCommunicator {
                     robot.rxCharPath = path;
                     robotsByRxPath.put(path, robot);
                     LOG.debug("Found rxChar for {}: {}", robot.name, path);
+                } else {
+                    LOG.debug("Unrecognized GATT characteristic for {}, UUID {}", robot.name, uuid);
                 }
             } catch (Exception e) {
                 LOG.error("failed to get gatt characteristic for " + path + ": " + e.getMessage());
@@ -484,7 +490,13 @@ public class LinuxBluezBLE implements RobotCommunicator {
             for (var entry : props.entrySet())
                 LOG.debug("  key: {}   value: {}", entry.getKey(), entry.getValue().getValue().toString());
             if (props.containsKey("Value")) {
-                byte[] value = toByteArray((List<Byte>)props.get("Value").getValue());
+                Object val = props.get("Value").getValue();
+                if (!(val instanceof List)) {
+                    LOG.error("BLE device {} sent unexpected Value type {}", path, val);
+                    return;
+                }
+                @SuppressWarnings("unchecked")
+                byte[] value = toByteArray((List<Byte>)val);
                 LOG.debug("Received from " + path + " : " + Utilities.bytesToString(value));
                 BLERobotDevice robot;
                 robot = robotsByTxPath.get(path);
@@ -498,7 +510,14 @@ public class LinuxBluezBLE implements RobotCommunicator {
                     return;
                 }
             } else if (props.containsKey("RSSI")) {
-                Short rssi = (Short)props.get("RSSI").getValue();
+                Object val = props.get("RSSI").getValue();
+                if (val == null)
+                    return;
+                if (!(val instanceof Short)) {
+                    LOG.error("BLE device {} sent unexpected RSSI type {}", path, val);
+                    return;
+                }
+                Short rssi = (Short)val;
                 BLERobotDevice robot;
                 robot = robotsByPath.get(path);
                 if (robot != null && rssi != null && (robot.rssi == null || Math.abs(rssi - robot.rssi) > RSSI_THRESHOLD)) {
@@ -541,9 +560,11 @@ public class LinuxBluezBLE implements RobotCommunicator {
         }
 
         private void deviceRemoved(String path, List<String> ifaces) {
+            LOG.info("Device removed: " + path);
+            for (String iface: ifaces)
+                LOG.info("with iface: " + iface);
             if (!ifaces.contains("org.bluez.Device1"))
                 return;
-            LOG.info("Device removed: " + path);
             workQueue.removeIf((work) -> work.path.equals(path) || work.path.startsWith(path + "/"));
             workQueue.offerFirst(new Work("dbus device removal", path, 
                         () -> {
@@ -691,12 +712,44 @@ public class LinuxBluezBLE implements RobotCommunicator {
             robot.checkedSend(command);
         }
 
+        private BLERobotDevice robotByService(String service) {
+            // Note: service is a path like
+            //    "/org/bluez/hci2/dev_DE_EC_24_5C_80_39/service000a"
+            // or "/org/bluez/hci2/dev_DE_EC_24_5C_80_39/service000a/char000b"
+            // and the keys in the robotsByPath hashmap are like
+            //    "/org/bluez/hci2/dev_DE_EC_24_5C_80_39"
+            
+            // First try exact match
+            BLERobotDevice robot = robotsByPath.get(service);
+            if (robot != null)
+                return robot;
+
+            // Try each prefix of service path
+            int slash = service.length();
+            while ((slash = service.lastIndexOf('/', slash - 1)) > 0) {
+                String parent = service.substring(0, slash);
+                robot = robotsByPath.get(parent);
+                if (robot != null)
+                    return robot;
+            }
+
+            return null;
+        }
+        
     }
 
 
     //
     // Helpers
     //
+    
+    private boolean containsIgnoreCase(Object list, String target) {
+        if (!(list instanceof List))
+            return false;
+        @SuppressWarnings("unchecked")
+        List<String> strings = (List<String>)list;
+        return containsIgnoreCase(strings, target);
+    }
     
     private boolean containsIgnoreCase(List<String> list, String target) {
         for (String s : list)

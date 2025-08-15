@@ -187,7 +187,7 @@ public class RobotManager {
             LOG.debug("Connecting {} at index {}", name, index);
         }
 
-        stopDiscovery();
+        // stopDiscovery();
         robotCommunicator.requestConnection(name);
     }
 
