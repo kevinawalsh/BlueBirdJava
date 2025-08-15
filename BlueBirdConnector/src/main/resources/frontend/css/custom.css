@@ -57,7 +57,7 @@ h1 { font-family: 'Raleway', Helvetica, Arial, sans-serif; font-size: 1.75em; te
 
 /* !robot list */
 .robot-list { background-color: #fff; border-radius: 5px; color: #535353; overflow: hidden; margin: 0.5em auto 2em auto; max-width: 720px; width: 98%; }
-.robot-list .robot-item:nth-child(even) { background-color: #F2F2F2; }
+.robot-list .robot-item:nth-of-type(even) { background-color: #E2E2E2; }
 
 /* !robot items */
 .robot-item { font-size: 1.5em; margin: 0; }
@@ -75,10 +75,10 @@ h1 { font-family: 'Raleway', Helvetica, Arial, sans-serif; font-size: 1.75em; te
 .robot-item .buttons > .button .fa-stack-1x.fa-compass { top: 0.025em; }
 
 /* !found robots section */
-#robots-found { margin-top: 1.25em; margin-bottom: 0; max-width: 480px; width: 98%; max-height: 245px; overflow: auto; }
+#robots-found { margin-top: 1.25em; margin-bottom: 0; max-width: 720px; width: 98%; max-height: 245px; overflow: auto; }
 
 #robots-found .robot-item { font-size: 1.125em; }
-#robots-found .robot-item .name { line-height: 1.625em; color: #535353;}
+#robots-found .robot-item .name { line-height: 1.325em; color: #535353;}
 #robots-found .img { text-align: center; }
 #robots-found .img img { height: 28px; }
 #robots-found .buttons { font-size: 0.375em; padding: 0px 10px 0px 10px; }
