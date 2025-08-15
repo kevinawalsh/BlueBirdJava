@@ -323,6 +323,7 @@ public class LinuxBluezBLE implements RobotCommunicator {
     private static final Object CONNECTING_GETTING_VERSION = "getting version information";
     private static final Object CONNECTING_CANCELLED = "cancelling connection attempt";
     private static final Object CONNECTED = "connected";
+    private static final Object DISCONNECTING = "disconnecting";
 
     private class Worker extends Thread {
 
@@ -534,7 +535,7 @@ public class LinuxBluezBLE implements RobotCommunicator {
                 }
                 boolean connected = (Boolean)val;
                 BLERobotDevice robot = robotsByPath.get(path);
-                if (robot != null && !connected) {
+                if (robot != null && !connected && robot.status != DISCONNECTING && robot.status != IDLE) {
                     LOG.info("Device disconnected: " + path);
                     workQueue.removeIf((work) -> work.path.equals(path) || work.path.startsWith(path + "/"));
                     disconnect(robot, false);
@@ -640,7 +641,7 @@ public class LinuxBluezBLE implements RobotCommunicator {
                     }
                 }
                 // set a timer in case connection drops out
-                if (robot.status != CONNECTED) {
+                if (robot.status != CONNECTED && robot.status != DISCONNECTING) {
                     robot.connectionTimer = scheduler.schedule(() -> {
                         LOG.error("Connection timeout...");
                         requestDisconnect(robot.name);
@@ -667,7 +668,13 @@ public class LinuxBluezBLE implements RobotCommunicator {
         }
 
         private void disconnect(BLERobotDevice robot, boolean userInitiated) {
-            if (robot.status == CONNECTED) {
+            Object prevStatus = robot.status;
+            robot.status = DISCONNECTING;
+            if (prevStatus == DISCONNECTING) {
+                LOG.error("reentrant disconnect");
+                return;
+            }
+            if (prevStatus == CONNECTED) {
                 robot.checkedSend(POLL_STOP);
                 try {
                     robot.rxChar.StopNotify();
@@ -702,6 +709,8 @@ public class LinuxBluezBLE implements RobotCommunicator {
             robot.status = IDLE;
             workQueue.removeIf((work) -> work.path.equals(robot.name));
             robotManager.receiveDisconnectionEvent(robot.name, userInitiated);
+            if (userInitiated)
+                robot.reportTo(frontendServer); // re-populate available robot list
         }
 
         private void disconnectAll() {
