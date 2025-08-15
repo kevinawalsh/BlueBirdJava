@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.net.URLDecoder;
 import java.util.Arrays;
 
@@ -983,7 +984,7 @@ public class RobotServlet extends HttpServlet {
         LOG.debug("Finch Orientation Accel = {}" , b);
         float gravity = (float)(b * (2.0/127.0));
         BigDecimal bd = new BigDecimal(gravity);
-        bd = bd.setScale(2, BigDecimal.ROUND_HALF_UP);  //Round to 2 decimal places
+        bd = bd.setScale(2, RoundingMode.HALF_UP);  //Round to 2 decimal places
         LOG.debug("Orientation gravity = {}", bd.floatValue());
         return bd.floatValue();
     }
@@ -992,7 +993,7 @@ public class RobotServlet extends HttpServlet {
         int i = (int)b;
         float gravity = (float)(i * (2.0/127.0));
         BigDecimal bd = new BigDecimal(gravity);
-        bd = bd.setScale(2, BigDecimal.ROUND_HALF_UP);  //Round to 2 decimal places
+        bd = bd.setScale(2, RoundingMode.HALF_UP);  //Round to 2 decimal places
         LOG.debug("Orientation gravity = {}", bd.floatValue());
         return bd.floatValue();
     }
@@ -1000,7 +1001,7 @@ public class RobotServlet extends HttpServlet {
 
     private String roundToString(double value) {
         BigDecimal bd = new BigDecimal(value);  //Scaling factor of 0.1
-        bd = bd.setScale(2, BigDecimal.ROUND_HALF_UP);  //Round to 2 decimal places
+        bd = bd.setScale(2, RoundingMode.HALF_UP);  //Round to 2 decimal places
         return Double.toString(bd.doubleValue());
     }
 
