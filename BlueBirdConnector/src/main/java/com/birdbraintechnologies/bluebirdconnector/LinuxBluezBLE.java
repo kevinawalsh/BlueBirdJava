@@ -306,7 +306,9 @@ public class LinuxBluezBLE implements RobotCommunicator {
             }
         }
         public void reportTo(FrontendServer frontendServer) {
-            if (rssi == null) {
+            if (status != IDLE) {
+                return; // filter out robots already connected (or in progress)
+            } else if (rssi == null) {
                 LOG.info("Robot {} has undefined RSSI, probably too distant or turned off. Ignoring.", name);
                 return; // ignore phantom, distant robots
             } else {
