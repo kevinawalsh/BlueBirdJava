@@ -19,6 +19,7 @@ import org.eclipse.jetty.server.*;
 import org.eclipse.jetty.servlet.DefaultServlet;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.util.resource.Resource;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
@@ -190,6 +191,13 @@ public class BlueBirdConnector extends Application{
                     LOG.info("snapURL is " + snapUrl);
                     LOG.debug("snapURL: {}", snapUrl);
                     context.setResourceBase(snapUrl.toString());
+
+                    // Resource snapResource = Resource.newClassPathResource("/Snap-6.1.4");
+                    // if (snapResource == null) {
+                    //     throw new IllegalStateException("Could not load Snap-6.1.4 from classpath");
+                    // }
+                    // context.setBaseResource(snapResource);
+
 
                     FilterHolder filterHolder = new FilterHolder(CrossOriginFilter.class);
                     filterHolder.setInitParameter("allowedOrigins", "*");

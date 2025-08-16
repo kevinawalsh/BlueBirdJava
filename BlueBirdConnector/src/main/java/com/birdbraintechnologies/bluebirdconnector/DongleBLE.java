@@ -315,12 +315,13 @@ public class DongleBLE extends BGAPIDefaultListener implements RobotCommunicator
      * @return
      */
     private boolean startBLEDongle () {
-        LOG.info("Connecting to BLED112. Resetting Dongle...");
+        // LOG.info("Connecting to BLED112. Resetting Dongle...");
         //connectionTable.clear(); //reset connecton table
         //blueBirdDriver.disconnect (false); //reset previous dongle connection
         //TODO: make sure another instance isn't already running?
-
-        LOG.debug("disconnection complete, starting bluetooth dongle connection attempt");
+        // LOG.debug("disconnection complete, starting bluetooth dongle connection attempt");
+        
+        LOG.info("Checking for BLED112 Dongle...");
         SerialPort blueGigaPort = BLED112.selectSerialPort();
         if (blueGigaPort!=null){
             port = BLED112.connectSerial(blueGigaPort);
