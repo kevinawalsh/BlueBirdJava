@@ -98,8 +98,8 @@ public class BLED112 {
             }
         } else if (osName.contains("Linux")) {
             for (int i = 0; i < commPorts.length; i++) {
-                System.out.println("FOUND serial port: " + commPorts[i].getDescriptivePortName());
                 if (commPorts[i].getDescriptivePortName().contains("Low Energy Dongle")) {
+                    System.out.println("FOUND serial port: " + commPorts[i].getDescriptivePortName());
                     return commPorts[i];
                 }
             }
