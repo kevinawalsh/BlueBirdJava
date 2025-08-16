@@ -25,12 +25,16 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 
 import java.io.*;
+import java.net.URI;
 import java.net.URL;
+import java.nio.file.*;
 import java.util.*;
+
 
 import netscape.javascript.JSObject;
 
 import static com.birdbraintechnologies.bluebirdconnector.Utilities.stackTraceToString;
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 public class BlueBirdConnector extends Application{
 
@@ -186,18 +190,11 @@ public class BlueBirdConnector extends Application{
                     // This is also known as the handler tree (in jetty speak)
                     ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
                     context.setContextPath("/");
-                    //context.setResourceBase(".");
-                    URL snapUrl = this.getClass().getResource("/Snap-6.1.4"); // BAD here
-                    LOG.info("snapURL is " + snapUrl);
-                    LOG.debug("snapURL: {}", snapUrl);
-                    context.setResourceBase(snapUrl.toString());
-
-                    // Resource snapResource = Resource.newClassPathResource("/Snap-6.1.4");
-                    // if (snapResource == null) {
-                    //     throw new IllegalStateException("Could not load Snap-6.1.4 from classpath");
-                    // }
-                    // context.setBaseResource(snapResource);
-
+                    try {
+                        setJettyResourceBase(context, "Snap-6.1.4");
+                    } catch (IOException e) {
+                        LOG.error("Could not unpack Snap-6.1.4 resources -- local snap feature will not work");
+                    }
 
                     FilterHolder filterHolder = new FilterHolder(CrossOriginFilter.class);
                     filterHolder.setInitParameter("allowedOrigins", "*");
@@ -282,5 +279,43 @@ public class BlueBirdConnector extends Application{
         });
     }
 
+    private void setJettyResourceBase(ServletContextHandler context, String snapDir) throws IOException {
+        ClassLoader cl = Thread.currentThread().getContextClassLoader();
+        // Try normal (file/jar) first
+        URL base = cl.getResource(snapDir + "/");
+        if (base != null && !"jrt".equalsIgnoreCase(base.getProtocol())) {
+            // Works under mvn javafx:run
+            context.setBaseResource(org.eclipse.jetty.util.resource.Resource.newResource(base));
+        } else {
+            // jlink image: copy from jrt:/modules/<module>/Snap-6.1.4 to a temp dir
+            String moduleName = getClass().getModule().getName();  // e.g., BlueBirdConnector
+            Path extracted = Files.createTempDirectory("snap-assets");
+            extracted.toFile().deleteOnExit();
+
+            try (FileSystem jrt = FileSystems.newFileSystem(URI.create("jrt:/"), java.util.Map.of())) {
+                Path src = jrt.getPath("/modules", moduleName, snapDir);
+                if (!Files.exists(src)) {
+                    throw new IllegalStateException("Resource dir not found in module: " + src);
+                }
+                Files.walk(src).forEach(p -> {
+                    try {
+                        Path rel = src.relativize(p);
+                        Path dst = extracted.resolve(rel.toString());
+                        if (Files.isDirectory(p)) {
+                            Files.createDirectories(dst);
+                        } else {
+                            Files.createDirectories(dst.getParent());
+                            try (InputStream in = Files.newInputStream(p)) {
+                                Files.copy(in, dst, REPLACE_EXISTING);
+                            }
+                        }
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+            }
+            context.setResourceBase(extracted.toAbsolutePath().toString());
+        }
+    }
 
 }
