@@ -11,6 +11,7 @@ module BlueBirdConnector {
     requires java.logging;
     requires freetts;
     requires org.freedesktop.dbus;
+    requires org.freedesktop.dbus.transport.jre;
 
     exports com.birdbraintechnologies.bluebirdconnector;
 }

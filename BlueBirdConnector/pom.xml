@@ -169,6 +169,10 @@
                     <jlinkImageName>BlueBirdConnector</jlinkImageName>
                     <launcher>launcher</launcher>
                     <mainClass>com.birdbraintechnologies.bluebirdconnector.BlueBirdConnector</mainClass>
+                    <addModules>
+                        <addModule>org.freedesktop.dbus</addModule>
+                        <addModule>org.freedesktop.dbus.transport.jre</addModule>
+                    </addModules>
                     <stripDebug>true</stripDebug>
                     <noHeaderFiles>true</noHeaderFiles>
                     <noManPages>true</noManPages>
