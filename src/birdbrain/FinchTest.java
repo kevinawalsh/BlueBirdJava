@@ -1,3 +1,4 @@
+package birdbrain;
 public class FinchTest {
     public static void main(String[] args) {
         Finch myFinch = new Finch("A");

@@ -1,7 +1,3 @@
 *.DS_Store
 *.class
-*.ctxt
-FinchGreenfootDemo/Robot.java
-FinchGreenfootDemo/Microbit.java
-FinchGreenfootDemo/Hummingbird.java
-FinchGreenfootDemo/Finch.java
+*.jar

@@ -1,3 +1,4 @@
+package birdbrain;
 /**
  * This class extends the Robot class to incorporate functions to control the inputs and outputs
  * of the Finch. It includes methods to set the values of motors and LEDs, as well

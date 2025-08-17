@@ -1,3 +1,5 @@
+package birdbrain;
+
 public class HummingbirdTest {
     public static void main(String[] args) {
         Hummingbird myBit = new Hummingbird("A");

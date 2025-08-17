@@ -1,3 +1,4 @@
+package birdbrain;
 /**
  * This class controls a micro:bit via bluetooth. It inherits almost 
  * all its functionality from the abstract class Robot. The only methods it needs here are constructors, 
