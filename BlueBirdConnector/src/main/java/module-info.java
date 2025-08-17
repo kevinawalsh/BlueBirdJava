@@ -3,6 +3,7 @@ module BlueBirdConnector {
     requires javafx.web;
     requires jdk.jsobject;
     requires com.google.gson;
+    requires slf4j.nop;
     requires org.eclipse.jetty.server;
     requires org.eclipse.jetty.servlet;
     requires org.eclipse.jetty.servlets;

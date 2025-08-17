@@ -82,20 +82,29 @@ public class Log {
             case "TRACE": return Level.FINEST;
             case "ALL": return Level.ALL;
             case "OFF": return Level.OFF;
-            default: return Level.INFO;
+            default: return Level.WARNING;
         }
     }
 
     static final Formatter ONE_LINE_FORMATTER = new OneLineFormatter();
 
     static {
+        Level rootLevel = parseLevel(System.getenv("BLUEBIRD_ROOT_LOGLEVEL"));
         Logger root = Logger.getLogger("");
-        Level level = parseLevel(System.getenv("BLUEBIRD_LOGLEVEL"));
-        root.setLevel(level);
+        root.setLevel(rootLevel);
         for (Handler handler : root.getHandlers()) {
             handler.setFormatter(ONE_LINE_FORMATTER);
-            handler.setLevel(level);
+            handler.setLevel(rootLevel);
         }
+
+        Level bbLevel = parseLevel(System.getenv("BLUEBIRD_LOGLEVEL"));
+        Logger bb = Logger.getLogger("com.birdbraintechnologies");
+        bb.setLevel(bbLevel);
+        bb.setUseParentHandlers(false);
+        ConsoleHandler console = new ConsoleHandler();
+        console.setFormatter(ONE_LINE_FORMATTER);
+        console.setLevel(bbLevel);
+        bb.addHandler(console);
     }
 
 }

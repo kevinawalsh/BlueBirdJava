@@ -1,5 +1,15 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
+cd "$(dirname "$0")" || exit 1
+
+# Sanity check to ensure we are in the right directory
+if ! grep -q "^module freetts {$" module-info.java; then
+  echo "Can't verify module-info.java... maybe we are in the wrong directory?"
+  exit 1
+fi
+
+echo Cleaning
+rm -rf META_INF com de javafx module-info.class
 echo Un-jaring
 jar xf ~/.m2/repository/net/sf/sociaal/freetts/1.2.2/freetts-1.2.2.jar
 echo Compiling

@@ -53,6 +53,12 @@
             <version>1.1.4</version>
         </dependency>-->
 
+        <!-- sl4j nop to silence jetty log messages -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-nop</artifactId>
+            <version>2.0.0-alpha1-modular</version> <!-- note: must match jetty's version for slf4j -->
+        </dependency>
         <!-- http server -->
         <dependency>
             <groupId>org.eclipse.jetty</groupId>
@@ -169,10 +175,11 @@
                     <jlinkImageName>BlueBirdConnector</jlinkImageName>
                     <launcher>launcher</launcher>
                     <mainClass>com.birdbraintechnologies.bluebirdconnector.BlueBirdConnector</mainClass>
-                    <addModules>
+                    <!-- <addModules>
                         <addModule>org.freedesktop.dbus</addModule>
                         <addModule>org.freedesktop.dbus.transport.jre</addModule>
-                    </addModules>
+                        <addModule>slf4j.nop</addModule>
+                    </addModules> -->
                     <stripDebug>true</stripDebug>
                     <noHeaderFiles>true</noHeaderFiles>
                     <noManPages>true</noManPages>

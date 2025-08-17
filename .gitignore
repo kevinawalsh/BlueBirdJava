@@ -4,6 +4,8 @@ BlueBirdConnector/target/*
 BlueBirdConnector/out/artifacts/BlueBirdConnector_jar/BlueBirdWindowsCL.exe
 BlueBirdConnector/libs/freetts-unpacked/META-INF
 BlueBirdConnector/libs/freetts-unpacked/com
+BlueBirdConnector/libs/slf4j-nop-unpacked/META-INF
+BlueBirdConnector/libs/slf4j-nop-unpacked/org
 BlueBirdWindowsCL/obj/*
 BlueBirdWindowsCL/bin/*
 Package/BlueBird Connector/*
