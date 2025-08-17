@@ -12,6 +12,5 @@ public class HummingbirdTest {
         }
         
         myBit.stopAll();
-        myBit.disconnect();
     }
 }

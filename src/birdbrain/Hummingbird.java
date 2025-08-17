@@ -80,7 +80,7 @@ public class Hummingbird extends Robot {
         	return; 
         } 
         
-    	angle = clampParameterToBounds(angle, 0, 180);
+    	angle = clampParameterToBounds(angle, 0, 180, "setPositionServo", "angle");
         int degrees = (int) (angle * 254.0 / 180.0);
         
         StringBuilder resultUrl = new StringBuilder(baseUrl);
@@ -105,7 +105,7 @@ public class Hummingbird extends Robot {
         	return; 
         }
     	
-    	speed = clampParameterToBounds(speed,-100,100);
+    	speed = clampParameterToBounds(speed, -100, 100, "setRotationServo", "speed");
     	
     
         if ((speed > -10) && (speed < 10)) {	// dead zone to turn off the motor
@@ -138,7 +138,7 @@ public class Hummingbird extends Robot {
         	return; 
         } 
     	
-    	intensity = clampParameterToBounds(intensity,0,100);
+    	intensity = clampParameterToBounds(intensity, 0, 100, "setLED", "intensity");
     	
     	// Scale and send http request
         intensity = (int) (intensity * 255.0 / 100.0);
@@ -165,9 +165,9 @@ public class Hummingbird extends Robot {
     	if (!isPortValid(port,2)) {		// Check that port is valid
         	return; 
         }
-    	redIntensity = clampParameterToBounds(redIntensity,0,100);
-    	greenIntensity = clampParameterToBounds(greenIntensity,0,100);
-    	blueIntensity = clampParameterToBounds(blueIntensity,0,100);
+    	redIntensity = clampParameterToBounds(redIntensity, 0, 100, "setTriLED", "redIntensity");
+    	greenIntensity = clampParameterToBounds(greenIntensity, 0, 100, "setTriLED", "greenIntensity");
+    	blueIntensity = clampParameterToBounds(blueIntensity, 0, 100, "setTriLED", "blueIntensity");
     	
     	// Scale
         redIntensity = (int) (redIntensity * 255.0 / 100.0);

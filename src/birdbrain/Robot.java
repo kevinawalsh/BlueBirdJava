@@ -3,8 +3,9 @@ package birdbrain;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.HashSet;
 import java.net.HttpURLConnection;
-import java.net.URL;
+import java.net.URI;
 
 /**
  * This is an abstract class that is inherited by Microbit.java, Hummingbird.java and Finch.java.
@@ -16,12 +17,12 @@ import java.net.URL;
  */
 abstract class Robot {
 	// Variables used to make http request to control the micro:bit (and Hummingbird Bit)
-    protected HttpURLConnection connection = null;
     protected static String baseUrl = "http://127.0.0.1:30061/hummingbird/";
-    protected URL requestUrl;
+    protected URI requestUrl;
     
     protected String deviceInstance;		// A, B, or C
-    
+    protected boolean failOnConnectionError = false;
+
     // String variables used to return the orientation of the micro:bit
     private static final String SCREEN_UP = "Screen%20Up";
     private static final String SCREEN_DOWN = "Screen%20Down";
@@ -31,9 +32,6 @@ abstract class Robot {
     private static final String LOGO_DOWN = "Logo%20Down";
     private static final String SHAKE = "Shake";
 
-    private String outputError = "Error: Could not set output on the device ";
-	private String inputError = "Error: Could not read sensor on the device ";
-	
 	protected boolean[] displayStatus = new boolean[25];
 
 	protected String magRequest = "Magnetometer";
@@ -56,6 +54,7 @@ abstract class Robot {
         if (stringResponse.equals("Not Connected")) {
             return false;
         } else {
+            failOnConnectionError = true;
             return true;
         }
     }
@@ -63,9 +62,10 @@ abstract class Robot {
     /* This function checks whether an input parameter is within the given bounds. If not, it prints
 	   a warning and returns a value of the input parameter that is within the required range.
 	   Otherwise, it just returns the initial value. */
-    protected int clampParameterToBounds(int parameter, int inputMin, int inputMax) {
+    protected int clampParameterToBounds(int parameter, int inputMin, int inputMax, String func, String paramName) {
     	if ((parameter < inputMin) || (parameter > inputMax)) {
-    		System.out.println("Warning: Please choose a parameter between " + inputMin + " and " + inputMax);
+    		warn("When calling `%s(...)`, using %d for %s is invalid. It must be an int between %d and %d, inclusive.",
+                    func, parameter, paramName, inputMin, inputMax);
     		return Math.max(inputMin, Math.min(inputMax,  parameter));
     	} else
     		return parameter;
@@ -74,9 +74,10 @@ abstract class Robot {
     /* This function checks whether an input parameter is within the given bounds. If not, it prints
 	   a warning and returns a value of the input parameter that is within the required range.
 	   Otherwise, it just returns the initial value. */
-	protected double clampParameterToBounds(double parameter, double inputMin, double inputMax) {
+	protected double clampParameterToBounds(double parameter, double inputMin, double inputMax, String func, String paramName) {
 	 	if ((parameter < inputMin) || (parameter > inputMax)) {
-	 		System.out.println("Warning: Please choose a parameter between " + inputMin + " and " + inputMax);
+    		warn("When calling `%s(...)`, using %f for %s is invalid. It must be a double between %f and %f, inclusive.",
+                    func, parameter, paramName, inputMin, inputMax);
 	 		return Math.max(inputMin, Math.min(inputMax,  parameter));
 	 	} else
 	 		return parameter;
@@ -104,9 +105,10 @@ abstract class Robot {
 	protected String sendHttpRequest(String URLRequest) {
         long requestStartTime = System.currentTimeMillis();
 	    String responseString = "Not Connected";
+        HttpURLConnection connection = null;
         try {
-            requestUrl = new URL(URLRequest);
-            connection = (HttpURLConnection) requestUrl.openConnection();
+            requestUrl = new URI(URLRequest);
+            connection = (HttpURLConnection) requestUrl.toURL().openConnection();
             connection.setRequestMethod("GET");
             //connection.setDoOutput(true);
 
@@ -126,16 +128,19 @@ abstract class Robot {
                     responseString = response.toString();
                 }
             } else {
-                System.out.println(inputError);
+                warn("robot sent error code %d in response to %s", responseCode, requestUrl);
             }
 
-        } catch (IOException e) {
-            System.out.println("Error sending http request: " + e.getMessage());
+        } catch (Exception e) {
+            warn("problem communicating with the robot: %s", e.getMessage());
         } finally {
-            if (responseString.equals("Not Connected")) {
-                System.out.println("Error: Device " + deviceInstance + " is not connected");
+            if (connection != null)
+                connection.disconnect();
+
+            if (failOnConnectionError && responseString.equals("Not Connected")) {
+                System.out.println("ERROR: Lost connection to robot.");
+                System.exit(0);
             }
-            disconnect();
         }
         //If too many requests get sent too quickly, macOS gets overwhelmed and starts to insert pauses.
         while(System.currentTimeMillis() < requestStartTime + 5) {}
@@ -157,7 +162,7 @@ abstract class Robot {
             double value = Double.parseDouble(stringResponse);
             return value;
         } catch(Exception e) {
-            System.out.println("Error: " + stringResponse);
+            warn("Expected a double value, but robot sent \"" + stringResponse + "\" instead.");
             return -1;
         }
     }
@@ -167,13 +172,12 @@ abstract class Robot {
         String stringResponse = sendHttpRequest(URLRequest);
         if (!stringResponse.equalsIgnoreCase("true")
                 && !stringResponse.equalsIgnoreCase("false")) {
-            System.out.println("Error: " + stringResponse);
+            warn("Expected a true or false value, but robot sent \"" + stringResponse + "\" instead.");
             return false;
         } else {
             return (stringResponse.equalsIgnoreCase("true"));
         }
     }
-
     
     /**
      * print() lets the LED Array display a given message.
@@ -182,14 +186,19 @@ abstract class Robot {
      */
     public void print(String message) {
        
-        // Warn the user if there are any special characters. Note that we don't use isCharacterOrDigit() because we can only display English characters
-        char letter;
+        // Warn the user if there are any special characters. Note that we don't use isCharacterOrDigit() because we can only display a few characters
+        // kwalsh: no... microbit can display ascii 32 up to ascii 126 just fine,
+        // and there is an url escaping issue here, space isn't working.
+        // Also, it has a length limit, 18 chars only, we should check for this
+        // here? And maybe replace bad chars with blanks or something?
         for (int i = 0; i < message.length(); i++) {
-        	letter = message.charAt(i);
-        	if (!(((letter >= 'a') && (letter <= 'z')) || ((letter >= 'A') && (letter <= 'Z')) || ((letter >= '0') && (letter <= '9')) || (letter == ' '))) {
-        		System.out.println("Warning: Many special characters cannot be printed on the LED display");
-        	}
+            char letter = message.charAt(i);
+            if (!(((letter >= 'a') && (letter <= 'z')) || ((letter >= 'A') && (letter <= 'Z')) || ((letter >= '0') && (letter <= '9')) || (letter == ' '))) {
+                warn("Warning: The robot can't display '%c', it can only display a-z, A-Z, and 0-9.", letter);
+                message = new StringBuilder(message).replace(i, i + 1, " ").toString();
+            }
         }
+
     	for (int i = 0; i < displayStatus.length; i++) displayStatus[i] = false;
  			
     	// Get rid of spaces
@@ -216,13 +225,13 @@ abstract class Robot {
         int ledLen = ledValues.length;
         
         for (int i = 0; i < ledLen; i++){
-        	ledValues[i] = clampParameterToBounds(ledValues[i],0,1);
+        	ledValues[i] = clampParameterToBounds(ledValues[i],0,1, "setDisplay", "array value");
         }
         
         if (ledLen != 25) {
-        	System.out.println("Error: setDisplay() requires a int array of length 25");
+        	warn("In `setDisplay(...)` you gave an array of %d ints. The array must have exactly 25 ints.", ledLen);
         	return;
-        }         
+        }
         
         /* For the http request, we need to convert the 0s and 1s to boolean values. We can do this while
          * also ensuring that the user only used 0 and 1.
@@ -258,9 +267,9 @@ abstract class Robot {
     	
     	StringBuilder resultUrl = new StringBuilder(baseUrl);
     	
-    	row = clampParameterToBounds(row, 1, 5);
-    	column = clampParameterToBounds(column, 1, 5);
-    	value = clampParameterToBounds(value, 0, 1);
+    	row = clampParameterToBounds(row, 1, 5, "setPoint", "row number");
+    	column = clampParameterToBounds(column, 1, 5, "setPoint", "column number");
+    	value = clampParameterToBounds(value, 0, 1, "setPoint", "pixel value");
     		
     	// Find the position of this led in displayStatus
 		int position = (row - 1)*5 + (column-1);
@@ -290,8 +299,8 @@ abstract class Robot {
      * @param beats - duration in beats (Range: 0 to 16); each beat is one second
      */
     public void playNote(int note, double beats) {
-        note = clampParameterToBounds(note, 32, 135);
-        beats = clampParameterToBounds(beats,0,16);
+        note = clampParameterToBounds(note, 32, 135, "playNote", "note value");
+        beats = clampParameterToBounds(beats,0,16, "playNote", "number of beats");
         beats = beats * 1000;
 
         String [] urlArgs = {"out", "playnote", Integer.toString(note), Integer.toString((int)beats), deviceInstance};
@@ -388,7 +397,7 @@ abstract class Robot {
     public boolean getButton(String button) {
         button = button.toUpperCase();
         if (!(button.equals("A") || button.equals("B") || button.equals("LOGO"))) {
-            System.out.println("Error: Please choose button A, B, or Logo");
+            warn("No such button named \"%s\". When calling `getButton(...)`, the argument must be \"A\", \"B\", or \"Logo\".", button);
             return false;
         }
         
@@ -416,8 +425,8 @@ abstract class Robot {
     }
 
     /**
-     * getTemperature() returns the current temperature in degrees Celsius from the micro:bit temperature sensor
-     * @return temperature in degrees Celsius
+     * getTemperature() returns the current temperature in degrees Celcius from the micro:bit temperature sensor
+     * @return temperature in degrees Celcius
      */
     public int getTemperature() {
         StringBuilder resultUrl = new StringBuilder(baseUrl);
@@ -476,7 +485,7 @@ abstract class Robot {
     }
 
     /* Pauses the program for a time in seconds. */
-    public void pause(double numSeconds) {
+    public static void pause(double numSeconds) {
     	
     	double milliSeconds = 1000*numSeconds;
     	try {
@@ -486,15 +495,6 @@ abstract class Robot {
         }
     }
     
-    /**
-     * disconnect closes the http connection to save memory
-     */
-    public void disconnect() {
-        if (connection != null) {
-            connection.disconnect();
-            connection = null;
-        }
-    }
     /* stopAll() turns off all the outputs. */
     public void stopAll() {
     
@@ -510,5 +510,15 @@ abstract class Robot {
 
         //Set the current display status to all off
         for (int i = 0; i < displayStatus.length; i++) displayStatus[i] = false;
+    }
+
+    private static HashSet<String> alreadyWarned = new HashSet<>();
+    protected static void warn(String fmt, Object... args) {
+        String message = String.format(fmt, args);
+        if (!alreadyWarned.contains(message)) {
+            System.out.println("WARNING: " + message);
+            alreadyWarned.add(message);
+            pause(1.0);
+        }
     }
 }
