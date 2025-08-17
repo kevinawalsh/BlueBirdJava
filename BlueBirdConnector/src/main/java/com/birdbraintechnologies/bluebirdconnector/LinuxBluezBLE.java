@@ -187,11 +187,15 @@ public class LinuxBluezBLE implements RobotCommunicator {
 
     public void startDiscovery() {
         discoveryLock.lock();
+        boolean restarting = false;
         try {
-            LOG.info("Starting discovery.");
             if (discoveryTimer != null) {
+                restarting = true;
+                LOG.info("Restarting discovery timer.");
                 discoveryTimer.cancel(false);
                 discoveryTimer = null;
+            } else {
+                LOG.info("Starting discovery.");
             }
             int count = 0;
             try {
@@ -204,20 +208,21 @@ public class LinuxBluezBLE implements RobotCommunicator {
                             adapter.StartDiscovery();
                             count++;
                         } catch (Exception e) {
-                            LOG.error("failed to start discovery on adapter " + path.getPath() + ": " + e.getMessage());
+                            if (!restarting)
+                                LOG.error("failed to start discovery on adapter " + path.getPath() + ": " + e.getMessage());
                         }
                     }
                 }
             } catch (Exception e) {
                 LOG.error("failed to enumerate bluetooth adapters: " + e.getMessage());
             }
-            if (count > 0) {
+            if (count > 0 || restarting) {
                 // re-report to the front end all previously discovered devices
                 workQueue.offer(worker.newEnumerationRequest());
                 // stop discovery after a few seconds
                 discoveryTimer = scheduler.schedule(() -> stopDiscovery(), 8, TimeUnit.SECONDS);
             }
-            frontendServer.updateGUIScanStatus(count > 0);
+            frontendServer.updateGUIScanStatus(count > 0 || restarting);
         } finally {
             discoveryLock.unlock();
         }
