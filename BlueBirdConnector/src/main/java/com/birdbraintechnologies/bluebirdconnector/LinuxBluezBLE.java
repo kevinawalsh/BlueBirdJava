@@ -670,6 +670,7 @@ public class LinuxBluezBLE implements RobotCommunicator {
         }
 
         private void disconnect(BLERobotDevice robot, boolean userInitiated) {
+            LOG.info("Disconnecting from {} robot {}, userInitiated={}.", robot.status, robot.name, userInitiated);
             Object prevStatus = robot.status;
             robot.status = DISCONNECTING;
             if (prevStatus == DISCONNECTING) {
@@ -710,14 +711,15 @@ public class LinuxBluezBLE implements RobotCommunicator {
             }
             robot.status = IDLE;
             workQueue.removeIf((work) -> work.path.equals(robot.name));
-            robotManager.receiveDisconnectionEvent(robot.name, userInitiated);
+            if (prevStatus == CONNECTED)
+                robotManager.receiveDisconnectionEvent(robot.name, userInitiated);
             if (userInitiated)
                 robot.reportTo(frontendServer); // re-populate available robot list
         }
 
         private void disconnectAll() {
             for (BLERobotDevice robot : robotsByPath.values())
-                disconnect(robot, false);
+                disconnect(robot, true); // userInitiated=true to avoid reconnection attempt
         }
 
         public Work newSendRequest(String robotName, byte[] command) {
