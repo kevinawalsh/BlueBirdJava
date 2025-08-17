@@ -73,7 +73,7 @@ public class Log {
     }
 
     private static Level parseLevel(String levelStr) {
-        if (levelStr == null) return Level.INFO;
+        if (levelStr == null) return Level.SEVERE;
         switch (levelStr.toUpperCase()) {
             case "ERROR": return Level.SEVERE;
             case "WARN": return Level.WARNING;
@@ -82,7 +82,7 @@ public class Log {
             case "TRACE": return Level.FINEST;
             case "ALL": return Level.ALL;
             case "OFF": return Level.OFF;
-            default: return Level.WARNING;
+            default: return Level.ALL;
         }
     }
 
