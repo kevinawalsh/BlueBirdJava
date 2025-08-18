@@ -3,6 +3,7 @@ package birdbrain;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.net.HttpURLConnection;
 import java.net.URI;
@@ -16,14 +17,18 @@ import java.net.URI;
  * November 2018
  */
 abstract class Robot {
-	// Variables used to make http request to control the micro:bit (and Hummingbird Bit)
-    protected static String baseUrl = "http://127.0.0.1:30061/hummingbird/";
-    protected URI requestUrl;
+    private static String baseUrl = "http://127.0.0.1:30061/hummingbird/";
     
-    protected String deviceInstance;		// A, B, or C
-    protected boolean failOnConnectionError = false;
+    protected String deviceInstance; // "A", "B", or "C"
+    
+    protected String connectionStatus = NO_CONNECTION;
+    protected static final String NO_CONNECTION = "BlueBird Connector app communication not yet initialized";
+    protected static final String BLUEBIRD_CONNECTOR_UNREACHABLE = "BlueBird Connector app not detected";
+    protected static final String BLUEBIRD_CONNECTOR_INCOMPATIBLE = "BlueBird Connector app not compatible";
+    protected static final String BLUEBIRD_CONNECTOR_FAILED = "BlueBird Connector app communication failure";
+    protected static final String BLUEBIRD_CONNECTOR_OK = "BlueBird Connector app appears to be working";
 
-    // String variables used to return the orientation of the micro:bit
+    // constants used for orientation of the micro:bit
     private static final String SCREEN_UP = "Screen%20Up";
     private static final String SCREEN_DOWN = "Screen%20Down";
     private static final String TILT_LEFT = "Tilt%20Left";
@@ -32,31 +37,149 @@ abstract class Robot {
     private static final String LOGO_DOWN = "Logo%20Down";
     private static final String SHAKE = "Shake";
 
-	protected boolean[] displayStatus = new boolean[25];
+    // status of the 25 LEDs on the micro:bit
+	protected String[] displayStatus = new String[25]; // "true" and "false" values
 
+    // default keywords used in requests, subclasses can change these
 	protected String magRequest = "Magnetometer";
 	protected String accelRequest = "Accelerometer";
 	protected String compassRequest = "Compass";
 
-    
-    /* This function tests a connection by attempting to read whether or not the micro:bit is shaking. 
-     * Return true if the connection is good and false otherwise. 
+
+    /* Ensure contact with BlueBird Connector, else maybe launch it or print
+     * help messages.
+     * Then probe the desired robot to ensure it is connected, else print help
+     * messages.
+     * This returns on success, or exits the program on failure.
      */
-    protected boolean isConnectionValid() {
-
-         StringBuilder newURL = new StringBuilder(baseUrl);
-         String testURL = (newURL.append("in/")
-                 .append("orientation/")
-                 .append(SHAKE + "/")
-                 .append(deviceInstance)).toString();
-
-        String stringResponse = sendHttpRequest(testURL);
-        if (stringResponse.equals("Not Connected")) {
-            return false;
-        } else {
-            failOnConnectionError = true;
-            return true;
+    protected void connect(String device) {
+        // First, establish communication with BlueBird Connector
+        connectionStatus = NO_CONNECTION;
+        String desiredResponse = "Not Connected";
+        String msg = fetch("in/orientation/Shake/Z"); // should return "Not Connected"
+        if (msg == null && connectionStatus == BLUEBIRD_CONNECTOR_UNREACHABLE) {
+            if (BlueBirdLauncher.isAvailable()) {
+                System.out.println("IMPORTANT: The BlueBird Connector program must be running");
+                System.out.println("  to enable communication with robots.");
+                System.out.println("Attempting to launch it for you... (press control-C to cancel)...");
+                if (!BlueBirdLauncher.launch()) {
+                    System.out.println("... Oops. Failed to launch the BlueBird Connector program.");
+                    System.out.println("Please run it yourself, then use it to connect to a robot,");
+                    System.out.println("before trying again.");
+                    System.exit(1);
+                } else {
+                    msg = fetch("in/orientation/Shake/Z");
+                    for (int i = 1; i < 10 && msg == null && connectionStatus == BLUEBIRD_CONNECTOR_UNREACHABLE; i++) {
+                        System.out.print(".");
+                        System.out.flush();
+                        pause(1.0);
+                        msg = fetch("in/orientation/Shake/Z");
+                    }
+                    if (msg == null && connectionStatus == BLUEBIRD_CONNECTOR_UNREACHABLE) {
+                        System.out.println("... Something is wrong (Failed to detect the BlueBird");
+                        System.out.println("Connector program). Please run the BlueBird Connector");
+                        System.out.println("yourself, then use it to connect to a robot, before trying");
+                        System.out.println("again.");
+                        System.exit(1);
+                    }
+                    System.out.println("... Successfully launched BlueBird Connector.");
+                }
+            } else {
+                System.out.println("IMPORTANT: The BlueBird Connector program must be running");
+                System.out.println("  to enable communication with robots. Please run the");
+                System.out.println("  BlueBird Connector program, then use it to connect to a");
+                System.out.println("  robot, before trying again.");
+                System.exit(1);
+            }
         }
+        if (msg == null || !msg.equals(desiredResponse)) {
+            System.out.println("Something is wrong with BlueBird Connector...");
+            System.out.println("   ("+connectionStatus+", response="+msg+").");
+            System.out.println("Please quit and re-start BlueBird Connector, then use it to");
+            System.out.println("connect to a robot, before trying again.");
+            System.exit(1);
+        }
+        connectionStatus = BLUEBIRD_CONNECTOR_OK;
+
+        // Next, probe the desired robot. If none was specified, try A, B, then C.
+        if (device == null) {
+            String[] choices = { "A", "B", "C" };
+            for (String choice : choices) {
+                msg = fetch("in/orientation/Shake/" + choice);
+                if ("true".equals(msg) || "false".equals(msg)) {
+                    System.out.println("Connected to robot " + choice + ".");
+                    deviceInstance = choice;
+                    return;
+                }
+                if (!msg.equals("Not Connected")) {
+                    System.out.println("Something is wrong with BlueBird Connector...");
+                    System.out.println("   ("+connectionStatus+", response="+msg+").");
+                    System.out.println("Please quit and re-start BlueBird Connector, then use it to");
+                    System.out.println("connect to a robot, before trying again.");
+                    System.exit(1);
+                }
+            }
+
+        } else {
+            msg = fetch("in/orientation/Shake/" + device);
+            if ("true".equals(msg) || "false".equals(msg)) {
+                deviceInstance = device;
+                return;
+            }
+            if (!msg.equals("Not Connected")) {
+                System.out.println("Something is wrong with BlueBird Connector...");
+                System.out.println("   ("+connectionStatus+", response="+msg+").");
+                System.out.println("Please quit and re-start BlueBird Connector, then use it to connect to a");
+                System.out.println("robot, before trying again.");
+                System.exit(1);
+            }
+        }
+        
+        // Let's wait a while to see if user connects to a robot (or the chosen robot).
+        String choice;
+        if (device == null) {
+            System.out.println("IMPORTANT: You aren't currently connected to any robots.");
+            System.out.println("  Within BlueBird Connector, scan for robots and select one.");
+            choice = "A"; // only check for first robot, "A"
+        } else {
+            System.out.println("IMPORTANT: You aren't currently connected to robot " + device +".");
+            System.out.println("  Within BlueBird Connector, scan for robots and select one as " + device + ".");
+            choice = device;
+        }
+        System.out.println("Waiting up to 30 seconds... (press control-C to cancel)...");
+        for (int i = 0; i < 30; i++) {
+            pause(1.0);
+            System.out.print(".");
+            System.out.flush();
+            msg = fetch("in/orientation/Shake/" + choice);
+            if ("true".equals(msg) || "false".equals(msg)) {
+                System.out.println("Connected to robot " + choice + ".");
+                deviceInstance = choice;
+                return;
+            }
+            if (!msg.equals("Not Connected")) {
+                System.out.println(" error.");
+                System.out.println("Something is wrong with BlueBird Connector...");
+                System.out.println("   ("+connectionStatus+", response="+msg+").");
+                System.out.println("Please quit and re-start BlueBird Connector, then use it to");
+                System.out.println("connect to a robot, before trying again.");
+                System.exit(1);
+            }
+        }
+        System.out.println(" timeout.");
+        if (device == null) {
+            System.out.println("Connect to a robot within BlueBird Connector, then try");
+            System.out.println("running this program again.");
+        } else {
+            System.out.println("Connect to a robot (as robot " + device + ") within BlueBird");
+            System.out.println("COnnector, then try running this program again.");
+        }
+        System.exit(1);
+        // System.out.printf("Error: Could not connect to Finch robot \"%s\".\n", device);
+        // System.out.printf("Make sure you are running the BlueBird Connector app and have connected via bluetooth\n");
+        // System.out.printf("to the Finch robot. Within that app you can connect up to three robots, which will be\n");
+        // System.out.printf("listed as robot \"A\", \"B\", and \"C\".\n");
+        // System.exit(1);
     }
     
     /* This function checks whether an input parameter is within the given bounds. If not, it prints
@@ -84,98 +207,111 @@ abstract class Robot {
 	}
 
     /**
-     * Create a url string given a list of arguments to include
-     * @param args
-     * @return
+     * Read data from URL. On failure returns null and sets connectionStatus.
      */
-    protected String getUrl(String[] args) {
-        StringBuilder resultUrl = new StringBuilder(baseUrl);
-        for (String arg : args) {
-            resultUrl.append(arg + "/");
-        }
-        String url = resultUrl.toString();
-        return url.substring(0, url.length() - 1); //remove the trailing '/'
-    }
-
-    /**
-     * General function for sending an http request and returning the response
-     * @param URLRequest
-     * @return String response
-     */
-	protected String sendHttpRequest(String URLRequest) {
+	protected String fetch(String fmt, Object... args) {
+        String suffix = String.format(fmt, args);
+        if (suffix.startsWith("/"))
+            suffix = suffix.substring(1);
+        String url = baseUrl + suffix;
         long requestStartTime = System.currentTimeMillis();
-	    String responseString = "Not Connected";
         HttpURLConnection connection = null;
+        int responseCode;
         try {
-            requestUrl = new URI(URLRequest);
-            connection = (HttpURLConnection) requestUrl.toURL().openConnection();
-            connection.setRequestMethod("GET");
-            //connection.setDoOutput(true);
-
-            int responseCode = connection.getResponseCode();
-            if (responseCode == 200) {
-                BufferedReader in = new BufferedReader(new InputStreamReader(
-                        connection.getInputStream()));
-                String inputLine;
-                StringBuffer response = new StringBuffer();
-
-                while ((inputLine = in.readLine()) != null) {
-                    response.append(inputLine);
+            try {
+                URI requestUrl = new URI(url);
+                connection = (HttpURLConnection) requestUrl.toURL().openConnection();
+                connection.setRequestMethod("GET");
+                responseCode = connection.getResponseCode();
+            } catch (Exception e) {
+                // BlueBird Connector not reachable.
+                connectionStatus = BLUEBIRD_CONNECTOR_UNREACHABLE;
+                return null;
+            }
+            if (responseCode != 200) {
+                warn("Received unexpected status code %d from %s", responseCode, url);
+                connectionStatus = BLUEBIRD_CONNECTOR_INCOMPATIBLE;
+                return null;
+            }
+            try {
+                BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                String line;
+                StringBuffer buf = new StringBuffer();
+                while ((line = in.readLine()) != null) {
+                    buf.append(line);
                 }
                 in.close();
-
-                if (!response.toString().contains("Not Connected")) {
-                    responseString = response.toString();
-                }
-            } else {
-                warn("robot sent error code %d in response to %s", responseCode, requestUrl);
+                return buf.toString();
+            } catch (IOException e) {
+                warn("Received unexpected error when accessing %s: %s", url, e.getMessage());
+                connectionStatus = BLUEBIRD_CONNECTOR_FAILED;
+                return null;
             }
-
-        } catch (Exception e) {
-            warn("problem communicating with the robot: %s", e.getMessage());
         } finally {
             if (connection != null)
                 connection.disconnect();
 
-            if (failOnConnectionError && responseString.equals("Not Connected")) {
-                System.out.println("ERROR: Lost connection to robot.");
-                System.exit(0);
+            // Rate limit: if macOS gets overwhelmed it will insert long pauses.
+            while (System.currentTimeMillis() < requestStartTime + 5) {
+                try { Thread.sleep(5); }
+                catch (InterruptedException e) { }
             }
+
         }
-        //If too many requests get sent too quickly, macOS gets overwhelmed and starts to insert pauses.
-        while(System.currentTimeMillis() < requestStartTime + 5) {}
+    }
 
-        return responseString;
+    /**
+     * Send an http request without expecting any response data.
+     */
+	protected void httpRequestOut(String fmt, Object... args) {
+        httpRequestInString(fmt, args);
+    }
 
-	}
-
-	/* This function sends http requests that set outputs (lights, motors, buzzer, 
-	 * etc.) on the micro:bit and Hummingbird. */
-    protected void httpRequestOut(String URLRequest) {
-        String response = sendHttpRequest(URLRequest);
+    /**
+     * Send an http request and return the response data as a String.
+     */
+	protected String httpRequestInString(String fmt, Object... args) {
+        String msg = fetch(fmt, args);
+        if (msg == null) {
+            System.out.println("ERROR: Lost connection to robot and/or BlueBird Connector");
+            System.out.println("   ("+connectionStatus+").");
+            System.exit(1);
+        } else if (msg.equals("Not Connected")) {
+            System.out.println("ERROR: Lost connection to robot.");
+            System.exit(1);
+        }
+        // NOTE: BlueBird Connector sometimes returns "200" or "404" in error
+        // cases, not as an http status code, but as the body of the response.
+        // That's not great, but let's not try to catch those here. BlueBird
+        // Connector should be fixed instead.
+        return msg;
     }
     
-    /* This function sends http requests that return a double response from a sensor. */
-    protected double httpRequestInDouble(String URLRequest) {
-        String stringResponse = sendHttpRequest(URLRequest);
+    /**
+     * Send an http request and return the response data as a double.
+     */
+    protected double httpRequestInDouble(String fmt, Object... args) {
+        String stringResponse = httpRequestInString(fmt, args);
         try {
-            double value = Double.parseDouble(stringResponse);
-            return value;
+            return Double.parseDouble(stringResponse);
         } catch(Exception e) {
             warn("Expected a double value, but robot sent \"" + stringResponse + "\" instead.");
             return -1;
         }
     }
     
-    /* This function sends http requests that return a boolean response from a sensor. */
-    protected boolean httpRequestInBoolean(String URLRequest) {
-        String stringResponse = sendHttpRequest(URLRequest);
-        if (!stringResponse.equalsIgnoreCase("true")
-                && !stringResponse.equalsIgnoreCase("false")) {
-            warn("Expected a true or false value, but robot sent \"" + stringResponse + "\" instead.");
+    /**
+     * Send an http request and return the response data as a boolean.
+     */
+    protected boolean httpRequestInBoolean(String fmt, Object... args) {
+        String stringResponse = httpRequestInString(fmt, args);
+        if (stringResponse.equalsIgnoreCase("true")) {
+            return true;
+        } else if (stringResponse.equalsIgnoreCase("false")) {
             return false;
         } else {
-            return (stringResponse.equalsIgnoreCase("true"));
+            warn("Expected a true or false value, but robot sent \"" + stringResponse + "\" instead.");
+            return false;
         }
     }
     
@@ -185,7 +321,6 @@ abstract class Robot {
      * @param message The message that will be displayed on the LED Array.
      */
     public void print(String message) {
-       
         // Warn the user if there are any special characters. Note that we don't use isCharacterOrDigit() because we can only display a few characters
         // kwalsh: no... microbit can display ascii 32 up to ascii 126 just fine,
         // and there is an url escaping issue here, space isn't working.
@@ -199,19 +334,12 @@ abstract class Robot {
             }
         }
 
-    	for (int i = 0; i < displayStatus.length; i++) displayStatus[i] = false;
+        Arrays.fill(displayStatus, "false");
  			
     	// Get rid of spaces
     	message = message.replace(" ", "%20");
     	
-    	// Build http request
-        StringBuilder resultUrl = new StringBuilder(baseUrl);
-        String printUrl = (resultUrl.append("out/")
-                    .append("print/")
-                    .append(message + "/")
-                    .append(deviceInstance)).toString();
-         httpRequestOut(printUrl);
-            
+        httpRequestOut("out/print/%s/%s", message, deviceInstance);
     }
 
     /**
@@ -221,40 +349,19 @@ abstract class Robot {
      *                1 means on and 0 means off.
      */
     public void setDisplay(int[] ledValues) {
-    	StringBuilder resultUrl = new StringBuilder(baseUrl);
         int ledLen = ledValues.length;
-        
-        for (int i = 0; i < ledLen; i++){
-        	ledValues[i] = clampParameterToBounds(ledValues[i],0,1, "setDisplay", "array value");
-        }
         
         if (ledLen != 25) {
         	warn("In `setDisplay(...)` you gave an array of %d ints. The array must have exactly 25 ints.", ledLen);
         	return;
         }
-        
-        /* For the http request, we need to convert the 0s and 1s to boolean values. We can do this while
-         * also ensuring that the user only used 0 and 1.
-         */
-    	for (int i = 0; i < ledLen; i++){
-    		if (ledValues[i] == 1)
-                displayStatus[i] = true;
-            else 
-                displayStatus[i] = false;
-                
-        }      
-    		
-        resultUrl = resultUrl.append("out/")
-                    .append("symbol/").append(deviceInstance.toString()+"/");
-          
-        for (int i = 0; i < ledLen; i++) {
-            resultUrl = resultUrl.append(String.valueOf(displayStatus[i]) + "/");
+
+    	for (int i = 0; i < ledLen; i++) {
+        	int value = clampParameterToBounds(ledValues[i], 0, 1, "setDisplay", "array value");
+            displayStatus[i] = (value == 1 ? "true" : "false");
         }
-           
-        String symbolUrl = resultUrl.append(deviceInstance).toString();
-        symbolUrl = symbolUrl.substring(0, symbolUrl.length() - 1);
-        
-        httpRequestOut(symbolUrl);
+    		
+        httpRequestOut("out/symbol/%s/%s", deviceInstance, String.join("/", displayStatus));
     }
     
     /* This function turns on or off a single LED on the micro:bit LED array. 
@@ -265,32 +372,15 @@ abstract class Robot {
      * */
     public void setPoint(int row, int column, int value) {
     	
-    	StringBuilder resultUrl = new StringBuilder(baseUrl);
-    	
     	row = clampParameterToBounds(row, 1, 5, "setPoint", "row number");
     	column = clampParameterToBounds(column, 1, 5, "setPoint", "column number");
     	value = clampParameterToBounds(value, 0, 1, "setPoint", "pixel value");
     		
-    	// Find the position of this led in displayStatus
-		int position = (row - 1)*5 + (column-1);
-		/* For the http request, we need to convert the 0 or 1 to a boolean. We can do this warning if the user didn't use 0 or 1 for the value
-         */
-		if (value == 1)
-			displayStatus[position] = true;
-		else 
-			displayStatus[position] = false;
-		
-        resultUrl = resultUrl.append("out/")
-                .append("symbol/").append(deviceInstance.toString()+"/");
-      
-        for (int i = 0; i < displayStatus.length; i++) {
-            resultUrl = resultUrl.append(String.valueOf(displayStatus[i]) + "/");
-        }
-       
-        String symbolUrl = resultUrl.append(deviceInstance).toString();
-        symbolUrl = symbolUrl.substring(0, symbolUrl.length() - 1);
+		int position = (row - 1)*5 + (column - 1);
 
-        httpRequestOut(symbolUrl);
+        displayStatus[position] = (value == 1 ? "true" : "false");
+		
+        httpRequestOut("out/symbol/%s/%s", deviceInstance, String.join("/", displayStatus));
     }
 
     /**
@@ -301,11 +391,7 @@ abstract class Robot {
     public void playNote(int note, double beats) {
         note = clampParameterToBounds(note, 32, 135, "playNote", "note value");
         beats = clampParameterToBounds(beats,0,16, "playNote", "number of beats");
-        beats = beats * 1000;
-
-        String [] urlArgs = {"out", "playnote", Integer.toString(note), Integer.toString((int)beats), deviceInstance};
-        String url = getUrl(urlArgs);
-        httpRequestOut(url);
+        httpRequestOut("out/playnote/%d/%d/%s", note, (int)(beats*1000), deviceInstance);
     }
    
     /**
@@ -314,14 +400,7 @@ abstract class Robot {
      * @param dir The direction of which the acceleration will be returned.
      */
     private double getAccelerationInDirs(String dir) {
-        
-        StringBuilder resultUrl = new StringBuilder(baseUrl);
-        String acclUrl = (resultUrl.append("in/")
-                .append(accelRequest + "/")
-                .append(dir + "/")
-                .append(deviceInstance)).toString();
-
-        return httpRequestInDouble(acclUrl);     
+        return httpRequestInDouble("in/%s/%s/%s", accelRequest, dir, deviceInstance);     
     }
 
     /**
@@ -330,13 +409,7 @@ abstract class Robot {
      * @param dir The direction of which the magnetometer value will be returned.
      */
     private double getMagnetometerValInDirs(String dir) {
-        StringBuilder resultUrl = new StringBuilder(baseUrl);
-        String magUrl = (resultUrl.append("in/")
-                .append(magRequest + "/")
-                .append(dir + "/")
-                .append(deviceInstance)).toString();
-
-        return httpRequestInDouble(magUrl);
+        return httpRequestInDouble("in/%s/%s/%s", magRequest, dir, deviceInstance);
     }
 
     /**
@@ -377,14 +450,7 @@ abstract class Robot {
      * @return the direction in degrees. (Range: 0-360)
      */
     public int getCompass() {
-        
-        StringBuilder resultUrl = new StringBuilder(baseUrl);
-        String compassUrl = (resultUrl.append("in/")
-                .append(compassRequest + "/")
-                .append(deviceInstance)).toString();
-
-        return (int) httpRequestInDouble(compassUrl);
-       
+        return (int) httpRequestInDouble("in/%s/%s", compassRequest, deviceInstance);
     }
 
     /**
@@ -400,15 +466,7 @@ abstract class Robot {
             warn("No such button named \"%s\". When calling `getButton(...)`, the argument must be \"A\", \"B\", or \"Logo\".", button);
             return false;
         }
-        
-        StringBuilder resultUrl = new StringBuilder(baseUrl);
-        String buttonUrl = (resultUrl.append("in/")
-                .append("button/")
-                .append(button + "/")
-                .append(deviceInstance)).toString();
-        
-        return httpRequestInBoolean(buttonUrl);
-          
+        return httpRequestInBoolean("in/button/%s/%s", button, deviceInstance);
     }
 
     /**
@@ -416,12 +474,7 @@ abstract class Robot {
      * @return sound level
      */
     public int getSound() {
-        StringBuilder resultUrl = new StringBuilder(baseUrl);
-        String soundUrl = (resultUrl.append("in/")
-                .append("V2sensor/Sound/")
-                .append(deviceInstance)).toString();
-
-        return (int) Math.round(httpRequestInDouble(soundUrl));
+        return (int) Math.round(httpRequestInDouble("in/V2sensor/Sound/%s", deviceInstance));
     }
 
     /**
@@ -429,12 +482,7 @@ abstract class Robot {
      * @return temperature in degrees Celcius
      */
     public int getTemperature() {
-        StringBuilder resultUrl = new StringBuilder(baseUrl);
-        String tempUrl = (resultUrl.append("in/")
-                .append("V2sensor/Temperature/")
-                .append(deviceInstance)).toString();
-
-        return (int) Math.round(httpRequestInDouble(tempUrl));
+        return (int) Math.round(httpRequestInDouble("in/V2sensor/Temperature/%s", deviceInstance));
     }
 
     /**
@@ -444,15 +492,7 @@ abstract class Robot {
      * @return "true" if the device is held to the orientation and false otherwise.
      */
     private boolean getOrientationBoolean(String orientation) {
-    	
-        StringBuilder resultUrl = new StringBuilder(baseUrl);
-        String orientationUrl = (resultUrl.append("in/")
-                .append("orientation/")
-                .append(orientation + "/")
-                .append(deviceInstance)).toString();
-      
-        return httpRequestInBoolean(orientationUrl);  
-        
+        return httpRequestInBoolean("in/orientation/%s/%s", orientation, deviceInstance);  
     }
 
     /* isShaking() tells you whether the micro:bit is being shaken. 
@@ -486,7 +526,6 @@ abstract class Robot {
 
     /* Pauses the program for a time in seconds. */
     public static void pause(double numSeconds) {
-    	
     	double milliSeconds = 1000*numSeconds;
     	try {
             Thread.sleep(Math.round(milliSeconds));
@@ -497,20 +536,12 @@ abstract class Robot {
     
     /* stopAll() turns off all the outputs. */
     public void stopAll() {
-    
-    	pause(0.1);         // Hack to give stopAll() time to act before the end of a program
-	
-		// Build http request to turn off all the outputs
-        StringBuilder resultUrl = new StringBuilder(baseUrl);
-        String stopUrl = (resultUrl.append("out/")
-                .append("stopall/")
-                .append(deviceInstance)).toString();
-        
-        httpRequestOut(stopUrl);
-
-        //Set the current display status to all off
-        for (int i = 0; i < displayStatus.length; i++) displayStatus[i] = false;
+    	pause(0.1);         // Give stopAll() time to act before the end of program
+        httpRequestOut("out/stopall/%s", deviceInstance);
+        Arrays.fill(displayStatus, "false");
+    	pause(0.1);         // Give stopAll() time to act before the end of program
     }
+
 
     private static HashSet<String> alreadyWarned = new HashSet<>();
     protected static void warn(String fmt, Object... args) {

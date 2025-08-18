@@ -21,7 +21,7 @@ public class Finch extends Robot {
      * Default constructor for the library. Set the default device to be A.
      */
     public Finch() {
-        this("A");
+        this(null);
     }
 
     /**
@@ -31,7 +31,7 @@ public class Finch extends Robot {
      * The letter that identifies the Hummingbird device is assigned by the BlueBird Connector.
      */
     public Finch(String device) {
-        if (!((device.equals("A"))||(device.equals("B"))||(device.equals("C")))) {
+        if (device != null && !device.equals("A") && !device.equals("B") && !device.equals("C")) {
             System.out.printf("Error: Could not connect to Finch robot \"%s\", that name is not legal.\n", device);
             System.out.printf("When calling `new Finch(...)`, instead use \"A\", \"B\", or \"C\" as the parameter to\n");
             System.out.printf("specify which robot to connect to. Make sure you are running the BlueBird Connector\n");
@@ -40,52 +40,24 @@ public class Finch extends Robot {
             throw new IllegalArgumentException(String.format("When calling `new Finch(\"%s\")`, the argument \"%s\" is invalid. "
                         + "Make sure you are running the BlueBird Connector app and have connected a robot, then use "
                         + "\"A\", \"B\", or \"C\" to specify which robot to connect to.", device, device));
-            // System.out.println("Error: Device must be A, B, or C.");
-            // System.exit(0);
-        } else {
-            deviceInstance = device;
-            if (!isConnectionValid()) {
-                System.out.printf("Error: Could not connect to Finch robot \"%s\".\n", device);
-                System.out.printf("Make sure you are running the BlueBird Connector app and have connected via bluetooth\n");
-                System.out.printf("to the Finch robot. Within that app you can connect up to three robots, which will be\n");
-                System.out.printf("listed as robot \"A\", \"B\", and \"C\".\n");
-                System.exit(0);
-            }
-            if (!isFinch()) {
-                System.out.printf("Error: Connected to robot \"%s\", but it is not a Finch device.\n", device);
-                System.out.printf("Within the BlueBird Connector app, ensure you connect to a Finch\n");
-                System.out.printf("robot. Within that app you can connect up to three robots, which\n");
-                System.out.printf("will be listed as robot \"A\", \"B\", and \"C\".\n");
-                System.exit(0);
-            }
-
-            //The finch has separate requests for these so that the results returned
-            // are in the finch reference frame.
-            magRequest = "finchMag";
-            accelRequest = "finchAccel";
-            compassRequest = "finchCompass/static";
         }
+        connect(device);
+        if (!isFinch()) {
+            System.out.printf("Error: Connected to robot \"%s\", but it is not a Finch device.\n", deviceInstance);
+            System.out.printf("Within the BlueBird Connector app, ensure you connect to a Finch\n");
+            System.out.printf("robot. Within that app you can connect up to three robots, which\n");
+            System.out.printf("will be listed as robot \"A\", \"B\", and \"C\".\n");
+            System.exit(0);
+        }
+        // The finch has separate requests for these so that the results returned
+        // are in the finch reference frame.
+        magRequest = "finchMag";
+        accelRequest = "finchAccel";
+        compassRequest = "finchCompass/static";
     }
 
-    /**
-     * This function sends a request to BlueBird Connector to determine whether or not
-     * the device is a Finch.
-     */
     private boolean isFinch() {
-        StringBuilder newURL = new StringBuilder(baseUrl);
-        String testURL = (newURL.append("in/isFinch/static/")
-                .append(deviceInstance)).toString();
-
-        String stringResponse = sendHttpRequest(testURL);
-        if (stringResponse.equals("false")) {
-            System.out.println("Error: Device " + deviceInstance + " is not a Finch");
-            return false;
-        } else if (stringResponse.equals("Not Connected")) {
-            System.out.println("Error: Device " + deviceInstance + " is no longer connected.");
-            return false;
-        } else {
-            return true;
-        }
+        return httpRequestInBoolean("in/isFinch/static/%s", deviceInstance);
     }
 
     /**
@@ -107,17 +79,11 @@ public class Finch extends Robot {
             case "backward":
                 return "Backward";
             default:
-                return "Neither";
+                return null;
         }
     }
 
-    /**
-     * Formats the direction string for sending to the bluebird connector.
-     * If the selection made is not acceptable, returns 'Neither'.
-     * @param direction
-     * @return
-     */
-    private String formatRightLeft(String direction) {
+    private String formatRightLeft(String direction, String method) {
         switch (direction) {
             case "R":
             case "r":
@@ -130,7 +96,8 @@ public class Finch extends Robot {
             case "left":
                 return "Left";
             default:
-                return "Neither";
+                warn("When calling `%s(...)`, using \"%s\" for direction is invalid. It must be \"L\", \"R\", \"Left\", or \"Right\".", method, direction);
+                return null;
         }
     }
 
@@ -143,20 +110,16 @@ public class Finch extends Robot {
      * @param speed - Speed as a percent (Range: 0 to 100)
      */
     private void moveFinchAndWait(String motion, String direction, double length, double speed){
-        String [] imUrlArgs = {"in", "finchIsMoving", "static", deviceInstance};
-        String isMovingUrl = getUrl(imUrlArgs);
-        boolean isMoving = httpRequestInBoolean(isMovingUrl);
+        boolean isMoving = httpRequestInBoolean("in/finchIsMoving/static/%s", deviceInstance);
         boolean wasMoving = isMoving;
         long commandSendTime = System.currentTimeMillis();
 
-        String [] urlArgs = {"out", motion, deviceInstance, direction, Double.toString(length), Double.toString(speed)};
-        String url = getUrl(urlArgs);
-        httpRequestOut(url);
+        httpRequestOut("out/%s/%s/%s/%s/%s", motion, deviceInstance, direction, length, speed);
 
-        while (!((System.currentTimeMillis() > commandSendTime + 500 || wasMoving) && !isMoving)){
+        while (!((System.currentTimeMillis() > commandSendTime + 500 || wasMoving) && !isMoving)) {
             wasMoving = isMoving;
-            pause(0.01);
-            isMoving = httpRequestInBoolean(isMovingUrl);
+            pause(0.01); // 10ms
+            isMoving = httpRequestInBoolean("in/finchIsMoving/static/%s", deviceInstance);
         }
     }
 
@@ -169,8 +132,8 @@ public class Finch extends Robot {
      */
     public void setMove(String direction, double distance, double speed) {
         String dir = formatForwardBackward(direction);
-        if (dir.equals("Neither")) {
-            warn("When calling `setMove(...)`, using \"%s\" for direction is invalid. It must be \"F\", \"B\", \"Forward\", or \"Backward\".", dir);
+        if (dir == null) {
+            warn("When calling `setMove(...)`, using \"%s\" for direction is invalid. It must be \"F\", \"B\", \"Forward\", or \"Backward\".", direction);
             return;
         }
 
@@ -188,16 +151,14 @@ public class Finch extends Robot {
      * @param speed - Speed of the turn as a percent (Range: 0 to 100)
      */
     public void setTurn(String direction, double angle, double speed) {
-        String dir = formatRightLeft(direction);
-        if (dir.equals("Neither")) {
-            warn("When calling `setMove(...)`, using \"%s\" for direction is invalid. It must be \"L\", \"R\", \"Left\", or \"Right\".", dir);
+        direction = formatRightLeft(direction, "setTurn");
+        if (direction == null)
             return;
-        }
 
         angle = clampParameterToBounds(angle, -360000, 360000, "setTurn", "angle");
         speed = clampParameterToBounds(speed, 0, 100, "setTurn", "speed");
 
-        moveFinchAndWait("turn", dir, angle, speed);
+        moveFinchAndWait("turn", direction, angle, speed);
     }
 
     /**
@@ -208,47 +169,27 @@ public class Finch extends Robot {
     public void setMotors(double leftSpeed, double rightSpeed) {
         leftSpeed = clampParameterToBounds(leftSpeed, -100, 100, "setMotors", "leftSpeed");
         rightSpeed = clampParameterToBounds(rightSpeed, -100, 100, "setMotors", "rightSpeed");
-
-        String [] urlArgs = {"out", "wheels", deviceInstance, Double.toString(leftSpeed), Double.toString(rightSpeed)};
-        String url = getUrl(urlArgs);
-        httpRequestOut(url);
+        httpRequestOut("out/wheels/%s/%s/%s", deviceInstance, leftSpeed, rightSpeed);
     }
 
     /**
      * Stop the finch motors
      */
     public void stop() {
-        String [] urlArgs = {"out", "stopFinch", deviceInstance};
-        String url = getUrl(urlArgs);
-        httpRequestOut(url);
+        httpRequestOut("out/stopFinch/%s", deviceInstance);
     }
 
-    /**
-     * Private method to set led intensity. Used to set beak and tail leds.
-     * @param port - led to set. 1 is beak. 2-5 are tail. 6 sets entire tail. (Range: 1 to 6)
-     * @param redIntensity - red intensity (Range: 0 to 100)
-     * @param greenIntensity - green intensity (Range: 0 to 100)
-     * @param blueIntensity - blue intensity (Range: 0 to 100)
-     */
-    private void setTriLED(int port, int redIntensity, int greenIntensity, int blueIntensity) {
-        if ((port < 1) || (port > 6)) {		// Check that port is valid
-            return;
-        }
-        redIntensity = clampParameterToBounds(redIntensity,0,100, "setTriLED", "redIntensity");
-        greenIntensity = clampParameterToBounds(greenIntensity,0,100, "setTriLED", "greenIntensity");
-        blueIntensity = clampParameterToBounds(blueIntensity,0,100, "setTriLED", "blueIntensity");
+    private void setTriLED(String port, int red, int green, int blue, String method) {
+        red = clampParameterToBounds(red,0,100, method, "red");
+        green = clampParameterToBounds(green,0,100, method, "green");
+        blue = clampParameterToBounds(blue,0,100, method, "blue");
 
         // Scale
-        redIntensity = (int) (redIntensity * 255.0 / 100.0);
-        greenIntensity = (int) (greenIntensity * 255.0 / 100.0);
-        blueIntensity = (int) (blueIntensity * 255.0 / 100.0);
+        red = (int) (red * 255.0 / 100.0);
+        green = (int) (green * 255.0 / 100.0);
+        blue = (int) (blue * 255.0 / 100.0);
 
-        String portString = Integer.toString(port);
-        if (port == 6) { portString = "all"; }
-
-        String [] urlArgs = {"out", "triled", portString, Integer.toString(redIntensity), Integer.toString(greenIntensity), Integer.toString(blueIntensity), deviceInstance};
-        String url = getUrl(urlArgs);
-        httpRequestOut(url);
+        httpRequestOut("out/triled/%s/%d/%d/%d/%s", port, red, green, blue, deviceInstance);
     }
 
     /**
@@ -258,10 +199,7 @@ public class Finch extends Robot {
      * @param blue - blue intensity (Range: 0 to 100)
      */
     public void setBeak(int red, int green, int blue) {
-        red = clampParameterToBounds(red,0,100, "setBeak", "redIntensity");
-        green = clampParameterToBounds(green,0,100, "setBeak", "greenIntensity");
-        blue = clampParameterToBounds(blue,0,100, "setBeak", "blueIntensity");
-        setTriLED(1, red, green, blue);
+        setTriLED("1", red, green, blue, "setBeak");
     }
 
     /**
@@ -273,10 +211,7 @@ public class Finch extends Robot {
      */
     public void setTail(int ledNum, int red, int green, int blue) {
         ledNum = clampParameterToBounds(ledNum, 1, 4, "setTail", "LED number");
-        red = clampParameterToBounds(red,0,100, "setTail", "redIntensity");
-        green = clampParameterToBounds(green,0,100, "setTail", "greenIntensity");
-        blue = clampParameterToBounds(blue,0,100, "setTail", "blueIntensity");
-        setTriLED(ledNum + 1, red, green, blue);
+        setTriLED(String.valueOf(ledNum + 1), red, green, blue, "setTail");
     }
 
     /**
@@ -291,40 +226,33 @@ public class Finch extends Robot {
             warn("When calling `setTail(...)` with a string as the first argument, the string must be \"all\". No other values are permitted.");
             return;
         }
-        red = clampParameterToBounds(red,0,100, "setTail", "redIntensity");
-        green = clampParameterToBounds(green,0,100, "setTail", "greenIntensity");
-        blue = clampParameterToBounds(blue,0,100, "setTail", "blueIntensity");
-
-        setTriLED(6, red, green, blue);
+        setTriLED("all", red, green, blue, "setTail");
     }
 
     /**
      * Reset the finch encoder values to 0.
      */
     public void resetEncoders() {
-        String [] urlArgs = {"out", "resetEncoders", deviceInstance};
-        String url = getUrl(urlArgs);
-        httpRequestOut(url);
-        pause(0.2); //Give the finch a chance to reset before moving on
+        httpRequestOut("out/resetEncoders/%s", deviceInstance);
+        pause(0.2); // Give the finch a chance to reset before moving on
     }
 
     /**
      * Private function to get the value of a sensor
      * @param sensor - Light, Distance, Line, or Encoder
-     * @param port - Right, Left, or static
+     * @param direction - Right, Left, or static
      * @return - sensor value returned by bluebird connector or -1 in the case of a problem.
      */
-    private double getSensor(String sensor, String port) {
-        if (!port.equals("static")) {
-            port = formatRightLeft(port);
-            if (port.equals("Neither")) {
-                warn("When calling `getSensor(...)`, using \"%s\" for the port is invalid. It must be \"static\", \"L\", \"R\", \"Left\", or \"Right\".", port);
+    private double getSensor(String sensor, boolean isStatic, String direction) {
+        String port;
+        if (isStatic) {
+            port = "static";
+        } else {
+            port = formatRightLeft(direction, "get"+sensor);
+            if (port == null)
                 return -1;
-            }
         }
-        String [] urlArgs = {"in", sensor, port, deviceInstance};
-        String url = getUrl(urlArgs);
-        return httpRequestInDouble(url);
+        return httpRequestInDouble("in/%s/%s/%s", sensor, port, deviceInstance);
     }
 
     /**
@@ -333,7 +261,7 @@ public class Finch extends Robot {
      * @return - encoder value in rotations
      */
     public double getEncoder(String direction) {
-        double value = getSensor("Encoder", direction);
+        double value = getSensor("Encoder", false, direction);
         value = Math.round(value * 100.0)/100.0;
         return value;
     }
@@ -343,8 +271,7 @@ public class Finch extends Robot {
      * @return - the distance to the closest obstacle in cm
      */
     public int getDistance() {
-        double value = getSensor("Distance", "static");
-        return (int) Math.round(value);
+        return (int) Math.round(getSensor("Distance", true, null));
     }
 
     /**
@@ -353,8 +280,7 @@ public class Finch extends Robot {
      * @return - brightness as a value 0-100
      */
     public int getLight(String direction) {
-        double value = getSensor("Light", direction);
-        return (int) Math.round(value);
+        return (int) Math.round(getSensor("Light", false, direction));
     }
 
     /**
@@ -365,20 +291,11 @@ public class Finch extends Robot {
      * @return - brightness as a value 0-100
      */
     public int getLine(String direction) {
-        double value = getSensor("Line", direction);
-        return (int)value;
+        return (int) getSensor("Line", false, direction);
     }
 
-    /**
-     * Checks whether or not the finch is in the given orientation.
-     *
-     * @param orientation - Orientation to check
-     * @return - True iff the finch is in the given orientation
-     */
     private boolean getOrientationBoolean(String orientation) {
-        String [] urlArgs = {"in", "finchOrientation", orientation, deviceInstance};
-        String url = getUrl(urlArgs);
-        return httpRequestInBoolean(url);
+        return httpRequestInBoolean("in/finchOrientation/%s/%s", orientation, deviceInstance);
     }
 
     /**
