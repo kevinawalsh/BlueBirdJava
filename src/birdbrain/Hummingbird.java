@@ -1,4 +1,5 @@
 package birdbrain;
+
 /**
  * This class extends the Robot class to incorporate functions to control the inputs and outputs
  * of the Hummingbird Bit. It includes methods to set the values of motors and LEDs, as well
@@ -24,28 +25,7 @@ public class Hummingbird extends Robot {
      * The letter that identifies the Hummingbird device is assigned by the BlueBird Connector.
      *      */
     public Hummingbird(String device) {
-        if (device != null && !device.equals("A") && !device.equals("B") && !device.equals("C")) {
-            System.out.printf("Error: Could not connect to Hummingbird robot \"%s\", that name is not legal.\n", device);
-            System.out.printf("When calling `new Hummingbird(...)`, instead use \"A\", \"B\", or \"C\" as the parameter to\n");
-            System.out.printf("specify which robot to connect to. Make sure you are running the BlueBird Connector\n");
-            System.out.printf("app and have connected via bluetooth to the Hummingbird robot. Within that app you can\n");
-            System.out.printf("connect up to three robots, which will be listed as robot \"A\", \"B\", and \"C\".\n");
-            throw new IllegalArgumentException(String.format("When calling `new Hummingbird(\"%s\")`, the argument \"%s\" is invalid. "
-                        + "Make sure you are running the BlueBird Connector app and have connected a robot, then use "
-                        + "\"A\", \"B\", or \"C\" to specify which robot to connect to.", device, device));
-        }
-        connect(device);
-        if (!isHummingbird()) {
-            System.out.printf("Error: Connected to robot \"%s\", but it is not a Hummingbird device.\n", deviceInstance);
-            System.out.printf("Within the BlueBird Connector app, ensure you connect to a Hummingbird\n");
-            System.out.printf("robot. Within that app you can connect up to three robots, which\n");
-            System.out.printf("will be listed as robot \"A\", \"B\", and \"C\".\n");
-            System.exit(0);
-        }
-    }
-    
-    private boolean isHummingbird() {
-        return httpRequestInBoolean("in/isHummingbird/static/%s", deviceInstance);
+        super("Hummingbird", device);
     }
 
     /* This function checks whether a port is within the given bounds. It returns a boolean value 

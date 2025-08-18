@@ -9,14 +9,14 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 
 /**
- * This is an abstract class that is inherited by Microbit.java, Hummingbird.java and Finch.java.
- * It includes methods to print on the micro:bit LED array or set those LEDs individually. It also
+ * This is class is the superclass of Microbit.java, Hummingbird.java and Finch.java.
+ * It includes common methods to print on the micro:bit LED array or set those LEDs individually. It also
  * contains methods to read the values of the micro:bit accelerometer and magnetometer.
  * 
  * Mike Yuan and Bambi Breewer, BirdBrain Technologies LLC
  * November 2018
  */
-abstract class Robot {
+public class Robot {
     private static String baseUrl = "http://127.0.0.1:30061/hummingbird/";
     
     protected String deviceInstance; // "A", "B", or "C"
@@ -52,7 +52,31 @@ abstract class Robot {
      * messages.
      * This returns on success, or exits the program on failure.
      */
-    protected void connect(String device) {
+    protected Robot(String model, String device) {
+        // Sanity check parameters
+        if (device != null && !device.equals("A") && !device.equals("B") && !device.equals("C")) {
+            System.out.printf("Error: Could not connect to %s \"%s\", that name is not legal.\n", model, device);
+            System.out.printf("When calling `new %s(...)`, instead use \"A\", \"B\", or \"C\" as the parameter to\n", model);
+            System.out.printf("specify which robot device to connect to. Make sure you are running the BlueBird Connector\n");
+            System.out.printf("app and have connected via bluetooth to a %s device. Within that app you can\n", model);
+            System.out.printf("connect up to three devices, which will be listed as device \"A\", \"B\", and \"C\".\n");
+            throw new IllegalArgumentException(String.format("When calling `new %s(\"%s\")`, the argument \"%s\" is invalid. "
+                        + "Make sure you are running the BlueBird Connector app and have connected some %s devices, then use "
+                        + "\"A\", \"B\", or \"C\" to specify which device to connect to.", model, device, device, model));
+        }
+        // Establish communication
+        connect(device);
+        // Verify model of connected device
+        if (!httpRequestInBoolean("in/is%s/static/%s", model, deviceInstance)) {
+            System.out.printf("Error: Connected to device \"%s\", but it is not a %s device.\n", deviceInstance, model);
+            System.out.printf("Within the BlueBird Connector app, ensure you connect to a %s\n", model);
+            System.out.printf("device as \"%s\". Within that app you can connect up to three devices, which\n", deviceInstance);
+            System.out.printf("will be listed as device \"A\", \"B\", and \"C\".\n");
+            System.exit(1);
+        }
+    }
+
+    private void connect(String device) {
         // First, establish communication with BlueBird Connector
         connectionStatus = NO_CONNECTION;
         String desiredResponse = "Not Connected";
@@ -175,11 +199,6 @@ abstract class Robot {
             System.out.println("COnnector, then try running this program again.");
         }
         System.exit(1);
-        // System.out.printf("Error: Could not connect to Finch robot \"%s\".\n", device);
-        // System.out.printf("Make sure you are running the BlueBird Connector app and have connected via bluetooth\n");
-        // System.out.printf("to the Finch robot. Within that app you can connect up to three robots, which will be\n");
-        // System.out.printf("listed as robot \"A\", \"B\", and \"C\".\n");
-        // System.exit(1);
     }
     
     /* This function checks whether an input parameter is within the given bounds. If not, it prints
