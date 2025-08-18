@@ -201,10 +201,9 @@ public class RobotServlet extends HttpServlet {
 
 
                     /*value = ScratchME.blueBirdDriver.getNotificationDataString(index, devLetter); //Sensor port number - 1
-
-                    if (value.equals("Not Connected")){
+                    if (value.equals("Not Connected"))
                         out.print(value);
-                    } else {//Send value of data as response
+                    else //Send value of data as response
                         int v = Integer.parseInt(value);*/
 
                     int v = robot.getNotificationDataUInt(index);
@@ -387,7 +386,7 @@ public class RobotServlet extends HttpServlet {
                     }
                     else if (buttonLetter.equals("LOGO")) {
                         LOG.debug("Button LOGO selected");
-                        //if (ScratchME.blueBirdDriver.getMicrobitVersion(devLetter) != 2) {
+                        //if (ScratchME.blueBirdDriver.getMicrobitVersion(devLetter) != 2) ...
                         if (!robot.hasV2) {
                             out.print("micro:bit V2 required");
                         } else if ((buttonState & 0x02) == 0){
@@ -403,7 +402,7 @@ public class RobotServlet extends HttpServlet {
                     //out.print(Integer.toHexString(buttonState & 0xFE));  //Mask LSB as it is for shake.
                     break;
                 case "V2sensor":
-                    //if (ScratchME.blueBirdDriver.getMicrobitVersion(devLetter) != 2) {
+                    //if (ScratchME.blueBirdDriver.getMicrobitVersion(devLetter) != 2) ...
                     if (!robot.hasV2) {
                         out.print("micro:bit V2 required");
                     } else {
@@ -627,9 +626,9 @@ public class RobotServlet extends HttpServlet {
 
                         level = (byte) (Integer.parseInt(params[2]));
                         /*connection = ScratchME.blueBirdDriver.getConnectionFromDevLetter(devLetter);
-                        if (connection > -1) {
+                        if (connection > -1)
                             ScratchME.blueBirdDriver.updateSetAll(connection, index, level);
-                        } else LOG.error("HummingbirdServelet: Nothing connected");*/
+                        else LOG.error("HummingbirdServelet: Nothing connected");*/
                         robotManager.updateSetAll(devLetter, index, level);
                     } catch (Exception e) {
                         LOG.error("HummingbirdServelet Error: {}" + e.toString());
@@ -653,10 +652,10 @@ public class RobotServlet extends HttpServlet {
                     //int port = Integer.parseInt(params[1]);
 
                     /*connection = ScratchME.blueBirdDriver.getConnectionFromDevLetter(devLetter);
-                    if (connection > -1) {
+                    if (connection > -1)
                         //rgb levels
                         ScratchME.blueBirdDriver.updateSetAllLED(connection, params[1], (byte) (Integer.parseInt(params[2])), (byte) (Integer.parseInt(params[3])), (byte) (Integer.parseInt(params[4])));
-                    } else LOG.error("HummingbirdServelet: tri-LED Nothing connected");*/
+                    else LOG.error("HummingbirdServelet: tri-LED Nothing connected");*/
                     robotManager.updateSetAllLED(devLetter, params[1], (byte) (Integer.parseInt(params[2])), (byte) (Integer.parseInt(params[3])), (byte) (Integer.parseInt(params[4])));
                     break;
                 case "servo":
@@ -692,9 +691,9 @@ public class RobotServlet extends HttpServlet {
                             return;
                     }
                     /*connection = ScratchME.blueBirdDriver.getConnectionFromDevLetter(devLetter);
-                    if (connection > -1) {
+                    if (connection > -1)
                         ScratchME.blueBirdDriver.updateSetAll(connection, index, (byte) (Integer.parseInt(params[2])));
-                    } else LOG.error("HummingbirdServelet: Servo: Nothing connected");*/
+                    else LOG.error("HummingbirdServelet: Servo: Nothing connected");*/
                     robotManager.updateSetAll(devLetter, index, (byte) (Integer.parseInt(params[2])));
                     break;
                 case "playnote":
@@ -811,7 +810,7 @@ public class RobotServlet extends HttpServlet {
                         devLetter = params[1].charAt(0);
                         /*connection = ScratchME.blueBirdDriver.getConnectionFromDevLetter(devLetter);
                         LOG.debug("symbol: DevLetter: {}, Connection: {}", devLetter, connection);
-                        if (connection > -1) {*/
+                        if (connection > -1) ... */
 
                             // kill the print thread (if it exists).
                             //killPrintThread();
@@ -855,7 +854,6 @@ public class RobotServlet extends HttpServlet {
                             ScratchME.blueBirdDriver.displayToHummingbird(connection, symbolCommand);  // Independent  command*/
 
                         robotManager.setSymbol(devLetter, symbolCommand);
-                        //}
 
                     } catch (Exception e) {
                         LOG.error("HummingbirdServelet display Error: {}", e.toString());
@@ -958,7 +956,7 @@ public class RobotServlet extends HttpServlet {
             // No response to process. Return 200 anyway.
             out.print("200");
         } else {
-            LOG.error("Invalid hummingbird block URL");
+            LOG.error("Invalid hummingbird block URL: " + uri);
             out.print("404");
         }
 
