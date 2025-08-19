@@ -383,7 +383,7 @@ public class Robot {
         httpRequestOut("out/symbol/%s/%s", deviceInstance, String.join("/", displayStatus));
     }
     
-    /* This function turns on or off a single LED on the micro:bit LED array. 
+    /** This function turns on or off a single LED on the micro:bit LED array. 
      * 
      * @param x The column of the LED (1-5)
      * @param y The row of the LED (1-5)
@@ -514,7 +514,7 @@ public class Robot {
         return httpRequestInBoolean("in/orientation/%s/%s", orientation, deviceInstance);  
     }
 
-    /* isShaking() tells you whether the micro:bit is being shaken. 
+    /** isShaking() tells you whether the micro:bit is being shaken. 
      * 
      * @return a boolean value telling you the shake state
      * */
@@ -543,7 +543,7 @@ public class Robot {
         return "In between";
     }
 
-    /* Pauses the program for a time in seconds. */
+    /** Pauses the program for a time in seconds. */
     public static void pause(double numSeconds) {
     	double milliSeconds = 1000*numSeconds;
     	try {
@@ -553,7 +553,7 @@ public class Robot {
         }
     }
     
-    /* stopAll() turns off all the outputs. */
+    /** stopAll() turns off all the outputs. */
     public void stopAll() {
     	pause(0.1);         // Give stopAll() time to act before the end of program
         httpRequestOut("out/stopall/%s", deviceInstance);

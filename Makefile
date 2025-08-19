@@ -3,7 +3,7 @@ JAR   := birdbrain-1.0hc.jar
 
 # ---- Default target ----
 .PHONY: all
-all: compile jar
+all: compile jar docs
 
 # ---- Compile sources to classes ----
 .PHONY: compile
@@ -19,6 +19,12 @@ jar: compile
 	jar cf $(JAR) -C build .
 	# Adding source files to jar
 	jar uf $(JAR) -C src .
+
+.PHONY: docs
+docs:
+	@mkdir -p docs
+	javadoc -d docs -sourcepath src -public -quiet -noindex -notree -nohelp -nonavbar -notimestamp -noqualifier all src/birdbrain/Finch.java
+	@echo "See: docs/birdbrain/Finch.html"
 
 # ---- Clean ----
 .PHONY: clean
