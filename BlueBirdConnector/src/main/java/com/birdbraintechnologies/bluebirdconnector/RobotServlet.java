@@ -54,7 +54,7 @@ public class RobotServlet extends HttpServlet {
         //int http_delay = ScratchME.blueBirdDriver.http_delay;
         int http_delay = 0;
         String uri = httpServletRequest.getRequestURI();
-        LOG.debug("Request URI = {}" , uri);
+        LOG.info("Request URI = {}" , uri);
 
         //byte devId = -1;
         //byte devNum = 0;

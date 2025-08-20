@@ -15,6 +15,7 @@ import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import org.eclipse.jetty.http.HttpVersion;
+import org.eclipse.jetty.http.UriCompliance;
 import org.eclipse.jetty.server.*;
 import org.eclipse.jetty.servlet.DefaultServlet;
 import org.eclipse.jetty.servlet.FilterHolder;
@@ -178,6 +179,10 @@ public class BlueBirdConnector extends Application{
 
                     // HTTPS Configuration
                     HttpConfiguration http_config = new HttpConfiguration();
+                    HttpConfiguration httpConfig = new HttpConfiguration();
+
+                    // Relax compliance to allow encoded % in path, used for /print/string/ url
+                    http_config.setUriCompliance(UriCompliance.from("RFC3986,AMBIGUOUS_PATH_ENCODING"));
 
                     ServerConnector http = new ServerConnector(server,
                             new HttpConnectionFactory(http_config));

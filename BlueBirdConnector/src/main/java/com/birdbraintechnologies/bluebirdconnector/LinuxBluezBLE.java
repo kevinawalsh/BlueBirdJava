@@ -716,7 +716,7 @@ public class LinuxBluezBLE implements RobotCommunicator {
             }
             robot.status = IDLE;
             workQueue.removeIf((work) -> work.path.equals(robot.name));
-            if (prevStatus == CONNECTED)
+            if (prevStatus != IDLE && prevStatus != DISCONNECTING)
                 robotManager.receiveDisconnectionEvent(robot.name, userInitiated);
             if (userInitiated)
                 robot.reportTo(frontendServer); // re-populate available robot list
