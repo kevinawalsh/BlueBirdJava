@@ -3,6 +3,7 @@ package com.birdbraintechnologies.bluebirdconnector;
 import java.io.*;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Date;
 import java.util.Deque;
@@ -271,8 +272,10 @@ public class LinuxBluezBLE implements RobotCommunicator {
     }
 
     public void sendCommand(String robotName, byte[] command) {
-        LOG.info("Sending command to {}: {}", robotName, Utilities.bytesToString(command));
-        workQueue.offer(worker.newSendRequest(robotName, command));
+        // copy cmd, so caller doesn't modify it before workQueue is processed
+        final byte cmd[] = Arrays.copyOf(command, command.length);
+        LOG.info("Sending command to {}: {}", robotName, Utilities.bytesToString(cmd));
+        workQueue.offer(worker.newSendRequest(robotName, cmd));
     }
 
 
@@ -727,8 +730,8 @@ public class LinuxBluezBLE implements RobotCommunicator {
                 disconnect(robot, true); // userInitiated=true to avoid reconnection attempt
         }
 
-        public Work newSendRequest(String robotName, byte[] command) {
-            return new Work("user command", robotName, () -> send(robotName, command));
+        public Work newSendRequest(String robotName, byte[] cmd) {
+            return new Work("user command", robotName, () -> send(robotName, cmd));
         }
 
         private void send(String robotName, byte[] command) {
