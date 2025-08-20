@@ -6,6 +6,21 @@ var translationTable = null;
 var language = "en";
 var ttsDisabled = true;
 
+// Safe translation function, works even if language not yet set.
+// Falls back to English, or that too fails, returns the key.
+function translate(key) {
+  var tt = translationTable;
+  if (tt && Object.prototype.hasOwnProperty.call(tt, key)) {
+    return tt[key];
+  }
+  var ft = window.fullTranslationTable;  // may not exist yet, depending on load ordering
+  var en = (ft && ft.en) ? ft.en : null;
+  if (en && Object.prototype.hasOwnProperty.call(en, key)) {
+    return en[key];
+  }
+  return key;
+}
+
 //HTML code to string conversion tool:  http://pojo.sodhanalibrary.com/string.html
 var connectButton =
       "              <div class=\"col-xs-2 buttons\">"+
@@ -295,10 +310,10 @@ function setConnectedDisplay(state) {
  */
 function setConnectingState(state) {
   if (state == "Connecting")
-    //$('#connection-state').html("<i class=\"fas fa-sync-alt fa-spin\"></i>" + " " + translationTable["connected"]);  //Do not change "Connected" to "Connecting"
+    //$('#connection-state').html("<i class=\"fas fa-sync-alt fa-spin\"></i>" + " " + translate("connected"));  //Do not change "Connected" to "Connecting"
     $('#connection-state').html("<i class=\"fas fa-sync-alt fa-spin\"></i>");
   else if (state == "Connected")
-    $('#connection-state').html(translationTable["connected"]);
+    $('#connection-state').html(translate("connected"));
 }
 
 /**

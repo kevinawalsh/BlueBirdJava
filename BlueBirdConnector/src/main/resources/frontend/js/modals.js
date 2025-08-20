@@ -130,7 +130,7 @@ function launchVideo(videoName) {
             icon2 = null;
             onClickCloseBtn = "return closeModal();";
             span.setAttribute("id", "CompassCalibrate");
-            span.textContent=" " + translationTable["CompassCalibrate"] + " ";
+            span.textContent=" " + translate("CompassCalibrate") + " ";
             const status = document.createElement('div');
             status.setAttribute("class", "status /*status-success*/ /*status-fail*/");
             const check = document.createElement('i');
@@ -149,7 +149,7 @@ function launchVideo(videoName) {
             section.setAttribute("id", "BLE-modal");
             icon.setAttribute("class", "fab fa-bluetooth-b");
             span.setAttribute("id", "Connection_Failure");
-            span.textContent=" " + translationTable["Connection_Failure"] + " ";
+            span.textContent=" " + translate("Connection_Failure") + " ";
             icon2.setAttribute("class", "fab fa-usb");
             break;
         default:

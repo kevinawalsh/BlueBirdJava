@@ -5,7 +5,7 @@
 /**
  * Table of all keys in all supported languages.
  */
-const fullTranslationTable = {
+window.fullTranslationTable = {
   en: {
     say_this: 'Say This',
     find_robots: 'Find Robots',
@@ -241,9 +241,9 @@ const fullTranslationTable = {
 function translateStrings() {
   if (translationTable == null) { return; }
   // Set up defaults
-  $('#findBtnText').text(" " + translationTable["find_robots"]);
-  $('#connection-state').html(translationTable["connected"]);
-  $('#start_programming').html(translationTable["start_programming"]);
+  $('#findBtnText').text(" " + translate("find_robots"));
+  $('#connection-state').html(translate("connected"));
+  $('#start_programming').html(translate("start_programming"));
 }
 
 /**
@@ -270,11 +270,11 @@ function setLanguage(language) {
 
   console.log("Language code used: " + language);
 
-  translationTable = fullTranslationTable[language];
+  translationTable = window.fullTranslationTable[language];
   if (translationTable === null) {
     console.log("Language unsupported. Defaulting to English (en)");
     language = "en";
-    translationTable = fullTranslationTable[language]; // populate the locale phrases
+    translationTable = window.fullTranslationTable[language]; // populate the locale phrases
   }
 
   console.log("translationTable:");

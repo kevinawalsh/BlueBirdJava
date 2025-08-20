@@ -87,7 +87,7 @@ CallbackManager.scanStarted = function() {
   scanDeviceList = []
   if (!($('#find-button i').hasClass('fa-spin'))){
     $('#find-button i').addClass('fa-spin');
-    $('#findBtnText').text(" "+translationTable["finding_robots"]);
+    $('#findBtnText').text(" "+translate("finding_robots"));
   }
   updateBleStatus(true);
   closeModal();
@@ -99,7 +99,7 @@ CallbackManager.scanStarted = function() {
 CallbackManager.scanEnded = function() {
   if ($('#find-button i').hasClass('fa-spin')) {
     $('#find-button i').removeClass('fa-spin');
-    $('#findBtnText').text(" "+translationTable["find_robots"]);
+    $('#findBtnText').text(" "+translate("find_robots"));
   }
 }
 
@@ -117,8 +117,8 @@ CallbackManager.bleDisabled = function() {
   //TODO: windows video
   //launchNativeMacOSBLEvideo();
   //launchPlugInDongleVideo();
-  let title = " " + translationTable["No_Ble"] + " "
-  let message = translationTable["Ble_Required"]
+  let title = " " + translate("No_Ble") + " "
+  let message = translate("Ble_Required")
   showErrorModal(title, message, false, "https://support.birdbraintechnologies.com/hc/en-us/articles/360042767953-Why-am-I-getting-a-Connection-Failure-message-in-the-BlueBird-Connector-");
 }
 
