@@ -720,7 +720,6 @@ public class LinuxBluezBLE implements RobotCommunicator {
                     LOG.error("robot {} is no longer present at {}", robot.name, robot.path);
                     return false;
                 } else {
-                    LOG.info("robot {} is still preent at {}", robot.name, robot.path);
                     return true;
                 }
             } catch (Exception e) {
