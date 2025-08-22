@@ -348,6 +348,7 @@ function getDeviceImage(deviceName) {
  * updateInternetStatus - Updates the internet indicator. Called on an interval,
  * starting when the document is ready.
  */
+var internetUp = false;
 function updateInternetStatus() {
   if (navigator.onLine != internetUp) {
     sendMessageToBackend(msgTypes.CONSOLE_LOG, {
