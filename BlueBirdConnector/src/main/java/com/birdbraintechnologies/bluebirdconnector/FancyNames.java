@@ -9,6 +9,7 @@ public final class FancyNames {
 
     /**
      * Array of names to choose from. One name will be chosen from each column.
+     * Note: Current longest possible name is 38 chars: "Extraordinary Rainforest Tyrannosaurus"
      */
     private static String[][] names = new String[][]{
             { "Adorable", "Amber", "Beaver" },
@@ -524,6 +525,22 @@ public final class FancyNames {
             {"Young", "Violet", "Wolf"},
             {"Zealous", "Yellow", "Zebra"}
     };
+    static {
+        int rows = names.length;
+        int cols = names[0].length;
+
+        for (int c = 0; c < cols; c++) {
+            String longest = "";
+            for (int r = 0; r < rows; r++) {
+                String current = names[r][c];
+                if (current != null && current.length() > longest.length()) {
+                    longest = current;
+                }
+            }
+            System.out.printf("Column %d: longest = \"%s\" (length %d)%n",
+                    c, longest, longest.length());
+        }
+    }
 
     /**
      * Array of initials to avoid. If the chosen 3 word name will produce any of

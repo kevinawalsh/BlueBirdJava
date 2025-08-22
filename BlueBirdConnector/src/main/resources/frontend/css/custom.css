@@ -60,10 +60,10 @@ h1 { font-family: 'Raleway', Helvetica, Arial, sans-serif; font-size: 1.75em; te
 .robot-list .robot-item:nth-of-type(even) { background-color: #E2E2E2; }
 
 /* !robot items */
-.robot-item { font-size: 1.5em; margin: 0; }
+.robot-item { font-size: 1.25em; margin: 0; }
 .robot-item > div { padding: 10px; }
 .robot-item .img { font-weight: 800; text-align: left; }
-.robot-item .img img { height: 36px; width: auto; }
+.robot-item .img img { height: 28px; width: auto; }
 
 .robot-item .name { line-height: 1.575em; }
 .robot-item .buttons { font-size: 0.45em; padding: 7px 10px 0 10px; text-align: right; }
