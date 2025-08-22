@@ -545,7 +545,6 @@ public class LinuxBluezBLE implements RobotCommunicator {
         }
         
         private void updateRobot(BLERobotDevice robot, Short rssi, Boolean connected) {
-            LOG.info("update {} with {} {}", robot.name, rssi, connected);
             switch (robot.status) {
                 case UNAVAILABLE:
                     // We knew of device, perhaps we enumerated it just as it was being created. Earlier it must have had
@@ -640,9 +639,9 @@ public class LinuxBluezBLE implements RobotCommunicator {
             BLERobotDevice robot;
             if ((robot = robotsByRxPath.get(path)) != null) {
 
-                LOG.debug("Properties of {} changed (rxChar path match)...", robot.name);
-                for (var entry : props.entrySet())
-                    LOG.debug("  key: {}   value: {}", entry.getKey(), entry.getValue().getValue().toString());
+                // LOG.debug("Properties of {} changed (rxChar path match)...", robot.name);
+                // for (var entry : props.entrySet())
+                //     LOG.debug("  key: {}   value: {}", entry.getKey(), entry.getValue().getValue().toString());
 
                 // We only care about Value changes, object should be a List of bytes
                 List val = getProp(props, "Value", List.class);
@@ -650,7 +649,7 @@ public class LinuxBluezBLE implements RobotCommunicator {
                     return;
                 @SuppressWarnings("unchecked")
                 byte[] value = toByteArray((List<Byte>)val);
-                LOG.debug("Robot {} received data from {}: {}", robot.name, path, Utilities.bytesToString(value));
+                // LOG.debug("Robot {} received data from {}: {}", robot.name, path, Utilities.bytesToString(value));
                 bluetoothRxResponse(robot, value);
             } else if ((robot = robotsByPath.get(path)) != null) {
 
@@ -942,7 +941,7 @@ public class LinuxBluezBLE implements RobotCommunicator {
 
         private void cleanupConnection(Boolean connected, String path, Status status) {
             if (connected != null && ((boolean)connected)) {
-                LOG.error("DANGER: Device was {} but already connected??? This code is untested.", status);
+                LOG.error("DANGER: Device was {} but already connected...", status);
                 LOG.error("Forcing BLE disconnection from {}", path);
                 try {
                     Device1 device = conn.getRemoteObject("org.bluez", path, Device1.class);
