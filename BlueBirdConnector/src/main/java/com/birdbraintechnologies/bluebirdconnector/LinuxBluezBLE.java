@@ -29,6 +29,7 @@ import org.freedesktop.dbus.types.UInt32;
 import org.freedesktop.dbus.types.Variant;
 
 import static com.birdbraintechnologies.bluebirdconnector.Utilities.stackTraceToString;
+import static com.birdbraintechnologies.bluebirdconnector.LinuxBluezBLE.Status.*;
 
 public class LinuxBluezBLE implements RobotCommunicator {
 
@@ -38,7 +39,8 @@ public class LinuxBluezBLE implements RobotCommunicator {
     private static final String TX_CHAR_UUID = "6e400002-b5a3-f393-e0a9-e50e24dcca9e";
     private static final String RX_CHAR_UUID = "6e400003-b5a3-f393-e0a9-e50e24dcca9e";
 
-    private static final int RSSI_THRESHOLD = 20;
+    private static final int RSSI_CHANGE_THRESHOLD = 10; // ignore small changes in strength
+    private static final int RSSI_LEVEL_THRESHOLD = -90; // below this, BLE is unreliable
     private static final List<String> supportedRobotTypes = List.of("MB", "BB", "FN");
 
     private static final byte[] GET_VERSION_FINCH = new byte[] { (byte)0xD4 };
@@ -72,37 +74,52 @@ public class LinuxBluezBLE implements RobotCommunicator {
     //    just queueing notifications on the primary thread's work queue. The
     //    worker thread examines the notifications and does something with them.
 
-    // BLERobotDevice object lifetime and state machine:
+    // BLERobotDevice object example lifetime and state machine:
     //
-    //        _______________
-    //       |   no object   |
-    //       |_______________|
+    //      _______________
+    //     |   no object   |
+    //     |      yet      |
+    //     |_______________|
     //             |
-    //             |    InterfaceAdded signal indicating a not-yet-known path for
+    //             |    InterfacesAdded signal indicating a not-yet-known path for
     //             |    a Device1 object, "/org/bluez/hci0/dev_DE_EC_24_5C_80_39".
-    //        _____v______
-    //       |            |  Robot is put in robotsByPath, as "/org/bluez/hci/dev_..."
-    //       |   IDLE     |  and in robotsByName under name, e.g. "FNC8039"
-    //       |   robot    |  but not yet in robotsByRxPath or robotsByTxPath.
-    //       |____________|  Front-end is notified of robot name and signal strength.
+    //             |
+    //             |    Robot is put in robotsByPath, as "/org/bluez/hci/dev_..."
+    //             |    and in robotsByName under name, e.g. "FNC8039"
+    //             |    but not yet in robotsByRxPath.
+    //             |
+    //            <?>   Is RSSI reasonable? Note: RSSI=null occurs for device that was paired
+    //           /   \       and cached, but isn't currently in range, or perhaps not even on.
+    //       yes/     \no       _____________
+    //         /       \       | UNAVAILABLE | Not shown in UI, just waiting for
+    //         |        `------>   robot     | more reasonable signal strength.
+    //         |               |_____________|
+    //         |        _________.'     
+    //         |       |         PropertiesChanged, or InterfacesAdded again,
+    //         |       |         with a reasonable RSSI.
+    //        _v_______v__
+    //       |            |   Front-end is notified of robot name and signal strength.   
+    //       | AVAILABLE  |   and robot is shown in UI. RSSI is reasonable.
+    //       |   robot    |<--.  
+    //       |____________|   | RSSI changes, but still okay, update frontend
+    //         /   |  | '-----'
+    //        /    |  '-------> RSSI drops too low, remove from frontend, back to UNAVAILABLE
     //       /     |
     //      /      |    Front-end requests to connect to robot.
     //     /       |    So initialize robot.device, and call device.Connect().
     //    |   _____v______
     //    |  | CONNECTING |  Waiting until both txChar and rxChar are initialized.
-    //    |  |   BEGIN    |  
-    //    |  |____________|    <-,
-    //    |  /   |    |          |  InterfaceAdded signal to notify of a new GattCharacteristic1
-    //    | /    |    '----------'  for this robot, either the txChar or rxChar.
-    //    |/     |
-    //    |      |   Both txChar and rxChar have been initialized for this robot.
+    //    |  |   BEGIN    |<-.
+    //    |  |____________|  | InterfacesAdded signal to notify of a new GattCharacteristic1
+    //    |  /   |    '------' for this robot, either the txChar or rxChar.
+    //    | /    |
+    //    |/     |   Both txChar and rxChar have been initialized for this robot.
     //    |      |   Enable rxChar notifications,
-    //    |      |   put robot into robotsByTxPath and robotsByRxPath, and
+    //    |      |   put robot into robotsByRxPath, and
     //    |      |   send a GET_VERSION command to robot.
     //    |   ___v________
     //    |  | CONNECTING |  Waiting to get version info response.
-    //    |  |  GETTING   |
-    //    |  |  VERSION   |  
+    //    |  |   PROBE    |  
     //    |  |____________|
     //    |  /   |
     //    | /    |   PropertiesChanged signal for txCharPath arrives with version info.
@@ -117,17 +134,20 @@ public class LinuxBluezBLE implements RobotCommunicator {
     //       \ |    
     //        \|
     //         |  If front-end requests disconnection,
-    //         |  then disconnect if needed, cleanup, and reset back to IDLE status.
-    //         |--------> Back to IDLE state.
+    //         |  then disconnect and tell manager to remove from "connected/pending" list.
+    //         |--------> Back to UNAVAILABLE or AVAILABLE state, depending on RSSI.
     //         |
-    //         |  If InterfaceRemoved signal indicates robot is gone,
+    //         |  If BLE callback indicates device is no longer connected,
+    //         |  then tell manager to remove from "connected/pending" list.
+    //         |-----> Back to UNAVAILABLE or AVAILABLE, depending on RSSI.
+    //         |
+    //         |  If BLE signal indicates robot is gone,
     //         |  then cleanup and reset fully. Remove from all maps.
-    //         '-----> Back to "no object" state.
+    //         '-----> Robot becomes DEAD.
     //
     private final LinkedBlockingDeque<Work> workQueue = new LinkedBlockingDeque<>();
     private final Worker worker = new Worker();
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-
 
 
     //
@@ -176,14 +196,14 @@ public class LinuxBluezBLE implements RobotCommunicator {
     }
 
     public void kill() {
-        if (conn != null) {
-            LOG.info("Killing linux bluez ble driver");
-            worker.interrupt();
-            try { worker.join(); }
-            catch (InterruptedException e) { }
-            conn.disconnect();
-            conn = null;
-        }
+        if (conn == null)
+            return;
+        LOG.info("Killing linux bluez ble driver");
+        worker.interrupt();
+        try { worker.join(); }
+        catch (InterruptedException e) { }
+        conn.disconnect();
+        conn = null;
     }
 
     public void startDiscovery() {
@@ -218,9 +238,9 @@ public class LinuxBluezBLE implements RobotCommunicator {
                 LOG.error("failed to enumerate bluetooth adapters: " + e.getMessage());
             }
             if (count > 0 || restarting) {
-                // re-report to the front end all previously discovered devices
+                // re-report to the front end all previously discovered and still available devices
                 workQueue.offer(worker.newEnumerationRequest());
-                // stop discovery after a few seconds
+                // timer to stop discovery after a few seconds
                 discoveryTimer = scheduler.schedule(() -> stopDiscovery(), 8, TimeUnit.SECONDS);
             }
             frontendServer.updateGUIScanStatus(count > 0 || restarting);
@@ -280,25 +300,48 @@ public class LinuxBluezBLE implements RobotCommunicator {
 
 
     //
-    // Implementation for Worker
+    // Implementation for BLERobotDevice
     //
+   
+    enum Status {
+     UNAVAILABLE, AVAILABLE,
+     CONNECTING_BEGIN, CONNECTING_PROBE, CONNECTED,
+     DISCONNECTING,
+     DEAD
+    };
 
     private static class BLERobotDevice {
         String path; // example: "/org/bluez/hci0/dev_DE_EC_24_5C_80_39"
         String addr; // example: "DE:EC:24:5C:80:39"
         String name; // example: "FNC8039"
-        Short rssi;  // 0 is strongest, more negative is weaker
+        Short rssi;  // 0 is strongest, more negative is weaker, null is unknown
         int version; // 0 is unknown, 1 or 2 are valid known micro:bit version numbers 
-        Object status = IDLE;
+        Status status;
         ScheduledFuture<?> connectionTimer;
         Device1 device;
         GattCharacteristic1 txChar, rxChar;
         String txCharPath, rxCharPath;
-        public BLERobotDevice(String p, String a, String n, Short r) {
+        public BLERobotDevice(String p, String a, String n) {
             path = p;
             addr = a;
             name = n;
-            rssi = r;
+            rssi = null;
+            status = UNAVAILABLE;
+        }
+        public void dump() {
+            LOG.debug("=== Robot ===");
+            LOG.debug("  path: {}", path);
+            LOG.debug("  addr: {}", addr);
+            LOG.debug("  name: {}", name);
+            LOG.debug("  rssi: {}", rssi);
+            LOG.debug("  version: {}", version);
+            LOG.debug("  status: {}", status);
+            LOG.debug("  device: {}", (device == null ? "-" : "non-null"));
+            LOG.debug("  txChar: {}", txChar == null ? "-" : txCharPath);
+            LOG.debug("  rxChar: {}", rxChar == null ? "-" : rxCharPath);
+        }
+        public boolean owns(Work work) {
+            return work.path.equals(name) || work.path.equals(path) || work.path.startsWith(path + "/");
         }
         public void send(byte[] cmd) throws DBusException {
             LOG.debug("sending to {}: cmd={}", name, Utilities.bytesToString(cmd));
@@ -314,32 +357,21 @@ public class LinuxBluezBLE implements RobotCommunicator {
             }
         }
         public void reportTo(FrontendServer frontendServer) {
-            if (status != IDLE) {
-                return; // filter out robots already connected (or in progress)
-            } else if (rssi == null) {
-                LOG.info("Robot {} has undefined RSSI, probably too distant or turned off. Ignoring.", name);
-                return; // ignore phantom, distant robots
-            } else {
-                LOG.info("Robot {} has RSSI level {}", name, rssi);
-            }
             JsonObject scanResponse = JsonParser.parseString("{'packetType': 'discovery', 'name': "+ name +", 'rssi': "+ rssi +"}").getAsJsonObject();
             LOG.debug("scan: {}", scanResponse.toString());
             frontendServer.receiveScanResponse(name, scanResponse);
         }
     }
 
-    private static final Object IDLE = "idle device";
-    private static final Object CONNECTING_BEGIN = "attempting to connect";
-    private static final Object CONNECTING_GETTING_VERSION = "getting version information";
-    private static final Object CONNECTING_CANCELLED = "cancelling connection attempt";
-    private static final Object CONNECTED = "connected";
-    private static final Object DISCONNECTING = "disconnecting";
+
+    //
+    // Implementation for Worker
+    //
 
     private class Worker extends Thread {
 
         private HashMap<String, BLERobotDevice> robotsByName = new HashMap<>();
         private HashMap<String, BLERobotDevice> robotsByPath = new HashMap<>();
-        private HashMap<String, BLERobotDevice> robotsByTxPath = new HashMap<>();
         private HashMap<String, BLERobotDevice> robotsByRxPath = new HashMap<>();
 
         public void run() {
@@ -354,7 +386,7 @@ public class LinuxBluezBLE implements RobotCommunicator {
 
                 // Set Bluez handler, used for removed devices
                 conn.addSigHandler(ObjectManager.InterfacesRemoved.class,
-                        (sig) -> deviceRemoved(sig.getPath(), sig.getInterfaces()));
+                        (sig) -> async_deviceRemoved(sig.getPath(), sig.getInterfaces()));
 
                 // Set Bluez handler, used for reading version info and sensor data
                 conn.addSigHandler(Properties.PropertiesChanged.class,
@@ -373,6 +405,7 @@ public class LinuxBluezBLE implements RobotCommunicator {
                 }
 
                 // Disconnect from all robots
+                LOG.info("worker shutting down.");
                 disconnectAll();
 
             } catch (InterruptedException e) {
@@ -386,14 +419,13 @@ public class LinuxBluezBLE implements RobotCommunicator {
         }
 
         private void bluetoothIfaceAdded(boolean viaCallback, String path, Map<String, Map<String, Variant<?>>> ifaces) {
-            LOG.info("interfaces added for {} {}", path, viaCallback ? "via callback" : "during initial enumeration");
-
-            for (var entry : ifaces.entrySet()) {
-                LOG.debug("  iface {} contents: ", entry.getKey());
-                Map<String, Variant<?>> p = entry.getValue();
-                for (var e2 : p.entrySet())
-                    LOG.debug("    key: {}   value: {}", e2.getKey(), e2.getValue().getValue().toString());
-            }
+            // LOG.debug("Device interfaces added for {} {}", path, viaCallback ? "via callback" : "during initial enumeration");
+            // for (var entry : ifaces.entrySet()) {
+            //     LOG.debug("  iface {} contents: ", entry.getKey());
+            //     Map<String, Variant<?>> p = entry.getValue();
+            //     for (var e2 : p.entrySet())
+            //         LOG.debug("    key: {}   value: {}", e2.getKey(), e2.getValue().getValue().toString());
+            // }
             Map<String, Variant<?>> props;
             // Check if this is a BirdBrain device, e.g. during discovery
             props = ifaces.get("org.bluez.Device1");
@@ -408,44 +440,148 @@ public class LinuxBluezBLE implements RobotCommunicator {
         private void bluetoothDeviceAdded(String path, Map<String, Variant<?>> props) {
             String addr = props.containsKey("Address") ? props.get("Address").getValue().toString() : "(unknown)";
             String name = props.containsKey("Name") ? props.get("Name").getValue().toString() : "(no name)";
-            LOG.info("Device detected: " + name + " [" + addr + "] at " + path);
+            // LOG.debug("Device detected: " + name + " [" + addr + "] at " + path);
             String prefix = name.substring(0, 2);
             if (!supportedRobotTypes.contains(prefix))
                 return;
             if (!containsIgnoreCase(props.get("UUIDs").getValue(), SERVICE_UUID))
                 return;
-            LOG.info("Device offers BirdBrain services: " + name);
+            LOG.info("Detected device offering BirdBrain services: {} [{}]", name, path);
             for (var entry : props.entrySet())
                 LOG.debug("  key: {}   value: {}", entry.getKey(), entry.getValue().getValue().toString());
             Short rssi = null;
             if (props.containsKey("RSSI")) {
                 rssi = (Short)props.get("RSSI").getValue();
-                LOG.info("RSSI: {} {}", rssi, (rssi > -75) ? "(strong signal)" : "(weak signal)");
             } else {
-                // FIXME: Maybe query dbus to see if RSSI property can be found?
+                // TODO: Maybe query dbus to see if RSSI property can be found?
                 // Currently, we get the RSSI on the next PropertiesChanged signal.
                 LOG.info("RSSI: unknown");
             }
-            // Add to list, if needed
-            boolean changed = false;
+            Boolean connected = null;
+            if (props.containsKey("Connected")) {
+                connected = (Boolean)props.get("Connected").getValue();
+                LOG.info("Already Connected: " + connected);
+            } else {
+                LOG.info("Already Connected: unknown");
+            }
+
             BLERobotDevice robot = robotsByPath.get(path);
             if (robot == null) {
-                robot = new BLERobotDevice(path, addr, name, rssi);
+                LOG.info("New robot: name={} path={}", name, path);
+                // Never-before-seen device, this is the happy path.
+                name = makeUnique(robotsByName, name, path);
+                robot = new BLERobotDevice(path, addr, name);
                 robotsByPath.put(path, robot);
-                robotsByName.put(name, robot); // FIXME: potential name collision?
-                changed = true;
-            } else if (!robot.name.equals(name)) {
-                robotsByName.remove(robot.name);
-                robot.name = name;
-                robotsByName.put(name, robot); // FIXME: potential name collision?
-                changed = true;
-            } else if (rssi != null && (robot.rssi == null || Math.abs(rssi - robot.rssi) > RSSI_THRESHOLD)) {
-                robot.rssi = rssi;
-                changed = true;
+                robotsByName.put(name, robot);
+                // If BLE is already connected... perhaps BlueBirdConnector was connected then
+                // killed abruptly without doing a BLE disconnection. Let's just kill the connection
+                // and hope for the best. Conceivably, we could try to recover and reconnect, but
+                // let's not.
+                cleanupConnection(connected, robot.path, robot.status);
+                updateRSSI(robot, rssi);
+                return;
             }
-            // Notify front end
-            if (changed)
-                robot.reportTo(frontendServer);
+
+            // Known device, verify name first
+            LOG.warn("New device notification, but robot info was already present.");
+            robot.dump();
+            if (!robot.name.equals(name)) {
+                // Name change: Robot was registered under some other name previously???
+                LOG.error("DANGER: ROBOT HAS CHANGED NAME??? This code is untested.");
+                disconnect(robot, UNAVAILABLE);
+                robotsByName.remove(robot.name);
+                robot.name = name = makeUnique(robotsByName, name, path);
+                robotsByName.put(name, robot);
+                updateRSSI(robot, rssi);
+                return;
+            }
+
+            updateRobot(robot, rssi, connected);
+        }
+        
+        private void updateRSSI(BLERobotDevice robot, Short rssi) {
+            LOG.info("RSSI for robot {}: {} {}", robot.name, rssi,
+                    (rssi == null) ? "(not currently known)" :
+                    (rssi < RSSI_LEVEL_THRESHOLD) ? "(unreliable)" :
+                    (rssi < -75) ? "(weak)" :
+                    (rssi < -60) ? "(okay)" :
+                    "(good)");
+            switch (robot.status) {
+                case UNAVAILABLE:
+                    robot.rssi = rssi;
+                    if (rssi != null && rssi >= RSSI_LEVEL_THRESHOLD) {
+                        robot.status = AVAILABLE;
+                        robot.reportTo(frontendServer);
+                    }
+                    break;
+                case AVAILABLE:
+                    if (rssi != null && Math.abs(rssi - robot.rssi) >= RSSI_CHANGE_THRESHOLD) {
+                        robot.rssi = rssi;
+                        if (rssi >= RSSI_LEVEL_THRESHOLD) {
+                            robot.reportTo(frontendServer); // this is only to update RSSI
+                        } else {
+                            robot.status = UNAVAILABLE;
+                            frontendServer.removeScanResponse(robot.name);
+                        }
+                    }
+                    break;
+                case CONNECTED:
+                case CONNECTING_BEGIN:
+                case CONNECTING_PROBE:
+                    if (rssi != null && Math.abs(rssi - robot.rssi) >= RSSI_CHANGE_THRESHOLD) {
+                        robot.rssi = rssi;
+                        if (rssi >= RSSI_LEVEL_THRESHOLD) {
+                            // rssi changes in UI not yet implemented for this case ...
+                        } else {
+                            // TODO: consider preemptive disconnection here
+                            LOG.info("Robot {} has unreliable signal, should perhaps be disconnected preemptively?");
+                        }
+                    }
+                    break;
+                default:
+                    // ignore RSSI changes for robots that are DEAD, etc.
+                    break;
+            }
+        }
+        
+        private void updateRobot(BLERobotDevice robot, Short rssi, Boolean connected) {
+            LOG.info("update {} with {} {}", robot.name, rssi, connected);
+            switch (robot.status) {
+                case UNAVAILABLE:
+                    // We knew of device, perhaps we enumerated it just as it was being created. Earlier it must have had
+                    // unacceptable RSSI, maybe that has changed now.
+                    cleanupConnection(connected, robot.path, robot.status);
+                    updateRSSI(robot, rssi);
+                    break;
+
+                case AVAILABLE:
+                    LOG.warn("WARNING: Previously available device was updated, or discovered again.");
+                    cleanupConnection(connected, robot.path, robot.status);
+                    updateRSSI(robot, rssi);
+                    break;
+
+                case CONNECTING_BEGIN:
+                case CONNECTING_PROBE:
+                case CONNECTED:
+                    // Should be connected. Ignore RSSI changes here, as there is no mechanism to notify the frontend
+                    // about RSSI for connected (and thus not "available") devices.
+                    if (connected != null && !((boolean)connected)) {
+                        LOG.info("Device was connected, or connecting, but appears to have failed?");
+                        disconnect(robot, UNAVAILABLE);
+                    }
+                    updateRSSI(robot, rssi);
+                    break;
+                
+                case DISCONNECTING:
+                    // Should not happen... it is straight code from DISCONNECTING to UNAVAILABLE
+                    // so there should be no BLE event handling between them.
+                    LOG.error("Unexpected state, got BLE event while disconnecting");
+                    break;
+
+                default:
+                    LOG.error("Unknown robot status: {}", robot.status);
+                    break;
+            }
         }
 
         private void bluetoothGattAdded(String path, Map<String, Variant<?>> props) {
@@ -463,13 +599,13 @@ public class LinuxBluezBLE implements RobotCommunicator {
         private void updateGatt(String path, BLERobotDevice robot, String uuid) {
             if (robot == null || robot.status != CONNECTING_BEGIN)
                 return;
+            // See if we just learned txChar or rxChar
             try {
                 if (uuid.equalsIgnoreCase(TX_CHAR_UUID) && robot.txChar == null) {
                     robot.txChar = conn.getRemoteObject("org.bluez", path, GattCharacteristic1.class);
                     if (robot.txChar == null)
                         LOG.error("failed to get tx characteristic for " + path);
                     robot.txCharPath = path;
-                    robotsByTxPath.put(path, robot);
                     LOG.debug("Found txChar for {}: {}", robot.name, path);
                 } else if (uuid.equalsIgnoreCase(RX_CHAR_UUID) && robot.rxChar == null) {
                     robot.rxChar = conn.getRemoteObject("org.bluez", path, GattCharacteristic1.class);
@@ -483,83 +619,55 @@ public class LinuxBluezBLE implements RobotCommunicator {
                 }
             } catch (Exception e) {
                 LOG.error("failed to get gatt characteristic for " + path + ": " + e.getMessage());
+                // let connection timeout handle the cleanup
             }
+            // See if we are ready to transition to CONNECTED_GETTING_VERSION
             try {
                 if (robot.txChar != null && robot.rxChar != null) {
                     LOG.info("Enabling notifications and getting version info for {}", robot.name);
-                    robot.status = CONNECTING_GETTING_VERSION;
+                    robot.status = CONNECTING_PROBE;
                     robot.rxChar.StartNotify();
                     robot.checkedSend(robot.name.startsWith("FN") ? GET_VERSION_FINCH : GET_VERSION_OTHER);
                 }
             } catch (Exception e) {
                 LOG.error("failed to enable notifications or get version for " + robot.name);
+                // let connection timeout handle the cleanup
             }
         }
 
         private void bluetoothValueChanged(String path, Map<String, Variant<?>> props) {
-            LOG.debug("Properties of {} changed...", path);
-            for (var entry : props.entrySet())
-                LOG.debug("  key: {}   value: {}", entry.getKey(), entry.getValue().getValue().toString());
-            if (props.containsKey("Value")) {
-                Object val = props.get("Value").getValue();
-                if (!(val instanceof List)) {
-                    LOG.error("BLE device {} sent unexpected Value type {}", path, val);
+            // Filter early for robot to avoid cluttering the logs
+            BLERobotDevice robot;
+            if ((robot = robotsByRxPath.get(path)) != null) {
+
+                LOG.debug("Properties of {} changed (rxChar path match)...", robot.name);
+                for (var entry : props.entrySet())
+                    LOG.debug("  key: {}   value: {}", entry.getKey(), entry.getValue().getValue().toString());
+
+                // We only care about Value changes, object should be a List of bytes
+                List val = getProp(props, "Value", List.class);
+                if (val == null)
                     return;
-                }
                 @SuppressWarnings("unchecked")
                 byte[] value = toByteArray((List<Byte>)val);
-                LOG.debug("Received from " + path + " : " + Utilities.bytesToString(value));
-                BLERobotDevice robot;
-                robot = robotsByTxPath.get(path);
-                if (robot != null) {
-                    bluetoothTxResponse(robot, value);
-                    return;
-                }
-                robot = robotsByRxPath.get(path);
-                if (robot != null) {
-                    bluetoothRxResponse(robot, value);
-                    return;
-                }
-            } else if (props.containsKey("RSSI")) {
-                Object val = props.get("RSSI").getValue();
-                if (val == null)
-                    return;
-                if (!(val instanceof Short)) {
-                    LOG.error("BLE device {} sent unexpected RSSI type {}", path, val.getClass());
-                    return;
-                }
-                Short rssi = (Short)val;
-                BLERobotDevice robot;
-                robot = robotsByPath.get(path);
-                if (robot != null && rssi != null && (robot.rssi == null || Math.abs(rssi - robot.rssi) > RSSI_THRESHOLD)) {
-                    robot.rssi = rssi;
-                    robot.reportTo(frontendServer);
-                }
-            } else if (props.containsKey("Connected")) {
-                Object val = props.get("Connected").getValue();
-                if (val == null)
-                    return;
-                if (!(val instanceof Boolean)) {
-                    LOG.error("BLE device {} sent unexpected Connected status type {}", path, val.getClass());
-                    return;
-                }
-                boolean connected = (Boolean)val;
-                BLERobotDevice robot = robotsByPath.get(path);
-                if (robot != null && !connected && robot.status != DISCONNECTING && robot.status != IDLE) {
-                    LOG.info("Device disconnected: " + path);
-                    workQueue.removeIf((work) -> work.path.equals(path) || work.path.startsWith(path + "/"));
-                    disconnect(robot, false);
-                }
+                LOG.debug("Robot {} received data from {}: {}", robot.name, path, Utilities.bytesToString(value));
+                bluetoothRxResponse(robot, value);
+            } else if ((robot = robotsByPath.get(path)) != null) {
+
+                LOG.debug("Properties of {} changed (device path match)...", robot.name);
+                for (var entry : props.entrySet())
+                    LOG.debug("  key: {}   value: {}", entry.getKey(), entry.getValue().getValue().toString());
+                
+                // Check for connected status and RSSI level changes
+                Boolean connected = getProp(props, "Connected", Boolean.class);
+                Short rssi = getProp(props, "RSSI", Short.class);
+                if (connected != null || rssi != null)
+                    updateRobot(robot, rssi, connected);
             }
         }
 
-        private void bluetoothTxResponse(BLERobotDevice robot, byte[] value) {
-            LOG.warn("got unexpected tx channel data from " + robot.txCharPath);
-        }
-
         private void bluetoothRxResponse(BLERobotDevice robot, byte[] value) {
-            LOG.debug("rx response");
-            if (value.length >= 4 && robot.status == CONNECTING_GETTING_VERSION) {
+            if (value.length >= 4 && robot.status == CONNECTING_PROBE) {
                 // Response for GET_VERSION command.
                 // Example response data: { 0x2, 0x2, 0x44, 0x22 }
                 // where 0x44 means "Finch", 0xFF would mean "MB" (micro:bit?),
@@ -585,7 +693,8 @@ public class LinuxBluezBLE implements RobotCommunicator {
             }
         }
 
-        private void deviceRemoved(String path, List<String> ifaces) {
+        // Note: this gets called directly from BLE async signal handler
+        private void async_deviceRemoved(String path, List<String> ifaces) {
             LOG.info("Device removed: " + path);
             for (String iface: ifaces)
                 LOG.info("with iface: " + iface);
@@ -594,19 +703,47 @@ public class LinuxBluezBLE implements RobotCommunicator {
             workQueue.removeIf((work) -> work.path.equals(path) || work.path.startsWith(path + "/"));
             workQueue.offerFirst(new Work("dbus device removal", path, 
                         () -> {
-                            BLERobotDevice robot = robotsByPath.remove(path);
-                            if (robot != null) {
-                                disconnect(robot, false);
-                                robotsByName.remove(robot.name);
-                            }
-            }));
+                            BLERobotDevice robot = robotsByPath.get(path);
+                            if (robot != null)
+                                disconnect(robot, DEAD);
+                        }));
+        }
+
+        private boolean revalidateDevice(BLERobotDevice robot) {
+            try {
+                if (robotsByName.get(robot.name) != robot) {
+                    LOG.error("robot {} is no longer present in table", robot.name);
+                    return false;
+                }
+                Device1 device = conn.getRemoteObject("org.bluez", robot.path, Device1.class);
+                if (device == null) {
+                    LOG.error("robot {} is no longer present at {}", robot.name, robot.path);
+                    return false;
+                } else {
+                    LOG.info("robot {} is still preent at {}", robot.name, robot.path);
+                    return true;
+                }
+            } catch (Exception e) {
+                LOG.error("can't revalidate robot {} at {}", robot.name, robot.path);
+                return false;
+            }
         }
         
         public Work newEnumerationRequest() {
+            // re-report previously known devices to front end, if still valid and AVAILABLE
             return new Work("user enumeration request", "", () -> {
-                // re-report previously known devices to front end
-                for (BLERobotDevice robot : robotsByPath.values())
-                    robot.reportTo(frontendServer);
+                ArrayList<BLERobotDevice> dead = new ArrayList<>();
+                for (BLERobotDevice robot : robotsByPath.values()) {
+                    if (!revalidateDevice(robot)) {
+                        LOG.info("Device no long valid, scheduling removal: {} {}", robot.name, robot.path);
+                        dead.add(robot);
+                        continue;
+                    }
+                    if (robot.status == AVAILABLE)
+                        robot.reportTo(frontendServer);
+                }
+                for (BLERobotDevice robot : dead)
+                    disconnect(robot, DEAD);
             });
         }
        
@@ -619,22 +756,37 @@ public class LinuxBluezBLE implements RobotCommunicator {
             BLERobotDevice robot = robotsByName.get(robotName);
             if (robot == null) {
                 LOG.error("can't find info for " + robotName);
+                robotManager.receiveDisconnectionEvent(robotName, true /* permanent */);
+                // do not repopulate frontend availabile list
                 return;
             }
-            if (robot.status != IDLE) {
-                LOG.error("Device " + robotName + " is busy.");
-                return;
+            if (robot.status != AVAILABLE) {
+                // Should not happen
+                LOG.error("Device " + robotName + " is not available.");
+                // Should we call manager here to notify of removal event?
+                if (robot.status == CONNECTED || robot.status == CONNECTING_BEGIN || robot.status == CONNECTING_PROBE) {
+                    // Maybe just leave it alone? UI could end up with two entries of same name?
+                    return;
+                } else {
+                    // Robot is dead, unavailable, or disconnecting
+                    robotManager.receiveDisconnectionEvent(robotName, true /* permanent */);
+                    // do not repopulate frontend availabile list
+                    return;
+                }
             }
-            LOG.info("robot {} is currently IDLE, path is {}", robotName, robot.path);
+            LOG.info("robot {} is currently AVAILABLE, path is {}", robot.name, robot.path);
             try {
                 Device1 device = conn.getRemoteObject("org.bluez", robot.path, Device1.class);
                 if (device == null) {
                     LOG.error("can't find " + robot.path);
+                    robot.status = UNAVAILABLE;
+                    robot.rssi = null;
+                    robotManager.receiveDisconnectionEvent(robotName, true /* permanent */);
                     return;
                 }
+                robot.status = CONNECTING_BEGIN;
                 device.Connect();
                 robot.device = device;
-                robot.status = CONNECTING_BEGIN;
                 // query dbus to get rxChar and txChar, if already present,
                 // otherwise we get them from InterfacesAdded signals
                 for (var entry : manager.GetManagedObjects().entrySet()) {
@@ -650,16 +802,17 @@ public class LinuxBluezBLE implements RobotCommunicator {
                         updateGatt(path, robot, uuid);
                     }
                 }
-                // set a timer in case connection drops out
-                if (robot.status != CONNECTED && robot.status != DISCONNECTING) {
-                    robot.connectionTimer = scheduler.schedule(() -> {
-                        LOG.error("Connection timeout...");
-                        requestDisconnect(robot.name);
-                    }, 3, TimeUnit.SECONDS);
-                }
             } catch (Exception e) {
                 LOG.error("can't connect to " + robot.path + ": " + e.getMessage());
-                disconnect(robot, true /*false*/); // userInitiated=true so frontend doesn't try to reconnect immediately
+                disconnect(robot, UNAVAILABLE);
+                return;
+            }
+            // set a timer in case connection drops out
+            if (robot.status != CONNECTED && robot.status != DISCONNECTING) {
+                robot.connectionTimer = scheduler.schedule(() -> {
+                    LOG.error("Connection timeout for {}...", robot.name);
+                    workQueue.offer(worker.newDisconnectRequest(robot.name));
+                }, 3, TimeUnit.SECONDS);
             }
         }
 
@@ -668,25 +821,31 @@ public class LinuxBluezBLE implements RobotCommunicator {
         }
 
         private void beginDisconnect(String robotName) {
-            LOG.info("disconnecting from " + robotName);
+            LOG.info("User-initiated disconnection from " + robotName);
             BLERobotDevice robot = robotsByName.get(robotName);
             if (robot == null) {
                 LOG.error("can't find info for " + robotName);
                 return;
             }
-            disconnect(robot, true);
+            disconnect(robot, AVAILABLE); // This is more like "AVAILABLE pending revalidation"
         }
 
-        private void disconnect(BLERobotDevice robot, boolean userInitiated) {
-            LOG.info("Disconnecting from {} robot {}, userInitiated={}.", robot.status, robot.name, userInitiated);
-            Object prevStatus = robot.status;
-            robot.status = DISCONNECTING;
+        private void disconnect(BLERobotDevice robot, Status nextStatus) {
+            Status prevStatus = robot.status;
+            LOG.info("Disconnecting from robot {}, {} -> {}.", robot.name, prevStatus, nextStatus);
+            if (prevStatus == DEAD) {
+                LOG.error("invalid disconnect");
+                return;
+            }
             if (prevStatus == DISCONNECTING) {
                 LOG.error("reentrant disconnect");
                 return;
             }
+            robot.status = DISCONNECTING;
             if (prevStatus == CONNECTED) {
                 robot.checkedSend(POLL_STOP);
+            }
+            if (prevStatus == CONNECTED || prevStatus == CONNECTING_PROBE) {
                 try {
                     robot.rxChar.StopNotify();
                 } catch (Exception e) {
@@ -698,7 +857,6 @@ public class LinuxBluezBLE implements RobotCommunicator {
                 robot.connectionTimer = null;
             }
             if (robot.txCharPath != null) {
-                robotsByTxPath.remove(robot.txCharPath);
                 robot.txCharPath = null;
                 robot.txChar = null;
             }
@@ -717,17 +875,93 @@ public class LinuxBluezBLE implements RobotCommunicator {
                 }
                 robot.device = null;
             }
-            robot.status = IDLE;
-            workQueue.removeIf((work) -> work.path.equals(robot.name));
-            if (prevStatus != IDLE && prevStatus != DISCONNECTING)
-                robotManager.receiveDisconnectionEvent(robot.name, userInitiated);
-            if (userInitiated)
-                robot.reportTo(frontendServer); // re-populate available robot list
+            workQueue.removeIf((work) -> robot.owns(work));
+            robot.status = nextStatus;
+            if (robot.status == AVAILABLE) {
+                // This is the user-initiated case, so permanent=true, that way the manager won't
+                // try to reconnect.
+                if (prevStatus == CONNECTED || prevStatus == CONNECTING_BEGIN || prevStatus == CONNECTING_PROBE) {
+                    // Expected case: robot was CONNECTED
+                    // Unexpected cases: robot was still connecting... should not happen.
+                    robotManager.receiveDisconnectionEvent(robot.name, true /* permanent */);
+                } else {
+                    // Unexpected cases: robot was not connected or connecting... should not happen.
+                    frontendServer.removeScanResponse(robot.name);
+                }
+                // In the expected case, the robot was CONNECTED, and the user simply wanted to
+                // disconnect, we go back to AVAILABLE if RSSI is reasonable. But maybe there was
+                // some glitch and the robot was stuck in some other state (in which case robot
+                // should not have been visible to user), and the user is disconnecting out of
+                // frustration. So let's revalidate before allowing this to show up in UI again.
+                if (revalidateDevice(robot)) {
+                    // Device is still good, check if RSSI is still reasonable...
+                    if (robot.rssi != null && robot.rssi >= RSSI_LEVEL_THRESHOLD)
+                        robot.reportTo(frontendServer); // repopulate frontend available list
+                    else
+                        robot.status = UNAVAILABLE;
+                    return;
+                }
+                robot.status = DEAD;
+                // fall through to next case
+            }
+            if (robot.status == DEAD) {
+                // Just in case, notify manager or frontend to remove from UI
+                if (prevStatus == CONNECTED || prevStatus == CONNECTING_BEGIN || prevStatus == CONNECTING_PROBE)
+                    robotManager.receiveDisconnectionEvent(robot.name, true /* permanent */);
+                else
+                    frontendServer.removeScanResponse(robot.name);
+                robotsByPath.remove(robot.path);
+                robotsByName.remove(robot.name);
+                robot.path += "[poisoned]";
+                robot.addr += "[expired]";
+                robot.name += "[dead]";
+                robot.rssi = null;
+                return;
+            }
+            if (robot.status == UNAVAILABLE) {
+                robot.rssi = null;
+                if (prevStatus == CONNECTED) {
+                    // Remove from manager's list of robots "Connected and/or Pending Connection".
+                    // Since we were previuosly connected, and apparently have lost the connection,
+                    // use permanent=false. This may be the intended case for that flag, e.g. where
+                    // robot has gone out of range temporarily, or was accidentally turned off.
+                    robotManager.receiveDisconnectionEvent(robot.name, false /* permanent */);
+                } else if (prevStatus == CONNECTING_BEGIN || prevStatus == CONNECTING_PROBE) {
+                    // Remove from manager's list of robots "Connected and/or Pending Connection".
+                    // Since we were previuosly connecting, we probably failed, or timed out, or the
+                    // user got frustrated. So use permanent=true, that way manager won't try to
+                    // reconnect to this misbehaving device.
+                    robotManager.receiveDisconnectionEvent(robot.name, true /* permanent */);
+                } else {
+                    // Remove from frontend's list of available robots, if it is there.
+                    frontendServer.removeScanResponse(robot.name);
+                }
+                return;
+            }
+        }
+
+        private void cleanupConnection(Boolean connected, String path, Status status) {
+            if (connected != null && ((boolean)connected)) {
+                LOG.error("DANGER: Device was {} but already connected??? This code is untested.", status);
+                LOG.error("Forcing BLE disconnection from {}", path);
+                try {
+                    Device1 device = conn.getRemoteObject("org.bluez", path, Device1.class);
+                    if (device == null) {
+                        LOG.error("can't find device at " + path);
+                    } else {
+                        device.Disconnect();
+                    }
+                }
+                catch (Exception e) {
+                    LOG.error("can't force disconect from " + path);
+                }
+            }
         }
 
         private void disconnectAll() {
-            for (BLERobotDevice robot : robotsByPath.values())
-                disconnect(robot, true); // userInitiated=true to avoid reconnection attempt
+            ArrayList<BLERobotDevice> dead = new ArrayList<>(robotsByPath.values());
+            for (BLERobotDevice robot : dead)
+                disconnect(robot, DEAD);
         }
 
         public Work newSendRequest(String robotName, byte[] cmd) {
@@ -771,8 +1005,28 @@ public class LinuxBluezBLE implements RobotCommunicator {
 
             return null;
         }
-        
-    }
+
+        private String makeUnique(HashMap<String, BLERobotDevice> robots, String name, String path) {
+            BLERobotDevice old = robotsByName.get(name);
+            if (old == null)
+                return name;
+            LOG.error("Name collision: {} is used by both {} and {}", name, path, old.path);
+            // Constraints:
+            //  - must not change the 2-letter prefix (e.g. "FN" or "MB")
+            //  - the rest must be valid hex
+            //  - must it remain 6 chars? Unknown.
+            // Let's just add more digits until it is unique.
+            int suffix = 1;
+            while (true) {
+                String alt = name + Integer.toHexString(suffix).toUpperCase();
+                if (!robotsByName.containsKey(alt)) {
+                    LOG.error("Renamed {} to {} for {} due to name collision", name, alt, path);
+                    return alt;
+                }
+            }
+        }
+
+    } // end of Worker
 
 
     //
@@ -824,15 +1078,26 @@ public class LinuxBluezBLE implements RobotCommunicator {
         return list;
     }
 
+    private static <T> T getProp(Map<String, Variant<?>> props, String key, Class<T> type) {
+        Variant<?> val = props.get(key);
+        if (val == null)
+            return null;
+        Object raw = val.getValue();
+        if (raw == null) {
+            LOG.error("BLE stack sent unexpected empty-value for key {}", key);
+            return null;
+        }
+        if (!type.isInstance(raw)) {
+            LOG.error("BLE stack sent unexpected type {} for key {}", raw.getClass().getName(), key);
+            return null;
+        }
+        return type.cast(raw);
+    }
+
 
     //
     // Bluez DBus Interfacces
     //
-    
-    // @DBusInterfaceName("org.freedesktop.DBus.ObjectManager")
-    // public interface ObjectManager extends DBusInterface {
-    //     Map<DBusPath, Map<String, Map<String, Variant<?>>>> GetManagedObjects();
-    // }
 
     @DBusInterfaceName("org.bluez.Adapter1")
     public interface Adapter1 extends DBusInterface {
@@ -852,6 +1117,5 @@ public class LinuxBluezBLE implements RobotCommunicator {
         void StartNotify();
         void StopNotify();
     }
-
 
 }

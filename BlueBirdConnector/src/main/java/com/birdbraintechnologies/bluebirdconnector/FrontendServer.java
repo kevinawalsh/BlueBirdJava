@@ -72,8 +72,9 @@ public class FrontendServer {
         LOG.debug("Internet is available? {}", online);
     }
 
+    // FIXME: index should be a property of Robot
+    // FIXME: this should be two functions: didConnect, and didDisconnect
     public void updateGUIConnection(Robot robot, int index) {
-        //deviceDidConnect = function(address, name, fancyName, devLetter, hasV2) {
         if (robot.isConnected()) {
             String devLetter = Utilities.indexToDevLetter(index);
             String[] args = new String[] {robot.name, robot.name, robot.fancyName, devLetter, String.valueOf(robot.hasV2) };
@@ -84,9 +85,10 @@ public class FrontendServer {
 
     }
 
-    public void receiveScanResponse(String name, JsonObject discoveryInfo){
+    public void receiveScanResponse(String name, JsonObject discoveryInfo) {
         if (robotManager.autoConnect && !autoconnectRequested) {
             autoconnectRequested = true;
+            // FIXME: This seems broken, should happen after the next few lines of code?
             requestConnection(name);
         }
         discoveryInfo.addProperty("fancyName", FancyNames.getDeviceFancyName(name));
@@ -97,6 +99,13 @@ public class FrontendServer {
         updateGuiDeviceList();
         robotManager.receiveScanResponse(name);
     }
+
+    public void removeScanResponse(String name) {
+        LOG.debug("Removing " + name);
+        availableRobots.remove(name.substring(2));
+        updateGuiDeviceList();
+    }
+
     private void updateGuiDeviceList() {
         LOG.debug("updateGuiDeviceList() availableRobots.values(): " + availableRobots.values());
         String[] newList = availableRobots.values().toArray(new String[0]);

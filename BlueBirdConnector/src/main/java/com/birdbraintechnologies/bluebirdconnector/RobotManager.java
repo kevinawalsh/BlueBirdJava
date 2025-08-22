@@ -14,6 +14,7 @@ public class RobotManager {
 
     private Robot[] selectedRobots = new Robot[3]; //Limit to 3 connections at a time.
     //Keep a list of where the robot is located. Set to -1 if the robot has disconnected and should reconnect automatically.
+    //FIXME: Use a Set for "robots we want to auto-connect", instead of -1's in this map.
     private Hashtable<String, Integer> robotIndexes = new Hashtable<>();
 
     private static RobotManager sharedInstance;
@@ -158,6 +159,7 @@ public class RobotManager {
 
         if (robotCommunicator == null || !robotCommunicator.isRunning()) {
             LOG.error("Requesting robot connection while no communicator is running");
+            // FIXME: frontend already removed robot from "available" list, should it put it back?
             return;
         }
 
@@ -178,6 +180,7 @@ public class RobotManager {
             }
             if (index == -1) {
                 LOG.error("Max connections already reached! Cannot connect {}.", name);
+                // FIXME: frontend already removed robot from "available" list, should it put it back?
                 return;
             }
 
@@ -185,6 +188,7 @@ public class RobotManager {
             selectedRobots[index] = connecting;
             robotIndexes.put(name, index);
             LOG.debug("Connecting {} at index {}", name, index);
+            // FIXME: display connecting robot in GUI
         }
 
         // stopDiscovery();
@@ -313,8 +317,20 @@ public class RobotManager {
             }, 1000);
         }
     }
-    public void receiveDisconnectionEvent(String robotName, boolean userInitiated) {
-        LOG.debug("Disconnection Event {}, {}", robotName, userInitiated ? "user initiated" : "connection failure");
+
+    // Temporary disconnections, e.g. perhaps due to BLE out-of-range issues...
+    //   - Mark robot as dead but still indexed (position=-1) so we can
+    //   reconnect immediately if this robot is discovered later.
+    //   - Also start discovery, in the hopes the robot gets discovered again.
+    // Permanent disconnections, i.e. user initiated disconnection...
+    //   - Remove robot's index position (corresponding to 'A', 'B', or 'C'). If
+    //     robot is discovered later, it goes into the "available robots" list.
+    //   - Do NOT start discovery, since the user didn't ask for it.
+    // FIXME: Permenent should perhaps distinguish two cases:
+    //   1. robot connection is fine, it goes right back into "available" list.
+    //   2. robot connection has failed, it should disappear from UI.
+    public void receiveDisconnectionEvent(String robotName, boolean permanent) {
+        LOG.debug("Disconnection Event {}, {}", robotName, permanent ? "permanent / user initiated" : "temporary / connection failure");
         Integer index = robotIndexes.get(robotName);
         if (index == null || index == -1) {
             LOG.error("{} not found in selectedRobots.", robotName);
@@ -323,14 +339,14 @@ public class RobotManager {
         Robot robot = selectedRobots[index];
         selectedRobots[index] = null;
         robot.setConnected(false);
-        if (userInitiated) {
+        if (permanent) {
             robotIndexes.remove(robotName);
         } else {
             robotIndexes.put(robotName, -1); //autoreconnect
             LOG.debug("{} will autoreconnect", robotName);
         }
         FrontendServer.getSharedInstance().updateGUIConnection(robot, index);
-        if (!userInitiated){
+        if (!permanent) {
             startDiscovery();
         }
     }
