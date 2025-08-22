@@ -386,7 +386,7 @@ public class LinuxBluezBLE implements RobotCommunicator {
 
                 // Set Bluez handler, used for removed devices
                 conn.addSigHandler(ObjectManager.InterfacesRemoved.class,
-                        (sig) -> async_deviceRemoved(sig.getPath(), sig.getInterfaces()));
+                        (sig) -> async_deviceRemoved(sig.getSignalSource().getPath(), sig.getInterfaces()));
 
                 // Set Bluez handler, used for reading version info and sensor data
                 conn.addSigHandler(Properties.PropertiesChanged.class,
@@ -695,9 +695,6 @@ public class LinuxBluezBLE implements RobotCommunicator {
 
         // Note: this gets called directly from BLE async signal handler
         private void async_deviceRemoved(String path, List<String> ifaces) {
-            LOG.info("Device removed: " + path);
-            for (String iface: ifaces)
-                LOG.info("with iface: " + iface);
             if (!ifaces.contains("org.bluez.Device1"))
                 return;
             workQueue.removeIf((work) -> work.path.equals(path) || work.path.startsWith(path + "/"));
@@ -705,6 +702,9 @@ public class LinuxBluezBLE implements RobotCommunicator {
                         () -> {
                             BLERobotDevice robot = robotsByPath.get(path);
                             if (robot != null)
+                                LOG.info("Robot {} BLE device removed from path {}", robot.name, path);
+                                // for (String iface: ifaces)
+                                //     LOG.info("with iface: " + iface);
                                 disconnect(robot, DEAD);
                         }));
         }
