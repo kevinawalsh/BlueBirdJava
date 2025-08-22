@@ -68,8 +68,8 @@ public class FrontendServer {
             sendToGUI("scanEnded");
         }
 
-        boolean online = internetIsAvailable();
-        LOG.debug("Internet is available? {}", online);
+        // boolean online = internetIsAvailable();
+        // LOG.debug("Internet is available? {}", online);
     }
 
     // FIXME: index should be a property of Robot
