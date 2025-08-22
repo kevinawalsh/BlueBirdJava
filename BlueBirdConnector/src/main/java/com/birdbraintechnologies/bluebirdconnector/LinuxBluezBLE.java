@@ -701,11 +701,12 @@ public class LinuxBluezBLE implements RobotCommunicator {
             workQueue.offerFirst(new Work("dbus device removal", path, 
                         () -> {
                             BLERobotDevice robot = robotsByPath.get(path);
-                            if (robot != null)
+                            if (robot != null) {
                                 LOG.info("Robot {} BLE device removed from path {}", robot.name, path);
                                 // for (String iface: ifaces)
                                 //     LOG.info("with iface: " + iface);
                                 disconnect(robot, DEAD);
+                            }
                         }));
         }
 
@@ -832,7 +833,7 @@ public class LinuxBluezBLE implements RobotCommunicator {
         private void disconnect(BLERobotDevice robot, Status nextStatus) {
             Status prevStatus = robot.status;
             LOG.info("Disconnecting from robot {}, {} -> {}.", robot.name, prevStatus, nextStatus);
-            if (prevStatus == DEAD) {
+            if (prevStatus == null || prevStatus == DEAD) {
                 LOG.error("invalid disconnect");
                 return;
             }
