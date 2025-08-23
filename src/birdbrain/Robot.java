@@ -3,10 +3,12 @@ package birdbrain;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.net.HttpURLConnection;
 import java.net.URI;
+import java.net.URLEncoder;
 
 /**
  * This is class is the superclass of Microbit.java, Hummingbird.java and Finch.java.
@@ -135,7 +137,7 @@ public class Robot {
                     deviceInstance = choice;
                     return;
                 }
-                if (!msg.equals("Not Connected")) {
+                if (msg == null || !msg.equals("Not Connected")) {
                     System.out.println("Something is wrong with BlueBird Connector...");
                     System.out.println("   ("+connectionStatus+", response="+msg+").");
                     System.out.println("Please quit and re-start BlueBird Connector, then use it to");
@@ -150,7 +152,7 @@ public class Robot {
                 deviceInstance = device;
                 return;
             }
-            if (!msg.equals("Not Connected")) {
+            if (msg == null || !msg.equals("Not Connected")) {
                 System.out.println("Something is wrong with BlueBird Connector...");
                 System.out.println("   ("+connectionStatus+", response="+msg+").");
                 System.out.println("Please quit and re-start BlueBird Connector, then use it to connect to a");
@@ -181,7 +183,7 @@ public class Robot {
                 deviceInstance = choice;
                 return;
             }
-            if (!msg.equals("Not Connected")) {
+            if (msg == null || !msg.equals("Not Connected")) {
                 System.out.println(" error.");
                 System.out.println("Something is wrong with BlueBird Connector...");
                 System.out.println("   ("+connectionStatus+", response="+msg+").");
@@ -340,25 +342,25 @@ public class Robot {
      * @param message The message that will be displayed on the LED Array.
      */
     public void print(String message) {
-        // Warn the user if there are any special characters. Note that we don't use isCharacterOrDigit() because we can only display a few characters
-        // kwalsh: no... microbit can display ascii 32 up to ascii 126 just fine,
-        // and there is an url escaping issue here, space isn't working.
-        // Also, it has a length limit, 18 chars only, we should check for this
-        // here? And maybe replace bad chars with blanks or something?
+        // Warn the user if there are any unusual (e.g. non-ascii) characters.
+        // The micro:bit can display ascii 32 up to ascii 126 just fine.
+        // There may be a length limit we should probably enforce/warn for.
         for (int i = 0; i < message.length(); i++) {
             char letter = message.charAt(i);
-            if (!(((letter >= 'a') && (letter <= 'z')) || ((letter >= 'A') && (letter <= 'Z')) || ((letter >= '0') && (letter <= '9')) || (letter == ' '))) {
-                warn("Warning: The robot can't display '%c', it can only display a-z, A-Z, and 0-9.", letter);
+            if ((int)letter < 32 || (int)letter > 126) {
+                warn("Warning: The robot can't display '%c' (ascii char %d), it can only display plain ascii characters.", letter, (int)letter);
                 message = new StringBuilder(message).replace(i, i + 1, " ").toString();
             }
         }
 
         Arrays.fill(displayStatus, "false");
- 			
-    	// Get rid of spaces
-    	message = message.replace(" ", "%20");
-    	
-        httpRequestOut("out/print/%s/%s", message, deviceInstance);
+
+        try {
+            String encoded = URLEncoder.encode(message, "ISO-8859-1");
+            httpRequestOut("out/print/%s/%s", encoded, deviceInstance);
+        } catch (UnsupportedEncodingException e) {
+            warn("Error encoding string for printing: %s", e.getMessage());
+        }
     }
 
     /**
@@ -385,8 +387,8 @@ public class Robot {
     
     /** This function turns on or off a single LED on the micro:bit LED array. 
      * 
-     * @param x The column of the LED (1-5)
-     * @param y The row of the LED (1-5)
+     * @param row The row of the LED (1-5)
+     * @param column The column of the LED (1-5)
      * @param value The value of the LED (0 for off, 1 for on)
      * */
     public void setPoint(int row, int column, int value) {
