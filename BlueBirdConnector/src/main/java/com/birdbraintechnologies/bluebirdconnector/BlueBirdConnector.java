@@ -8,6 +8,8 @@ import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.ButtonBar;
+import javafx.scene.control.ButtonType;
 import javafx.scene.image.Image;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
@@ -82,8 +84,25 @@ public class BlueBirdConnector extends Application{
             try {
                 Platform.setImplicitExit(false);
                 LOG.debug("Starting GUI");
-                WebView webView = new WebView();
+                final WebView webView = new WebView();
                 final WebEngine webEngine = webView.getEngine();
+
+                webEngine.setConfirmHandler(message -> {
+                    System.out.println("confirmation dialog");
+                    Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+                    if (webView.getScene() != null && webView.getScene().getWindow() != null)
+                        alert.initOwner(webView.getScene().getWindow());
+                    alert.setTitle("Confirm");
+                    alert.setHeaderText(null);
+                    alert.setContentText(message);
+
+                    ButtonType ok = new ButtonType(message.startsWith("Calibration") ? "Calibrate Now" : "Whatever", ButtonBar.ButtonData.OK_DONE);
+                    ButtonType cancel = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
+                    alert.getButtonTypes().setAll(ok, cancel);
+
+                    Optional<ButtonType> result = alert.showAndWait();
+                    return result.orElse(cancel) == ok;
+                });
 
                 webEngine.getLoadWorker().stateProperty().addListener((observable, oldValue, newValue) -> {
                     if (newValue == Worker.State.SUCCEEDED) {

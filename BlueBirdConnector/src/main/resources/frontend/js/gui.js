@@ -217,7 +217,7 @@ $.connectedDevListRefresh = function() {
       "                   <span title=\"Battery Level: unknown\" style=\"display:inline-block\" class=\"button button-battery button-battery-" + devLetter + " fa-stack fa-2x\"><i class=\"fas /*fa-battery-full fa-battery-half*/ /*fa-battery-quarter*/ fa-stack-2x\"></i></span> " +
 
       // Calibration button
-      "                   <a title=\"Calibrate orientation magnetometer\" class=\"button\" href=\"#\" onmouseenter=\"tts(\'" + ttsCalibrate + "\')\" onclick=\"return launchCalibrate(\'" + devLetter + "\', \'" + deviceName + "\', \'" + item.hasV2 + "\');\"><span class=\"button-calibrate fa-stack fa-2x\">" +
+      "                   <a title=\"Calibrate orientation magnetometer\" class=\"button\" href=\"#\" onmouseenter=\"tts(\'" + ttsCalibrate + "\')\" onclick=\"return confirm(\'Calibration of the accelerometer/magnetometer takes time and can\\\'t be cancelled, are you sure you want to do it now?\') && launchCalibrate(\'" + devLetter + "\', \'" + deviceName + "\', \'" + item.hasV2 + "\');\"><span class=\"button-calibrate fa-stack fa-2x\">" +
       "                     <i class=\"fas fa-square fa-stack-2x\"></i>" +
       "                     <i class=\"fas fa-compass fa-stack-1x fa-inverse\"></i>" +
       "                   </span></a>" +
