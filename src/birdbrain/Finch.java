@@ -471,7 +471,7 @@ public class Finch extends Robot {
      *    while (true) {
      *      int x = bot.getLight("L");    // Check left eye brightness.
      *      int y = bot.getLight("R");    // Check right eye brightness.
-     *      if (x > y)                    // If left side is brighter...
+     *      if (x &gt; y)                    // If left side is brighter...
      *        bot.setTurn("L", 5, 100);   // ... then turn 5 degrees left
      *      else
      *        bot.setTurn("R", 5, 100);   // ... otherwise turn 5 degrees right
@@ -745,7 +745,7 @@ public class Finch extends Robot {
      *     } else {
      *       bot.setBeak(0, 0, 0);     // Beak is off otherwise
      *     }
-     *     Finch.pause(1.0);           // A small delay... we check the button once per second
+     *     bot.pause(1.0);             // A small delay... we check the button once per second
      *   }
      * </pre>
      *
@@ -764,7 +764,7 @@ public class Finch extends Robot {
      *   Finch bot = new Finch("A");
      *   while (true) {
      *     int s = bot.getSound();
-     *     if (s > 60) bot.setBeak(100, 0, 0);  // Red beak when loud
+     *     if (s &gt; 60) bot.setBeak(100, 0, 0);  // Red beak when loud
      *     else bot.setBeak(0, 0, 100);         // Blue beak otherwise
      *   }
      * </pre>
@@ -820,7 +820,7 @@ public class Finch extends Robot {
      * <pre>
      *   Finch bot = new Finch("A");
      *   bot.setMotors(30, 30);       // Start the wheels turning
-     *   Finch.pause(1.5);            // delay for 1.5 seconds (and the wheels are still turning)
+     *   bot.pause(1.5);              // delay for 1.5 seconds (and the wheels are still turning)
      *   bot.stop();                  // then stop the wheels
      * </pre>
      *
