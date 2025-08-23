@@ -89,7 +89,7 @@ public class Finch extends Robot {
         }
     }
 
-    private String formatRightLeft(String direction, String method) {
+    private String formatRightLeft(String direction, String method, String variable) {
         switch (direction) {
             case "R":
             case "r":
@@ -102,19 +102,47 @@ public class Finch extends Robot {
             case "left":
                 return "Left";
             default:
-                warn("When calling `%s(...)`, using \"%s\" for direction is invalid. It must be \"L\", \"R\", \"Left\", or \"Right\".", method, direction);
+                warn("When calling `%s(...)`, using \"%s\" for %s is invalid. It must be \"L\", \"R\", \"Left\", or \"Right\".", method, direction, variable);
                 return null;
         }
     }
-
+    
     /**
-     * Send a command to move the finch and wait until the finch has finished
-     * its motion to return. Used by straight(), spin(), and curve().
-     * @param motion  Move or turn
-     * @param direction forward, backward, right or left
-     * @param length  Length of travel (distance or angle)
-     * @param speed  Speed as a percent (range: 0 to 100)
+     * Check whether the finch is moving, that is, if the wheel motors are engaged.
+     *
+     * <b>Note:</b> For some motion-related commands, like
+     * {@link birdbrain.Finch#straight(String direction, double distance, double speed) straight(...)},
+     * and {@link birdbrain.Finch#spin(String direction, double angle, double
+     * speed) spin(...)}, your program will pause while the motion happens, so
+     * calling {@code isMoving()} is useless, as it would return {@code false}
+     * both before and after the motion command.
+     * <b>Note:</b> For other motion-related commands, like
+     * {@link birdbrain.Finch#setMotors(double leftDistance, double rightDistance, double leftSpeed, double rightSpeed) setMotors(...)},
+     * your program continues executing program while the motion happens, so
+     * calling {@code isMoving()} can be useful to check if the finch has
+     * stopped yet. But take care: the motors can take a fraction of a second to
+     * engage, so it's best to give them some time before calling {@code isMoving()}.
+     *
+     * <p><b>Example:</b>
+     * <pre>
+     *    Finch bot = new Finch("A");
+     *    bot.setMotors(30, 30, 100, 100);  // Set motors driving forward for 30cm.
+     *    bot.allowTime(0.1);               // Allow a moment for the motors to engage.
+     *    int i = 0;
+     *    while (bot.isMoving()) {          // Keep changing beak color so long
+     *      i++;                            // as the finch is still moving.
+     *      bot.setBeak(i%100, (i/3)%100, (i/7)%100);
+     *      bot.allowTime(0.2);             // Slight delay to not overwhelm the lights
+     *    }
+     *    bot.print("Blinked " + i + " times");
+     * </pre>
+     *
+     * @return  encoder value in rotations
      */
+    public boolean isFinchMoving() { 
+        return httpRequestInBoolean("in/finchIsMoving/static/%s", deviceInstance);
+    }
+
     private void moveFinchAndWait(String motion, String direction, double length, double speed){
         boolean isMoving = httpRequestInBoolean("in/finchIsMoving/static/%s", deviceInstance);
         boolean wasMoving = isMoving;
@@ -134,6 +162,9 @@ public class Finch extends Robot {
      * <b>pauses your program</b> until the finch has finished moving the
      * desired distance. <b>Note:</b> The finch can't always measure distances
      * perfectly, it can be affected if the floor is slippery, or bumpy, etc.
+     * Note: technically, it is legal to specify a distance of zero cm in this
+     * function, but in practice finch will ignore such a command. Similarly,
+     * specifying a speed of zero doesn't make much sense.
      * 
      * <p><b>Example:</b>
      * <pre>
@@ -143,7 +174,7 @@ public class Finch extends Robot {
      * </pre>
      *
      * @param direction  Use "F" or "B" for forward or backward.
-     * @param distance  Distance to travel, in centimeters (range: 0 to 500).
+     * @param distance  Distance to travel, in centimeters (range: 0 to 1000... ten meters).
      * @param speed  Speed, as a percentage (range: 0 to 100).
      */
     public void straight(String direction, double distance, double speed) {
@@ -153,7 +184,8 @@ public class Finch extends Robot {
             return;
         }
 
-        distance = clampParameterToBounds(distance, -10000, 10000, "straight", "distance");
+        // eliminated undocumented feature: negative distances would work fine, just reversing the direction flag
+        distance = clampParameterToBounds(distance, 0, 1000, "straight", "distance");
         speed = clampParameterToBounds(speed, 0, 100, "straight", "speed");
 
         moveFinchAndWait("move", dir, distance, speed);
@@ -177,18 +209,95 @@ public class Finch extends Robot {
      * </pre>
      *
      * @param direction  Use "R" or "L" for right (clockwise) or left (counter-clockwise).
-     * @param angle  Angle to turn, in degrees, where negatives go in the reverse direction (range: -360000 to 360000 ... up to ten full rotations, though Finch might get a bit dizzy).
+     * @param angle  Angle to turn, in degrees, where negatives go in the reverse direction (range: -3600 to 3000 ... up to ten full rotations, though Finch might get a bit dizzy).
      * @param speed  Speed, as a percentage (range: 0 to 100).
      */
     public void spin(String direction, double angle, double speed) {
-        direction = formatRightLeft(direction, "spin");
+        direction = formatRightLeft(direction, "spin", "direction");
         if (direction == null)
             return;
 
-        angle = clampParameterToBounds(angle, -360000, 360000, "spin", "angle");
+        angle = clampParameterToBounds(angle, -3600, 3600, "spin", "angle"); // maybe require non-negative angles?
         speed = clampParameterToBounds(speed, 0, 100, "spin", "speed");
 
         moveFinchAndWait("turn", direction, angle, speed);
+    }
+
+    /**
+     * Move the finch forward or backwards in a curving motion a specified
+     * distance and speed. This <b>pauses your program</b> until the finch has
+     * finished moving the desired distance.
+     *
+     * <b>Note:</b> The finch can't always measure distances and angles
+     * perfectly, it can be affected if the floor is slippery, or bumpy, etc. In
+     * fact, because of the acceleration and deceleration profiles built into
+     * the wheel motors, even on a perfect surface the finch won't quite follow
+     * a perfect circular path.
+     *
+     * <b>Note:</b> When moving backwards, the direction the arc curves might
+     * seem opposite from what you expect. Moving forward along a left-bending
+     * arc will make the finch go in a counter-clockwise circle, beak-first. But
+     * moving backwards along the same left-bending arc will make the finch go
+     * clockwise around that circle, tail-first.
+     *
+     * <b>Note:</b> Technically, it is legal to specify an angle of zero degrees
+     * in this function, but in practice finch will ignore such a command.
+     * Similarly, specifying a speed of zero doesn't make much sense.
+     * 
+     * <p><b>Example:</b>
+     * <pre>
+     *    Finch bot = new Finch("A");
+     *    bot.curve("F", 40, "L", 90, 50.0);  // Move forward along a 40cm-diameter left-bending arc
+     *                                        // (so moving counter-clockwise), for 90 degrees of turn, at 50% speed.
+     *    bot.curve("F", 40, "R", 90, 50.0);  // Move forward along a 40cm-diameter right-bending arc
+     *                                        // (so moving clockwise), for 90 degrees of turn, at 50% speed.
+     *    bot.curve("B", 40, "L", 90, 50.0);  // Move backwards along a 40-cm diameter left-bending arc
+     *                                        // (so moving clockwise... surprise!), for 90 degrees of turn, at 50% speed.
+     *    bot.curve("B", 40, "R", 90, 50.0);  // Move backwards along a 40-cm diameter right-bending arc
+     *                                                // (so moving counter-clockwise... surprise!), for 90 degrees of turn, at 50% speed.
+     * </pre>
+     *
+     * @param travelDirection  Use "F" or "B" for forward or backward.
+     * @param arcDiameter      The diameter of the arc to travel, in cm. Smaller
+     *                         values make a tighter turn, larger makes a more gradual turn (range: 0 to 100 ... up to one meter circles).
+     * @param arcDirection     Use "R" or "L" for right or left. When moving
+     *                         forward (travelDirection = "F"), right means
+     *                         clockwise. But when moving backwards
+     *                         (travelDirection = "B"), it's the opposite, with
+     *                         right meaning counter-clockwise.
+     * @param angle            Angle to travel, in degrees (range: 0 to 3600 ... up to ten full circles).
+     * @param speed            Speed, as a percentage (range: 0 to 100).
+     */
+    public void curve(String travelDirection, double arcDiameter, String arcDirection, double angle, double speed) {
+        String travelDir = formatForwardBackward(travelDirection);
+        if (travelDir == null) {
+            warn("When calling `curve(...)`, using \"%s\" for travelDirection is invalid. It must be \"F\", \"B\", \"Forward\", or \"Backward\".", travelDirection);
+            return;
+        }
+
+        arcDiameter = clampParameterToBounds(arcDiameter, 0, 100, "curve", "arcDiameter");
+
+        String arcDir = formatRightLeft(arcDirection, "curve", "arcDirection");
+        if (arcDir == null) {
+            warn("When calling `curve(...)`, using \"%s\" for arcDirection is invalid. It must be \"R\", \"L\", \"Right\", or \"Left\".", arcDirection);
+            return;
+        }
+
+        angle = clampParameterToBounds(angle, 0, 3600, "curve", "angle");
+
+        speed = clampParameterToBounds(speed, 0, 100, "curve", "speed");
+
+        boolean isMoving = httpRequestInBoolean("in/finchIsMoving/static/%s", deviceInstance);
+        boolean wasMoving = isMoving;
+        long commandSendTime = System.currentTimeMillis();
+
+        httpRequestOut("out/curve/%s/%s/%s/%s/%s/%s", deviceInstance, travelDir, arcDiameter, arcDir, angle, speed);
+
+        while (!((System.currentTimeMillis() > commandSendTime + 500 || wasMoving) && !isMoving)) {
+            wasMoving = isMoving;
+            delay(0.01); // 10ms
+            isMoving = httpRequestInBoolean("in/finchIsMoving/static/%s", deviceInstance);
+        }
     }
 
     /**
@@ -228,6 +337,59 @@ public class Finch extends Robot {
         leftSpeed = clampParameterToBounds(leftSpeed, -100, 100, "setMotors", "leftSpeed");
         rightSpeed = clampParameterToBounds(rightSpeed, -100, 100, "setMotors", "rightSpeed");
         httpRequestOut("out/wheels/%s/%s/%s", deviceInstance, leftSpeed, rightSpeed);
+    }
+
+    /**
+     * Drive the finch by specifying wheel speeds and distances directly. Using different
+     * combinations of positive, negative, or zero values, you can make the
+     * finch move straight, forwards or backwards, or turn in place. You can
+     * even make it curve in an arc or circle, by having the wheels go at
+     * different speeds. You can make it go forever, or make it go only a
+     * certain distance before automatically stopping. And you can fully control
+     * each wheel independently of the other.
+     * Unlike {@link birdbrain.Finch#straight(String direction, double distance, double speed) straight(...)},
+     * and {@link birdbrain.Finch#spin(String direction, double angle, double speed) spin(...)},
+     * this function does <b>not</b> pause your program. Instead, your program
+     * will continue executing, allowing you to command the finch to do other
+     * things while it moves. 
+     *
+     * <p><b>Note:</b> If you specify a zero distance for either of the two
+     * wheels, along with a non-zero speed, then that wheel will continue moving
+     * indefinitely. That's because a zero distance in this function is treated
+     * specially, used to mean "drive indefinitely". So your code
+     * must call {@link birdbrain.Finch#stop() stop()},
+     * {@link birdbrain.Finch#stopAll() stopAll()}, or some other motion
+     * command, at some later point in the program. Otherwise the robot will
+     * keep driving forever, even after your program exits.
+     *
+     * <p><b>Example:</b>
+     * <pre>
+     *    Finch bot = new Finch("A");
+     *    bot.setMotors(10, 10, 25, 25);    // Straight forward, both wheels 10 cm distance at 25% speed.
+     *    bot.allowTime(5.0);               // Delay for 5 seconds... the robot probably finishes by then.
+     *    bot.setMotors(70, 35, -100, -50); // Left wheel moves 70 cm at 100% backwards power, right wheel moves 35 cm at 50% backwards power.
+     *    bot.allowTime(0.2);               // Allow a moment for the motors to engage.
+     *    while (bot.isMoving()) {          // Loop to find out when the finch is done moving
+     *      bot.allowTime(0.2);             // Allow a moment for the motors to move some more.
+     *    }
+     *    bot.setMotors(0, 0, -50, 50);     // Left wheel moves forever at 50% backwards power, right wheel moves forever at 50% power.
+     *    bot.allowTime(5.0);               // Delay for 5 seconds... meanwhile the robot is spinning loops!
+     *    bot.setMotors(0, 20, 0, 100);     // Left wheel halts, right wheel 20 cm at 100% power forward.
+     *    bot.allowTime(5.0);               // Delay for 5 seconds... meanwhile the robot is spinning loops!
+     *    bot.stop();                       // Stop moving.
+     * </pre>
+     *
+     * @param leftDistance  Distance for the left wheel, in cm (range: 0 to 1000 ... up to ten meters), but note that 0.0 means "drive indefinitely".
+     * @param rightDistance  Distance for the right wheel, in cm (range: 0 to 1000 ... up to ten meters), or note that 0.0 means "drive indefinitely".
+     * @param leftSpeed  Speed for the left wheel, as a percentage (range: -100 to 100).
+     * @param rightSpeed  Speed for the right wheel, as a percentage (range: -100 to 100).
+     */
+    public void setMotors(double leftDistance, double rightDistance, double leftSpeed, double rightSpeed) {
+        leftDistance = clampParameterToBounds(leftDistance, 0, 1000, "setMotors", "leftDistance");
+        rightDistance = clampParameterToBounds(rightDistance, 0, 1000, "setMotors", "rightDistance");
+        leftSpeed = clampParameterToBounds(leftSpeed, -100, 100, "setMotors", "leftSpeed");
+        rightSpeed = clampParameterToBounds(rightSpeed, -100, 100, "setMotors", "rightSpeed");
+        httpRequestOut("out/wheels/%s/%s/%s/%s/%s", deviceInstance, leftSpeed, rightSpeed, leftDistance, rightDistance);
     }
 
     /**
@@ -391,12 +553,12 @@ public class Finch extends Robot {
         delay(0.2); // Give the finch a chance to reset before moving on
     }
 
-    private double getSensor(String sensor, boolean isStatic, String direction) {
+    private double getSensor(String sensor, boolean isStatic, String side) {
         String port;
         if (isStatic) {
             port = "static";
         } else {
-            port = formatRightLeft(direction, "get"+sensor);
+            port = formatRightLeft(side, "get"+sensor, "side");
             if (port == null)
                 return -1;
         }
@@ -437,11 +599,11 @@ public class Finch extends Robot {
      *    System.out.println("We moved " + total + " centimeters so far!");
      * </pre>
      *
-     * @param direction  Use "R" or "L" for right or left wheel.
+     * @param side  Use "R" or "L" for right or left wheel.
      * @return  encoder value in rotations
      */
-    public double getEncoder(String direction) {
-        double value = getSensor("Encoder", false, direction);
+    public double getEncoder(String side) {
+        double value = getSensor("Encoder", false, side);
         value = Math.round(value * 100.0)/100.0;
         return value;
     }
@@ -505,11 +667,11 @@ public class Finch extends Robot {
      *   }
      * </pre>
      *
-     * @param direction  Use "R" or "L" to specify right or left side light sensor.
+     * @param side  Use "R" or "L" to specify right or left side light sensor.
      * @return  approximate brightness, as a percentage (range: 0-100).
      */
-    public int getLight(String direction) {
-        return (int) Math.round(getSensor("Light", false, direction));
+    public int getLight(String side) {
+        return (int) Math.round(getSensor("Light", false, side));
     }
 
     /**
@@ -548,11 +710,11 @@ public class Finch extends Robot {
      *   }
      * </pre>
      *
-     * @param direction  Use "R" or "L" to specify right or left side line sensor.
+     * @param side  Use "R" or "L" to specify right or left side line sensor.
      * @return  approximate brightness, as a percentage (range: 0-100).
      */
-    public int getLine(String direction) {
-        return (int) getSensor("Line", false, direction);
+    public int getLine(String side) {
+        return (int) getSensor("Line", false, side);
     }
 
     private boolean getOrientationBoolean(String orientation) {
