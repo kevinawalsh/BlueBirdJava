@@ -331,6 +331,7 @@ public abstract class Robot {
         sendCommand(command);
     }
 
+    // note: ticks must always be positive, or it can be 0 to indicate no limit.
     public void updateMotors(int speedL, int ticksL, int speedR, int ticksR) {
         byte[] left = getMotorArray(speedL, ticksL);
         byte[] right = getMotorArray(speedR, ticksR);
@@ -347,13 +348,17 @@ public abstract class Robot {
         }
     }
     private byte[] getMotorArray(int speed, int ticks){
+        // speed in [-100, +100]
         int absSpeed = Math.abs(speed);
+        // absSpeed in [0, 100]
         int sSpeed = (int) Math.round(absSpeed * FINCH_SPEED_SCALING);
+        // sSpeed in [0, MAX]
         if (sSpeed < 3 && sSpeed != 0) { sSpeed = 3; }
+        // sSpeed in 0 + [3, MAX]
         byte scaledSpeed = (byte) sSpeed;
-        LOG.debug("speed scaling... {} -> {} -> {} -> {}", speed, absSpeed, sSpeed, scaledSpeed);
-        //byte scaledSpeed = (byte) Math.abs(Math.round(speed * FINCH_SPEED_SCALING));
         if (speed > 0) { scaledSpeed += 128;}
+        // scaledSpeed as a sign bit at the top, 1 for forward, 0 for backwards
+        LOG.debug("speed scaling... {} -> {} -> {} -> {}", speed, absSpeed, sSpeed, scaledSpeed);
         byte ticksMSB = (byte) ((ticks & 0xFF0000) >> 16);
         byte ticksSSB = (byte) ((ticks & 0x00FF00) >> 8);
         byte ticksLSB = (byte) (ticks & 0x0000FF);

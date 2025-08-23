@@ -6,10 +6,20 @@ public class RobotManager {
 
     static final Log LOG = Log.getLogger(RobotManager.class);
 
-    static final double FINCH_TICKS_PER_CM = 49.7; //51;
-    static final double FINCH_TICKS_PER_DEGREE = 4.335;
-    static final int FINCH_TICKS_PER_ROTATION = 792;
-    static final double FINCH_SPEED_SCALING = 0.36; //0.45;// 45/100;
+    // Finch encoders emit 792 ticks per revolution. How do we know this?
+    static final int FINCH_TICKS_PER_ROTATION = 792; // 792 ticks per heel revolution
+    // Finch wheel circumfrence is 15.95 cm, measured empirically. This
+    // corresponds to a wheel diameter of 5.077 cm, is close to the 5cm design value.
+    static final double FINCH_ROTATION_CM = 15.95;
+    // Finch wheelbase is is 10.0 cm, measured empirically, and as designed.
+    static final double FINCH_WHEELBASE_CM = 10.0;
+    // FInch encoders emit about 49.7 ticks per cm of driving distance.
+    static final double FINCH_TICKS_PER_CM = FINCH_TICKS_PER_ROTATION / FINCH_ROTATION_CM;
+    // When spinning in place, finch encoders emit about 4.3 ticks per degree of rotation.
+    static final double FINCH_TICKS_PER_DEGREE = FINCH_WHEELBASE_CM * Math.PI / 360 * FINCH_TICKS_PER_CM;
+    // Top speed, when client requests 100% speed, is 36 units (must fit in a 7 bit field)
+    static final double FINCH_SPEED_SCALING = 0.36; //0.45; // 45/100;
+    
     static final int MAX_LED_PRINT_WORD_LEN = 10;
 
     private Robot[] selectedRobots = new Robot[3]; //Limit to 3 connections at a time.

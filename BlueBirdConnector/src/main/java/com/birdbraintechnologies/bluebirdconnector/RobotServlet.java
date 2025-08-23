@@ -14,7 +14,7 @@ import java.math.RoundingMode;
 import java.net.URLDecoder;
 import java.util.Arrays;
 
-import static com.birdbraintechnologies.bluebirdconnector.RobotManager.MAX_LED_PRINT_WORD_LEN;
+import static com.birdbraintechnologies.bluebirdconnector.RobotManager.*;
 
 public class RobotServlet extends HttpServlet {
     static final Log LOG = Log.getLogger(RobotServlet.class);
@@ -54,7 +54,7 @@ public class RobotServlet extends HttpServlet {
         //int http_delay = ScratchME.blueBirdDriver.http_delay;
         int http_delay = 0;
         String uri = httpServletRequest.getRequestURI();
-        LOG.info("Request URI = {}" , uri);
+        LOG.debug("Request URI = {}" , uri);
 
         //byte devId = -1;
         //byte devNum = 0;
@@ -249,7 +249,7 @@ public class RobotServlet extends HttpServlet {
                     int unsigned = (msb << 16) + (ssb << 8) + lsb;
                     int signed = (unsigned << 8) >> 8;
                     LOG.debug("Creating the encoder value from {}, {}, {}; unsigned is {}, signed is {}", msb, ssb, lsb, unsigned, signed);
-                    double rotations = Math.round(((double)signed/RobotManager.FINCH_TICKS_PER_ROTATION)*100.0)/100.0;
+                    double rotations = Math.round(((double)signed/FINCH_TICKS_PER_ROTATION)*100.0)/100.0;
                     out.print(Double.toString(rotations));
                     //out.print(Integer.toString(signed));
                     break;
@@ -897,36 +897,79 @@ public class RobotServlet extends HttpServlet {
                     robotManager.resetEncoders(devLetter);
                     break;
                 case "turn":
-                    devLetter = params[1].charAt(0);
-                    String direction = params[2];
-                    double angle = Double.parseDouble(params[3]);//Integer.parseInt(params[3]);
-                    int speed = (int) Math.round(Double.parseDouble(params[4]));//Integer.parseInt(params[4]);
+                    {
+                        devLetter = params[1].charAt(0);
+                        String direction = params[2];
+                        double angle = Double.parseDouble(params[3]);//Integer.parseInt(params[3]);
+                        int speed = (int) Math.round(Double.parseDouble(params[4]));//Integer.parseInt(params[4]);
 
-                    //int ticks = (int) Math.round(angle * ScratchME.blueBirdDriver.FINCH_CM_PER_DEGREE * ScratchME.blueBirdDriver.FINCH_TICKS_PER_CM);
-                    int ticks = (int) Math.round(angle * RobotManager.FINCH_TICKS_PER_DEGREE);
+                        //int ticks = (int) Math.round(angle * ScratchME.blueBirdDriver.FINCH_CM_PER_DEGREE * ScratchME.blueBirdDriver.FINCH_TICKS_PER_CM);
+                        int ticks = (int) Math.round(angle * FINCH_TICKS_PER_DEGREE);
 
-                    if (ticks != 0) { //ticks=0 is the command for continuous motion
-                        boolean shouldTurnRight = direction.equals("Right");
-                        if (ticks < 0) {
-                            shouldTurnRight = !shouldTurnRight;
-                            ticks = Math.abs(ticks);
-                        }
-                        if (shouldTurnRight) {
-                            //ScratchME.blueBirdDriver.updateMotors(devLetter, speed, ticks, -speed, ticks);
-                            robotManager.updateMotors(devLetter, speed, ticks, -speed, ticks);
-                        } else {
-                            //ScratchME.blueBirdDriver.updateMotors(devLetter, -speed, ticks, speed, ticks);
-                            robotManager.updateMotors(devLetter, -speed, ticks, speed, ticks);
+                        if (ticks != 0) { //ticks=0 is the command for continuous motion
+                            boolean shouldTurnRight = direction.equals("Right");
+                            if (ticks < 0) {
+                                shouldTurnRight = !shouldTurnRight;
+                                ticks = Math.abs(ticks);
+                            }
+                            if (shouldTurnRight) {
+                                //ScratchME.blueBirdDriver.updateMotors(devLetter, speed, ticks, -speed, ticks);
+                                robotManager.updateMotors(devLetter, speed, ticks, -speed, ticks);
+                            } else {
+                                //ScratchME.blueBirdDriver.updateMotors(devLetter, -speed, ticks, speed, ticks);
+                                robotManager.updateMotors(devLetter, -speed, ticks, speed, ticks);
+                            }
                         }
                     }
                     break;
+                 case "curve":
+                    {
+                        devLetter = params[1].charAt(0);
+                        String tDir = params[2];
+                        double aDiam = Double.parseDouble(params[3]); // negative will swap aDir "L" <--> "R"
+                        String aDir = params[4];
+                        double angle = Double.parseDouble(params[5]); // negative will swap tDir "F" <--> "B"
+                        double speed = Double.parseDouble(params[6]); // negative will swap tDir "F" <--> "B"
+
+                        int outerTks = (int)Math.round((Math.abs(aDiam) + FINCH_WHEELBASE_CM) * Math.PI * Math.abs(angle) / 360 * FINCH_TICKS_PER_CM);
+                        int innerTks = (int)Math.round((Math.abs(aDiam) - FINCH_WHEELBASE_CM) * Math.PI * Math.abs(angle) / 360 * FINCH_TICKS_PER_CM);
+                        // wheel with longer travel uses the requested power level
+                        int outerSpd = (int)Math.round(Math.abs(speed));
+                        if (outerTks != 0 && outerSpd != 0) {
+                            // wheel with shorter travel uses a lower absolute power (but it could be zero, or negated),
+                            int innerSpd = (int)Math.round(Math.abs(speed) * innerTks / outerTks);
+                            if (innerSpd == 0)
+                                innerTks = 0;
+
+                            boolean circleOnRight = aDir.equals("Right");
+                            if (aDiam < 0)
+                                circleOnRight = !circleOnRight;
+
+                            boolean movingForward = !tDir.equals("Backward");
+                            if (angle < 0)
+                                movingForward = !movingForward;
+                            if (speed < 0)
+                                movingForward = !movingForward;
+
+                            LOG.debug("curve {} {} {} {} {} {}", outerTks, outerSpd, innerTks, innerSpd, circleOnRight, movingForward);
+                            if (movingForward && circleOnRight) // forward, right-is-inside
+                                robotManager.updateMotors(devLetter, outerSpd, outerTks, innerSpd, innerTks);
+                            else if (movingForward) // forward, left-is-inside
+                                robotManager.updateMotors(devLetter, innerSpd, innerTks, outerSpd, outerTks);
+                            else if (circleOnRight) // backward, right-is-inside
+                                robotManager.updateMotors(devLetter, -outerSpd, outerTks, -innerSpd, innerTks);
+                            else // backward, left-is-inside
+                                robotManager.updateMotors(devLetter, -innerSpd, innerTks, -outerSpd, outerTks);
+                        }
+                    }
+                     break;
                 case "move":
                     devLetter = params[1].charAt(0);
                     String dir = params[2];
                     double dist = Double.parseDouble(params[3]);//Integer.parseInt(params[3]);
                     int spd = (int) Math.round(Double.parseDouble(params[4]));//Integer.parseInt(params[4]);
 
-                    int tks = (int) Math.round(dist * RobotManager.FINCH_TICKS_PER_CM);
+                    int tks = (int) Math.round(dist * FINCH_TICKS_PER_CM);
 
                     if (dir.equals("Backward")) { spd = -spd; }
                     if (tks < 0) {
@@ -943,9 +986,32 @@ public class RobotServlet extends HttpServlet {
                     devLetter = params[1].charAt(0);
                     int left = (int) Math.round(Double.parseDouble(params[2]));//Integer.parseInt(params[2]);
                     int right = (int) Math.round(Double.parseDouble(params[3]));//Integer.parseInt(params[3]);
-
-                    //ScratchME.blueBirdDriver.updateMotors(devLetter, left, 0, right, 0);
-                    robotManager.updateMotors(devLetter, left, 0, right, 0);
+                    int ticksL = 0;
+                    int ticksR = 0;
+                    if (params.length >= 6) {
+                        double cmL = Double.parseDouble(params[4]);
+                        double cmR = Double.parseDouble(params[5]);
+                        ticksL = (int) Math.round(FINCH_TICKS_PER_CM * cmL);
+                        ticksR = (int) Math.round(FINCH_TICKS_PER_CM * cmR);
+                        if (ticksL == 0 && cmL > 0.0)
+                            ticksL = 1;
+                        else if (ticksL == 0 && cmL < 0.0)
+                            ticksL = -1;
+                        if (ticksL < 0) {
+                            left = -left;
+                            ticksL = -ticksL;
+                        }
+                        if (ticksR == 0 && cmR > 0.0)
+                            ticksR = 1;
+                        else if (ticksR == 0 && cmR < 0.0)
+                            ticksR = -1;
+                        if (ticksR < 0) {
+                            right = -right;
+                            ticksR = -ticksR;
+                        }
+                    }
+                    //ScratchME.blueBirdDriver.updateMotors(devLetter, left, ticksL, right, ticksR);
+                    robotManager.updateMotors(devLetter, left, ticksL, right, ticksR);
                     break;
                 case "stopFinch":
                     devLetter = params[1].charAt(0);
