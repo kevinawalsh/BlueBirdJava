@@ -3,7 +3,7 @@ package birdbrain;
 /**
  * This class provides mothods to control and query a Finch robot. It includes
  * methods to set the values of motors and LEDs, print strings to the 25-LED
- * panel, as to read the values of all sensors.
+ * panel, and to read the values of all sensors.
  *
  * @author Krissie Lauwers, BirdBrain Technologies LLC, October 2019
  * @author Kevin Walsh, kwalsh@holycross.edu, August 2025
@@ -20,12 +20,14 @@ public class Finch extends Robot {
     
     /**
      * Constructor to initialize a Finch object, without specifying any name.
-     * This will try to connect to robot "A", "B", or "C" in turn, until one of
+     * This will try to control robot "A", "B", or "C" in turn, until one of
      * them succeeds. Use this if you only have one robot connected, or you
      * don't care which one you control.
      * <b>NOTE:</b> You must first run the <b>BlueBird Connector</b> program,
-     * and use that program to scan for bluetooth devices. You can then connect
-     * up to three robots, which will be labeled "A, "B", and "C".
+     * and use that program to scan for bluetooth devices. That program can
+     * connect to up to three robots simultaneously, which will be labeled "A,
+     * "B", and "C". Normally you'll just connect to one robot, and it will be
+     * "A".
      *
      * <p><b>Example:</b>
      * <pre>
@@ -41,8 +43,11 @@ public class Finch extends Robot {
     /**
      * Constructor to initialize a Finch, by name.
      * <b>NOTE:</b> You must first run the <b>BlueBird Connector</b> program,
-     * and use that program to scan for bluetooth devices. You can then connect
-     * up to three robots, which will be labeled "A, "B", and "C".
+     * and use that program to scan for bluetooth devices. That program can
+     * connect to up to three robots simultaneously, which will be labeled "A,
+     * "B", and "C". Normally you'll just connect to one robot, and it will be
+     * "A". But if you want to control multiple robots, this constructor will
+     * let you specify which one each Finch object controls.
      *
      * @param device  A device letter ("A", "B", or "C") to indicate which robot
      * to control. The available device letters can be seen within the
@@ -51,9 +56,10 @@ public class Finch extends Robot {
      * 
      * <p><b>Example:</b>
      * <pre>
-     *    Finch bot = new Finch("A");  // Connect to robot "A".
-     *    bot.straight("F", 10, 50.0); // Move it forward 10 cm distance at 50% speed.
-     *    bot.setBeak(0, 75, 50);      // Set its beak to 0% red, 75% green, 50% blue.
+     *    Finch bot1 = new Finch("A");  // Connect to robot "A".
+     *    Finch bot2 = new Finch("C");  // Connect to robot "C".
+     *    bot1.straight("F", 10, 50.0); // Move A forward 10 cm distance at 50% speed.
+     *    bot2.setBeak(0, 75, 50);      // Set B's beak to 0% red, 75% green, 50% blue.
      * </pre>
      */
     public Finch(String device) {
@@ -129,7 +135,7 @@ public class Finch extends Robot {
      * desired distance. <b>Note:</b> The finch can't always measure distances
      * perfectly, it can be affected if the floor is slippery, or bumpy, etc.
      * 
-     * <p><b>Examples:</b>
+     * <p><b>Example:</b>
      * <pre>
      *    Finch bot = new Finch("A");
      *    bot.straight("F", 10, 50.0);  // First, move forward 10 cm distance at 50% speed.
@@ -158,17 +164,20 @@ public class Finch extends Robot {
      * and speed. This <b>pauses your program</b> until the finch has finished
      * turning the desired angle. <b>Note:</b> The finch can't always measure
      * angles perfectly, it can be affected if the floor is slippery, or bumpy,
-     * etc.
+     * etc. Uusually you should use positive numbers for the angle. Using a
+     * negative number causes finch to spin in the opposite direction you
+     * specified.
      *
-     * <p><b>Examples:</b>
+     * <p><b>Example:</b>
      * <pre>
      *    Finch bot = new Finch("A");
-     *    bot.spin("R", 90, 100);  // First, turn right 90 degrees, at 100% speed.
-     *    bot.spin("L", 45, 25.0); // Then, turn left backwards 5.5 cm distance at 33.3% speed.
+     *    bot.spin("R", 90, 100);  // First, spin right (clockwise) 90 degrees, at 100% speed.
+     *    bot.spin("L", 45, 25.0); // Then, spin left (counter-clockwise) 45 degrees, at 25% speed.
+     *    bot.spin("L", -45, 25.0); // Then, surprise! It spins right, becuse negative angle means opposite direction.
      * </pre>
      *
      * @param direction  Use "R" or "L" for right (clockwise) or left (counter-clockwise).
-     * @param angle  Angle to turn, in degrees (range: 0 to 360).
+     * @param angle  Angle to turn, in degrees, where negatives go in the reverse direction (range: -360000 to 360000 ... up to ten full rotations, though Finch might get a bit dizzy).
      * @param speed  Speed, as a percentage (range: 0 to 100).
      */
     public void spin(String direction, double angle, double speed) {
@@ -183,28 +192,32 @@ public class Finch extends Robot {
     }
 
     /**
-     * Move the finch by specifying wheel speeds directly. Using different
+     * Drive the finch by specifying wheel speeds directly. Using different
      * combinations of positive, negative, or zero values, you can make the
-     * finch move straight or curving in an arc, move forward or backwards, or
-     * turn in place. This does <b>not</b> pause your program -- instead, your
-     * program will continue executing, allowing you to command the finch to do
-     * other things while it moves. 
+     * finch move straight, forwards or backwards, or turn in place. You can
+     * even make it curve in an arc or circle, by having the wheels go at
+     * different speeds.
+     * Unlike {@link birdbrain.Finch#straight(String direction, double distance, double speed) straight(...)},
+     * and {@link birdbrain.Finch#spin(String direction, double angle, double speed) spin(...)},
+     * this function does <b>not</b> pause your program. Instead, your program
+     * will continue executing, allowing you to command the finch to do other
+     * things while it moves. 
      *
      * <p><b>Note:</b> The robot will continue moving indefinitely. Your code
      * must call {@link birdbrain.Finch#stop() stop()},
      * {@link birdbrain.Finch#stopAll() stopAll()}, or some other motion
-     * command, at some later point, otherwise the robot will keep driving
-     * forever.
+     * command, at some later point in the program. Otherwise the robot will
+     * keep driving forever, even after your program exits.
      *
-     * <p><b>Examples:</b>
+     * <p><b>Example:</b>
      * <pre>
      *    Finch bot = new Finch("A");
      *    bot.setMotors(25, 25);    // Straight forward, both wheels at 25% speed.
-     *    bot.delay(1.5);           // Delay for 1.5 seconds... the robot keeps driving forward.
+     *    bot.allowTime(1.5);       // Delay for 1.5 seconds... the robot keeps driving forward.
      *    bot.setBeak(100, 0, 0);   // Change the beak lights... the robot is still driving forward.
-     *    bot.delay(1.5);           // Delay for 1.5 seconds... the robot keeps driving forward.
+     *    bot.allowTime(1.5);       // Delay for 1.5 seconds... the robot keeps driving forward.
      *    bot.setMotors(-100, 10);  // Move in a backwards curve, left wheel full reverse, right wheel 10% forward.
-     *    bot.delay(1.5);           // Delay for 1.5 seconds... the robot keeps curving back.
+     *    bot.allowTime(1.5);       // Delay for 1.5 seconds... the robot keeps curving back.
      *    bot.stop();               // Stop moving.
      * </pre>
      *
@@ -220,8 +233,8 @@ public class Finch extends Robot {
     /**
      * Stop the finch wheel motors. This can be useful to stop the robot after
      * calling {@link birdbrain.Finch#setMotors(double leftSpeed, double rightSpeed) setMotors(...)} at some earlier
-     * time.
-     * <p><b>Examples:</b>
+     * point in your program.
+     * <p><b>Example:</b>
      * <pre>
      *    Finch bot = new Finch("A");
      *    bot.setMotors(25, 25);    // Starts moving.
@@ -252,15 +265,15 @@ public class Finch extends Robot {
      * Use all zeros to turn the beak light off, or all 100's to make the beak
      * light bright white.
      *
-     * <p><b>Examples:</b>
+     * <p><b>Example:</b>
      * <pre>
      *    Finch bot = new Finch("A");
      *    bot.setBeak(100, 100, 100);  // Bright white.
-     *    bot.delay(1.0);              // Delay 1 second.
+     *    bot.allowTime(1.0);          // Delay 1 second.
      *    bot.setBeak(0, 100, 0);      // Then bright green.
-     *    bot.delay(1.0);              // Delay 1 second.
+     *    bot.allowTime(1.0);          // Delay 1 second.
      *    bot.setBeak(75, 0, 75);      // Then medium violet (75% red, 0% green, 75% blue).
-     *    bot.delay(1.0);              // Delay 1 second.
+     *    bot.allowTime(1.0);          // Delay 1 second.
      *    bot.setBeak(0, 0, 0);        // Then turn the beak light off.
      * </pre>
      *
@@ -274,14 +287,14 @@ public class Finch extends Robot {
 
     /**
      * Change one of the finch's tail light colors. There are four lights on the
-     * tail, numbered 1 to 4, and you can achieve most any color for each one
-     * using combinations of red, green, and blue.
-     * Use all zeros to a light off, or all 100's to make the light bright
+     * tail, numbered 1 to 4 from left to right, and you can achieve most any
+     * color for each one using combinations of red, green, and blue. Use all
+     * zeros to a light off, or all 100's to make the light bright
      * white.
      * See also {@link birdbrain.Finch#setTail(String ledChoice, int red, int green, int blue) setTail(String, ...)}
      * which lets you change all four lights with one line of code.
      *
-     * <p><b>Examples:</b>
+     * <p><b>Example:</b>
      * <pre>
      *    Finch bot = new Finch("A");
      *    bot.setTail(1, 100, 100, 100);  // Make tail light #1 full bright white.
@@ -308,7 +321,7 @@ public class Finch extends Robot {
      * which lets you change the four tail lights individually, using different
      * colors for each.
      *
-     * <p><b>Examples:</b>
+     * <p><b>Example:</b>
      * <pre>
      *    Finch bot = new Finch("A");
      *    bot.setTail("all", 100, 100, 100);  // Make all tail lights full bright white.
@@ -324,11 +337,24 @@ public class Finch extends Robot {
      * @param blue  blue intensity, as a percentage (range: 0 to 100).
      */
     public void setTail(String ledChoice, int red, int green, int blue) {
-        if (!ledChoice.equals("all") && !ledChoice.equals("All") && !ledChoice.equals("ALL")) {
-            warn("When calling `setTail(...)` with a string as the first argument, the string must be \"all\". No other values are permitted.");
+        if (ledChoice == null) {
+            warn("When calling `setTail(...)` the first parameter can't be null");
             return;
         }
-        setTriLED("all", red, green, blue, "setTail");
+        // undocumented feature: allow "1", "2", "3", and "4"
+        if (ledChoice.equals("1")) {
+            setTriLED("2", red, green, blue, "setTail");
+        } else if (ledChoice.equals("2")) {
+            setTriLED("3", red, green, blue, "setTail");
+        } else if (ledChoice.equals("3")) {
+            setTriLED("4", red, green, blue, "setTail");
+        } else if (ledChoice.equals("4")) {
+            setTriLED("5", red, green, blue, "setTail");
+        } else if (!ledChoice.equals("all") && !ledChoice.equals("All") && !ledChoice.equals("ALL")) {
+            warn("When calling `setTail(...)` with a string as the first argument, the string must be \"all\". No other values are permitted.");
+        } else {
+            setTriLED("all", red, green, blue, "setTail");
+        }
     }
 
     /**
@@ -579,20 +605,31 @@ public class Finch extends Robot {
     }
   
     /**
-     * Print a short text message on the finch's 5x5 LED panel (the letters scroll,
-     * flashing across the tiny screen). Only the characters a–z, A–Z, 0–9, and
-     * space are supported; other characters are replaced with a blank. This
-     * does <b>not</b> pause your program -- instead, your program will continue
-     * executing, allowing you to command the finch to do other things while the
-     * text is printing.
+     * Print a short text message on the finch's 5x5 LED panel (the letters
+     * scroll, flashing across the tiny screen). Any plain ASCII characters work
+     * fine. You can't use emoji or other special characters like em-dashes or
+     * smart-quotes. This does <b>not</b> pause your program -- instead, your
+     * program will continue executing, allowing you to command the finch to do
+     * other things while the text is printing. If you call print again, before
+     * the first printing is done, it will cancel the previous message and
+     * immediately start printing the new message. So between print calls, you
+     * might want to do other actions, or maybe call
+     * {@link birdbrain.Finch#delay(double numSeconds) delay(...)} (or
+     * {@link birdbrain.Finch#carryOn(double numSeconds) carryOn(...)} or
+     * {@link birdbrain.Finch#allowTime(double numSeconds) allowTime(...)}, all
+     * of which do the same thing).
+     *
      *
      * <p><b>Example:</b>
      * <pre>
      *   Finch bot = new Finch("A");
      *   bot.print("Hello 123");   // Scrolls “Hello 123” on the panel.
+     *   bot.spin("L", 45, 30);    // Slow left spin, plenty of time to show the message.
+     *   bot.print("Bye!");        // Next, scrolls “Bye!" on the panel.
+     *   bot.delay(3.0);           // Delay 3 seconds, should be enough for "Bye!" to finish.
      * </pre>
      *
-     * @param message  text to show on the LED panel
+     * @param message  text to immediately begin scrolling along the LED panel
      */
     @Override
     public void print(String message) { super.print(message); }
@@ -601,6 +638,8 @@ public class Finch extends Robot {
      * Set the entire 5x5 LED panel at once using a 25-element array of 0/1 values
      * (where 1 means on, 0 means off). The array is in row-major order (first
      * five values are the top row, next five values are the second row, etc.).
+     * Anything previuosly put on the screen, including any previous print
+     * messages, is cancelled.
      *
      * <p><b>Example:</b>
      * <pre>
@@ -608,17 +647,41 @@ public class Finch extends Robot {
      *   int[] smile = {
      *     0,0,0,0,0,           // top row: all off
      *     0,1,0,1,0,           // 2nd row: two eyes
-     *     0,0,0,0,0,           // 3rd row: nothing, no nose
+     *     0,0,0,0,0,           // 3rd row: nothing here, we have no "nose"
      *     1,0,0,0,1,           // 4th row: top of smile
      *     0,1,1,1,0            // 4th row: bottom of smile
      *   };
      *   bot.setDisplay(smile);
      * </pre>
      *
-     * @param ledValues  25 integers (each 0 or 1)
+     * @param ledValues  an array of 25 integers (each 0 or 1)
      */
     @Override
     public void setDisplay(int[] ledValues) { super.setDisplay(ledValues); }
+
+    /**
+     * Clear the 5x5 LED panel immediately, turning off all 25 lights. If any
+     * message was printing, it is cancelled.
+     *
+     * <p><b>Example:</b>
+     * <pre>
+     *   Finch bot = new Finch("A");
+     *   int[] smile = {
+     *     0,0,0,0,0,           // top row: all off
+     *     0,1,0,1,0,           // 2nd row: two eyes
+     *     0,0,0,0,0,           // 3rd row: nothing here, we have no "nose"
+     *     1,0,0,0,1,           // 4th row: top of smile
+     *     0,1,1,1,0            // 4th row: bottom of smile
+     *   };
+     *   while (true) {           // This loop repeatedly
+     *     bot.setDisplay(smile); // displays a smile
+     *     bot.allowTime(1.0);    // for one second
+     *     bot.clearDisplay();    // then blanks the screen
+     *     bot.allowTime(0.5);    // for half a second.
+     *   }
+     * </pre>
+     */
+    public void clearDisplay() { super.setDisplay(new int[25]); }
 
     /**
      * Turn a single dot (or "pixel") of the 5x5 LED panel on or off.
@@ -626,9 +689,9 @@ public class Finch extends Robot {
      * <p><b>Example:</b>
      * <pre>
      *   Finch bot = new Finch("A");
-     *   bot.setPoint(3, 3, 1);   // Turn on the middle pixel (row 3, col 3).
+     *   bot.setPixel(3, 3, 1);   // Turn on the middle pixel (row 3, col 3).
      *   bot.delay(1.0);          // Delay for 1 second.
-     *   bot.setPoint(3, 3, 0);   // Turn that dot back off.
+     *   bot.setPixel(3, 3, 0);   // Turn that dot back off.
      * </pre>
      *
      * @param row     row number (1–5)
@@ -636,19 +699,19 @@ public class Finch extends Robot {
      * @param value   Use 1 for on, 0 for off.
      */
     @Override
-    public void setPoint(int row, int column, int value) { super.setPoint(row, column, value); }
+    public void setPixel(int row, int column, int value) { super.setPixel(row, column, value); }
 
     /**
      * Play a musical note on the finch's buzzer for a certain duration (in
-     * beats), and wait for the note to finish. One beat equals one second. The
-     * notes are defined by MIDI note numbers, on a scale from 32 to 135,
-     * corresponding to the keys on a piano. Note 60 is "middle C",
+     * beats), and wait for the note to finish playing. One beat equals one
+     * second. The notes are defined by MIDI note numbers, on a scale from 32 to
+     * 135, corresponding to the keys on a piano. Note 60 is "middle C",
      * approximately the middle key on a piano keyboard. Lower numbers are lower
      * notes. This also pauses your program for the given amount of time, so you
-     * can play a song by calling this function several times in a row.
-     * If instead you want your program
-     * to continue executing, so the finch can do other
-     * things while the note is playing, see {@link birdbrain.Finch#playNoteInBackground(int note, double beats) playNoteInBackground(...)}.
+     * can play a song by calling this function several times in a row. If
+     * instead you want your program to continue executing, so the finch can do
+     * other things while the note is playing, see
+     * {@link birdbrain.Finch#playNoteInBackground(int note, double beats) playNoteInBackground(...)}.
      *
      * <p><b>Example:</b>
      * <pre>
@@ -806,33 +869,47 @@ public class Finch extends Robot {
      *   }
      * </pre>
      *
+     * If you want to <b>wait for a button</b> to be pressed, use a loop. It's good practice to give
+     * the robot time to think within the loop, so it doesn't get tired. For
+     * example:
+     *
+     * <pre>
+     *   Finch bot = new Finch("A");
+     *   bot.print("Press button A please");
+     *   while (!bot.getButton("A")) {  // Check the button in a loop,
+     *     bot.allowTime(0.1);          // about ten times a second.
+     *   }
+     *   bot.print("Thanks!");
+     * </pre>
+     *
+     *
      * @param button  "A", "B", or "Logo"
      * @return true if pressed; false otherwise
      */
     @Override
     public boolean getButton(String button) { return super.getButton(button); }
 
-    /**
-     * Wait for one of the buttons to be pressed, and return a string indicating
-     * which one was. This will wait indefinitely for the user to press one of
-     * the three buttons: "A", "B" or the touch-sensitive "Logo" button.
-     *
-     * <p><b>Example:</b>
-     * <pre>
-     *   Finch bot = new Finch("A");
-     *   String s = bot.waitForButton();
-     *   if (s.equals("A"))
-     *     bot.playNote(60, 0.5);
-     *   else if (s.equals("B")
-     *     bot.playNote(48, 0.5);
-     *   else // must be "Logo"
-     *     bot.payNote(72, 0.5);
-     * </pre>
-     *
-     * @return Either "A", "B", or "Logo", indicating which button was pressed.
-     */
-    @Override
-    public String waitForButton() { return super.waitForButton(); }
+    // /**
+    //  * Wait for one of the buttons to be pressed, and return a string indicating
+    //  * which one was. This will wait indefinitely for the user to press one of
+    //  * the three buttons: "A", "B" or the touch-sensitive "Logo" button.
+    //  *
+    //  * <p><b>Example:</b>
+    //  * <pre>
+    //  *   Finch bot = new Finch("A");
+    //  *   String s = bot.waitForButton();
+    //  *   if (s.equals("A"))
+    //  *     bot.playNote(60, 0.5);
+    //  *   else if (s.equals("B")
+    //  *     bot.playNote(48, 0.5);
+    //  *   else // must be "Logo"
+    //  *     bot.payNote(72, 0.5);
+    //  * </pre>
+    //  *
+    //  * @return Either "A", "B", or "Logo", indicating which button was pressed.
+    //  */
+    // @Override
+    // public String waitForButton() { return super.waitForButton(); }
 
     /**
      * Get the builtin microphone sound level, as a rough percentage.
@@ -891,9 +968,55 @@ public class Finch extends Robot {
     public boolean isShaking() { return super.isShaking(); }
 
     /**
-     * Pause (delay) the program for the given number of seconds. This causes
-     * the program to simply wait, and the robot keeps doing whatever it was
-     * doing. Useful if you want to just have the program delay for a moment.
+     * Allow the robot to carry on whatever it is doing, delaying the execution
+     * of the program for the given number of seconds. This causes the program
+     * to simply wait, and the robot keeps doing whatever it was doing. Useful
+     * if the robot needs some time to complete an action and you want to just
+     * have the program delay for a moment. This is the exact same as
+     * {@link birdbrain.Finch#delay(double numSeconds) delay(...)} and
+     * {@link birdbrain.Finch#carryOn(double numSeconds) carryOn(...)}.
+     *
+     * <p><b>Example:</b>
+     * <pre>
+     *   Finch bot = new Finch("A");
+     *   bot.setMotors(30, 30);       // Start the wheels turning
+     *   bot.allowTime(1.5);          // delay for 1.5 seconds (and the wheels are still turning)
+     *   bot.stop();                  // then stop the wheels
+     * </pre>
+     *
+     * @param numSeconds  time to wait, in seconds
+     */
+    public static void allowTime(double numSeconds) { Robot.allowTime(numSeconds); }
+
+    /**
+     * Allow the robot to carry on whatever it is doing, delaying the execution
+     * of the program for the given number of seconds. This causes the program
+     * to simply wait, and the robot keeps doing whatever it was doing. Useful
+     * if the robot needs some time to complete an action and you want to just
+     * have the program delay for a moment. This is the exact same as
+     * {@link birdbrain.Finch#allowTime(double numSeconds) allowTime(...)} and
+     * {@link birdbrain.Finch#delay(double numSeconds) delay(...)}.
+     *
+     * <p><b>Example:</b>
+     * <pre>
+     *   Finch bot = new Finch("A");
+     *   bot.setMotors(30, 30);       // Start the wheels turning
+     *   bot.carryOn(1.5);            // delay for 1.5 seconds (and the wheels are still turning)
+     *   bot.stop();                  // then stop the wheels
+     * </pre>
+     *
+     * @param numSeconds  time to wait, in seconds
+     */
+    public static void carryOn(double numSeconds) { Robot.delay(numSeconds); }
+
+    /**
+     * Allow the robot to carry on whatever it is doing, delaying the execution
+     * of the program for the given number of seconds. This causes the program
+     * to simply wait, and the robot keeps doing whatever it was doing. Useful
+     * if the robot needs some time to complete an action and you want to just
+     * have the program delay for a moment. This is the exact same as
+     * {@link birdbrain.Finch#allowTime(double numSeconds) delay(...)} and
+     * {@link birdbrain.Finch#carryOn(double numSeconds) carryOn(...)}.
      *
      * <p><b>Example:</b>
      * <pre>

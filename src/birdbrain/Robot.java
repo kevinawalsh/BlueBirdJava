@@ -59,7 +59,7 @@ public class Robot {
         if (device != null && !device.equals("A") && !device.equals("B") && !device.equals("C")) {
             System.out.printf("Error: Could not connect to %s \"%s\", that name is not legal.\n", model, device);
             System.out.printf("When calling `new %s(...)`, instead use \"A\", \"B\", or \"C\" as the parameter to\n", model);
-            System.out.printf("specify which robot device to connect to. Make sure you are running the BlueBird Connector\n");
+            System.out.printf("specify which robot device to connect to. Also make sure you are running the BlueBird Connector\n");
             System.out.printf("app and have connected via bluetooth to a %s device. Within that app you can\n", model);
             System.out.printf("connect up to three devices, which will be listed as device \"A\", \"B\", and \"C\".\n");
             throw new IllegalArgumentException(String.format("When calling `new %s(\"%s\")`, the argument \"%s\" is invalid. "
@@ -86,12 +86,17 @@ public class Robot {
         if (msg == null && connectionStatus == BLUEBIRD_CONNECTOR_UNREACHABLE) {
             if (BlueBirdLauncher.isAvailable()) {
                 System.out.println("IMPORTANT: The BlueBird Connector program must be running");
-                System.out.println("  to enable communication with robots.");
+                System.out.println("to enable communication with robots.");
+                System.out.println("");
                 System.out.println("Attempting to launch it for you... (press control-C to cancel)...");
                 if (!BlueBirdLauncher.launch()) {
                     System.out.println("... Oops. Failed to launch the BlueBird Connector program.");
+                    System.out.println("");
                     System.out.println("Please run it yourself, then use it to connect to a robot,");
                     System.out.println("before trying again.");
+                    System.out.println("");
+                    System.out.println("For example, in a separate terminal, try typing:");
+                    System.out.println("    bluebirdconnector");
                     System.exit(1);
                 } else {
                     msg = fetch("in/orientation/Shake/Z");
@@ -103,24 +108,33 @@ public class Robot {
                     }
                     if (msg == null && connectionStatus == BLUEBIRD_CONNECTOR_UNREACHABLE) {
                         System.out.println("... Something is wrong (Failed to detect the BlueBird");
+                        System.out.println("");
                         System.out.println("Connector program). Please run the BlueBird Connector");
                         System.out.println("yourself, then use it to connect to a robot, before trying");
                         System.out.println("again.");
+                        System.out.println("");
+                        System.out.println("For example, in a separate terminal, try typing:");
+                        System.out.println("    bluebirdconnector");
                         System.exit(1);
                     }
                     System.out.println("... Successfully launched BlueBird Connector.");
                 }
             } else {
                 System.out.println("IMPORTANT: The BlueBird Connector program must be running");
-                System.out.println("  to enable communication with robots. Please run the");
-                System.out.println("  BlueBird Connector program, then use it to connect to a");
-                System.out.println("  robot, before trying again.");
+                System.out.println("to enable communication with robots.");
+                System.out.println("");
+                System.out.println("Please run the BlueBird Connector program, then use it to");
+                System.out.println("connect to a robot, before trying again.");
+                System.out.println("");
+                System.out.println("For example, in a separate terminal, try typing:");
+                System.out.println("    bluebirdconnector");
                 System.exit(1);
             }
         }
         if (msg == null || !msg.equals(desiredResponse)) {
             System.out.println("Something is wrong with BlueBird Connector...");
             System.out.println("   ("+connectionStatus+", response="+msg+").");
+            System.out.println("");
             System.out.println("Please quit and re-start BlueBird Connector, then use it to");
             System.out.println("connect to a robot, before trying again.");
             System.exit(1);
@@ -140,6 +154,7 @@ public class Robot {
                 if (msg == null || !msg.equals("Not Connected")) {
                     System.out.println("Something is wrong with BlueBird Connector...");
                     System.out.println("   ("+connectionStatus+", response="+msg+").");
+                    System.out.println("");
                     System.out.println("Please quit and re-start BlueBird Connector, then use it to");
                     System.out.println("connect to a robot, before trying again.");
                     System.exit(1);
@@ -155,6 +170,7 @@ public class Robot {
             if (msg == null || !msg.equals("Not Connected")) {
                 System.out.println("Something is wrong with BlueBird Connector...");
                 System.out.println("   ("+connectionStatus+", response="+msg+").");
+                System.out.println("");
                 System.out.println("Please quit and re-start BlueBird Connector, then use it to connect to a");
                 System.out.println("robot, before trying again.");
                 System.exit(1);
@@ -172,6 +188,7 @@ public class Robot {
             System.out.println("  Within BlueBird Connector, scan for robots and select one as " + device + ".");
             choice = device;
         }
+        System.out.println("");
         System.out.println("Waiting up to 30 seconds... (press control-C to cancel)...");
         for (int i = 0; i < 30; i++) {
             delay(1.0);
@@ -187,6 +204,7 @@ public class Robot {
                 System.out.println(" error.");
                 System.out.println("Something is wrong with BlueBird Connector...");
                 System.out.println("   ("+connectionStatus+", response="+msg+").");
+                System.out.println("");
                 System.out.println("Please quit and re-start BlueBird Connector, then use it to");
                 System.out.println("connect to a robot, before trying again.");
                 System.exit(1);
@@ -194,9 +212,11 @@ public class Robot {
         }
         System.out.println(" timeout.");
         if (device == null) {
+            System.out.println("");
             System.out.println("Connect to a robot within BlueBird Connector, then try");
             System.out.println("running this program again.");
         } else {
+            System.out.println("");
             System.out.println("Connect to a robot (as robot " + device + ") within BlueBird");
             System.out.println("COnnector, then try running this program again.");
         }
@@ -391,11 +411,11 @@ public class Robot {
      * @param column The column of the LED (1-5)
      * @param value The value of the LED (0 for off, 1 for on)
      * */
-    public void setPoint(int row, int column, int value) {
+    public void setPixel(int row, int column, int value) {
     	
-    	row = clampParameterToBounds(row, 1, 5, "setPoint", "row number");
-    	column = clampParameterToBounds(column, 1, 5, "setPoint", "column number");
-    	value = clampParameterToBounds(value, 0, 1, "setPoint", "pixel value");
+    	row = clampParameterToBounds(row, 1, 5, "setPixel", "row number");
+    	column = clampParameterToBounds(column, 1, 5, "setPixel", "column number");
+    	value = clampParameterToBounds(value, 0, 1, "setPixel", "pixel value");
     		
 		int position = (row - 1)*5 + (column - 1);
 
@@ -415,6 +435,10 @@ public class Robot {
         httpRequestOut("out/playnote/%d/%d/%s", note, (int)(beats*1000), deviceInstance);
     }
 
+    /** alternative to playNoteInBackground()
+     * @param note - midi note number to play (Range: 32 to 135)
+     * @param beats - duration in beats (Range: 0 to 16); each beat is one second
+     */
     public void playNote(int note, double beats) {
         note = clampParameterToBounds(note, 32, 135, "playNote", "note value");
         beats = clampParameterToBounds(beats, 0, 16, "playNote", "number of beats");
@@ -422,6 +446,9 @@ public class Robot {
         delay(beats);
     }
 
+    /** alternative to playNote()
+     * @param notes_and_beats the parameter
+     */
     public void playSong(Object... notes_and_beats) {
         int len = notes_and_beats.length;
         if (len % 2 != 0) {
@@ -527,24 +554,24 @@ public class Robot {
         return httpRequestInBoolean("in/button/%s/%s", button, deviceInstance);
     }
 
-    /**
-     * getButton() waits for one of the three buttons to be pressed, and returns
-     * a string indicating which one was pressed.
-     *playNote
-     * @return Either "A", "B", or "Logo".
-     */
-    public String waitForButton() {
-        while (true) {
-            if (getButton("A"))
-                return "A";
-            else if (getButton("B"))
-                return "B";
-            else if (getButton("Logo"))
-                return "Logo";
-            else
-                delay(0.1);
-        }
-    }
+    // /**
+    //  * getButton() waits for one of the three buttons to be pressed, and returns
+    //  * a string indicating which one was pressed.
+    //  *playNote
+    //  * @return Either "A", "B", or "Logo".
+    //  */
+    // public String waitForButton() {
+    //     while (true) {
+    //         if (getButton("A"))
+    //             return "A";
+    //         else if (getButton("B"))
+    //             return "B";
+    //         else if (getButton("Logo"))
+    //             return "Logo";
+    //         else
+    //             delay(0.1);
+    //     }
+    // }
 
     /**
      * getSound() returns the current sound level from the micro:bit sound sensor
@@ -610,6 +637,11 @@ public class Robot {
             Thread.currentThread().interrupt();
         }
     }
+    /** Pauses the program for a time in seconds. */
+    public static void carryOn(double numSeconds) { delay(numSeconds); }
+
+    /** Pauses the program for a time in seconds. */
+    public static void allowTime(double numSeconds) { delay(numSeconds); }
     
     /** stopAll() turns off all the outputs. */
     public void stopAll() {
