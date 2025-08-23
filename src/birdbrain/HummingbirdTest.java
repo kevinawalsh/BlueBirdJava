@@ -6,9 +6,9 @@ public class HummingbirdTest {
         
         for (int i = 0; i < 10; i++) {
         	myBit.setLED(1, 100);
-        	myBit.pause(1);
+        	myBit.delay(1);
         	myBit.setLED(1, 0);
-        	myBit.pause(1);
+        	myBit.delay(1);
         }
         
         myBit.stopAll();

@@ -29,9 +29,9 @@ public class Finch extends Robot {
      *
      * <p><b>Example:</b>
      * <pre>
-     *    Finch bot = new Finch();    // Connect to some robot.
-     *    bot.setMove("F", 10, 50.0); // Move it forward 10 cm distance at 50% speed.
-     *    bot.setBeak(0, 75, 50);     // Set its beak to 0% red, 75% green, 50% blue.
+     *    Finch bot = new Finch();     // Connect to some robot.
+     *    bot.straight("F", 10, 50.0); // Move it forward 10 cm distance at 50% speed.
+     *    bot.setBeak(0, 75, 50);      // Set its beak to 0% red, 75% green, 50% blue.
      * </pre>
      */
     public Finch() {
@@ -51,9 +51,9 @@ public class Finch extends Robot {
      * 
      * <p><b>Example:</b>
      * <pre>
-     *    Finch bot = new Finch("A"); // Connect to robot "A".
-     *    bot.setMove("F", 10, 50.0); // Move it forward 10 cm distance at 50% speed.
-     *    bot.setBeak(0, 75, 50);     // Set its beak to 0% red, 75% green, 50% blue.
+     *    Finch bot = new Finch("A");  // Connect to robot "A".
+     *    bot.straight("F", 10, 50.0); // Move it forward 10 cm distance at 50% speed.
+     *    bot.setBeak(0, 75, 50);      // Set its beak to 0% red, 75% green, 50% blue.
      * </pre>
      */
     public Finch(String device) {
@@ -103,7 +103,7 @@ public class Finch extends Robot {
 
     /**
      * Send a command to move the finch and wait until the finch has finished
-     * its motion to return. Used by setMove and setTurn.
+     * its motion to return. Used by straight(), spin(), and curve().
      * @param motion  Move or turn
      * @param direction forward, backward, right or left
      * @param length  Length of travel (distance or angle)
@@ -118,7 +118,7 @@ public class Finch extends Robot {
 
         while (!((System.currentTimeMillis() > commandSendTime + 500 || wasMoving) && !isMoving)) {
             wasMoving = isMoving;
-            pause(0.01); // 10ms
+            delay(0.01); // 10ms
             isMoving = httpRequestInBoolean("in/finchIsMoving/static/%s", deviceInstance);
         }
     }
@@ -132,23 +132,23 @@ public class Finch extends Robot {
      * <p><b>Examples:</b>
      * <pre>
      *    Finch bot = new Finch("A");
-     *    bot.setMove("F", 10, 50.0);  // First, move forward 10 cm distance at 50% speed.
-     *    bot.setMove("B", 5.5, 33.3); // Then, move backwards 5.5 cm distance at 33.3% speed.
+     *    bot.straight("F", 10, 50.0);  // First, move forward 10 cm distance at 50% speed.
+     *    bot.straight("B", 5.5, 33.3); // Then, move backwards 5.5 cm distance at 33.3% speed.
      * </pre>
      *
      * @param direction  Use "F" or "B" for forward or backward.
      * @param distance  Distance to travel, in centimeters (range: 0 to 500).
      * @param speed  Speed, as a percentage (range: 0 to 100).
      */
-    public void setMove(String direction, double distance, double speed) {
+    public void straight(String direction, double distance, double speed) {
         String dir = formatForwardBackward(direction);
         if (dir == null) {
-            warn("When calling `setMove(...)`, using \"%s\" for direction is invalid. It must be \"F\", \"B\", \"Forward\", or \"Backward\".", direction);
+            warn("When calling `straight(...)`, using \"%s\" for direction is invalid. It must be \"F\", \"B\", \"Forward\", or \"Backward\".", direction);
             return;
         }
 
-        distance = clampParameterToBounds(distance, -10000, 10000, "setMove", "distance");
-        speed = clampParameterToBounds(speed, 0, 100, "setMove", "speed");
+        distance = clampParameterToBounds(distance, -10000, 10000, "straight", "distance");
+        speed = clampParameterToBounds(speed, 0, 100, "straight", "speed");
 
         moveFinchAndWait("move", dir, distance, speed);
     }
@@ -163,21 +163,21 @@ public class Finch extends Robot {
      * <p><b>Examples:</b>
      * <pre>
      *    Finch bot = new Finch("A");
-     *    bot.setTurn("R", 90, 100);  // First, turn right 90 degrees, at 100% speed.
-     *    bot.setTurn("L", 45, 25.0); // Then, turn left backwards 5.5 cm distance at 33.3% speed.
+     *    bot.spin("R", 90, 100);  // First, turn right 90 degrees, at 100% speed.
+     *    bot.spin("L", 45, 25.0); // Then, turn left backwards 5.5 cm distance at 33.3% speed.
      * </pre>
      *
      * @param direction  Use "R" or "L" for right (clockwise) or left (counter-clockwise).
      * @param angle  Angle to turn, in degrees (range: 0 to 360).
      * @param speed  Speed, as a percentage (range: 0 to 100).
      */
-    public void setTurn(String direction, double angle, double speed) {
-        direction = formatRightLeft(direction, "setTurn");
+    public void spin(String direction, double angle, double speed) {
+        direction = formatRightLeft(direction, "spin");
         if (direction == null)
             return;
 
-        angle = clampParameterToBounds(angle, -360000, 360000, "setTurn", "angle");
-        speed = clampParameterToBounds(speed, 0, 100, "setTurn", "speed");
+        angle = clampParameterToBounds(angle, -360000, 360000, "spin", "angle");
+        speed = clampParameterToBounds(speed, 0, 100, "spin", "speed");
 
         moveFinchAndWait("turn", direction, angle, speed);
     }
@@ -200,11 +200,11 @@ public class Finch extends Robot {
      * <pre>
      *    Finch bot = new Finch("A");
      *    bot.setMotors(25, 25);    // Straight forward, both wheels at 25% speed.
-     *    bot.pause(1.5);           // Delay for 1.5 seconds... the robot keeps driving forward.
+     *    bot.delay(1.5);           // Delay for 1.5 seconds... the robot keeps driving forward.
      *    bot.setBeak(100, 0, 0);   // Change the beak lights... the robot is still driving forward.
-     *    bot.pause(1.5);           // Delay for 1.5 seconds... the robot keeps driving forward.
+     *    bot.delay(1.5);           // Delay for 1.5 seconds... the robot keeps driving forward.
      *    bot.setMotors(-100, 10);  // Move in a backwards curve, left wheel full reverse, right wheel 10% forward.
-     *    bot.pause(1.5);           // Delay for 1.5 seconds... the robot keeps curving back.
+     *    bot.delay(1.5);           // Delay for 1.5 seconds... the robot keeps curving back.
      *    bot.stop();               // Stop moving.
      * </pre>
      *
@@ -256,11 +256,11 @@ public class Finch extends Robot {
      * <pre>
      *    Finch bot = new Finch("A");
      *    bot.setBeak(100, 100, 100);  // Bright white.
-     *    bot.pause(1.0);              // Delay 1 second.
+     *    bot.delay(1.0);              // Delay 1 second.
      *    bot.setBeak(0, 100, 0);      // Then bright green.
-     *    bot.pause(1.0);              // Delay 1 second.
+     *    bot.delay(1.0);              // Delay 1 second.
      *    bot.setBeak(75, 0, 75);      // Then medium violet (75% red, 0% green, 75% blue).
-     *    bot.pause(1.0);              // Delay 1 second.
+     *    bot.delay(1.0);              // Delay 1 second.
      *    bot.setBeak(0, 0, 0);        // Then turn the beak light off.
      * </pre>
      *
@@ -312,9 +312,9 @@ public class Finch extends Robot {
      * <pre>
      *    Finch bot = new Finch("A");
      *    bot.setTail("all", 100, 100, 100);  // Make all tail lights full bright white.
-     *    bot.pause(1.0);
+     *    bot.delay(1.0);
      *    bot.setTail("all", 50, 50, 0);      // Make all tail lights dull yellow (50% red, 50% green, 0% blue).
-     *    bot.pause(1.0);
+     *    bot.delay(1.0);
      *    bot.setTail("all", 0, 0, 0);        // Turn off all tail lights.
      * </pre>
      *
@@ -353,7 +353,7 @@ public class Finch extends Robot {
      *    bot.resetEncoders();          // Reset the odometers
      *    bot.setMotors(50, 50);        // Move straight forward at 50% speed.
      *    while (getLight("L") &gt; 30) {  // keep checking the left side light sensor...
-     *       bot.pause(1.0);            // ... and delay while it is above 30%
+     *       bot.delay(1.0);            // ... and delay while it is above 30%
      *    }
      *    bot.stop();                   // Stop moving once we reach a nice shady spot.
      *    int d = bot.getEncoder("L");  // Get the encoder value for the left wheel.
@@ -362,7 +362,7 @@ public class Finch extends Robot {
      */
     public void resetEncoders() {
         httpRequestOut("out/resetEncoders/%s", deviceInstance);
-        pause(0.2); // Give the finch a chance to reset before moving on
+        delay(0.2); // Give the finch a chance to reset before moving on
     }
 
     private double getSensor(String sensor, boolean isStatic, String direction) {
@@ -472,10 +472,10 @@ public class Finch extends Robot {
      *      int x = bot.getLight("L");    // Check left eye brightness.
      *      int y = bot.getLight("R");    // Check right eye brightness.
      *      if (x &gt; y)                    // If left side is brighter...
-     *        bot.setTurn("L", 5, 100);   // ... then turn 5 degrees left
+     *        bot.spin("L", 5, 100);      // ... then turn 5 degrees left
      *      else
-     *        bot.setTurn("R", 5, 100);   // ... otherwise turn 5 degrees right
-     *      bot.setMove("F", 5, 100);     // Move forward a few centimeters.
+     *        bot.spin("R", 5, 100);      // ... otherwise turn 5 degrees right
+     *      bot.straight("F", 5, 100);    // Move forward a few centimeters.
      *   }
      * </pre>
      *
@@ -627,7 +627,7 @@ public class Finch extends Robot {
      * <pre>
      *   Finch bot = new Finch("A");
      *   bot.setPoint(3, 3, 1);   // Turn on the middle pixel (row 3, col 3).
-     *   bot.pause(1.0);          // Delay for 1 second.
+     *   bot.delay(1.0);          // Delay for 1 second.
      *   bot.setPoint(3, 3, 0);   // Turn that dot back off.
      * </pre>
      *
@@ -640,21 +640,23 @@ public class Finch extends Robot {
 
     /**
      * Play a musical note on the finch's buzzer for a certain duration (in
-     * beats). One beat equals one second. The notes are defined by MIDI note
-     * numbers, on a scale from 32 to 135, corresponding to the keys on a piano.
-     * Note 60 is "middle C", approximately the middle key on a piano keyboard.
-     * Lower numbers are lower notes. This does <b>not</b> pause your program --
-     * instead, your program will continue executing, allowing you to command
-     * the finch to do other things while the note is playing.
+     * beats), and wait for the note to finish. One beat equals one second. The
+     * notes are defined by MIDI note numbers, on a scale from 32 to 135,
+     * corresponding to the keys on a piano. Note 60 is "middle C",
+     * approximately the middle key on a piano keyboard. Lower numbers are lower
+     * notes. This also pauses your program for the given amount of time, so you
+     * can play a song by calling this function several times in a row.
+     * If instead you want your program
+     * to continue executing, so the finch can do other
+     * things while the note is playing, see {@link birdbrain.Finch#playNoteInBackground(int note, double beats) playNoteInBackground(...)}.
      *
      * <p><b>Example:</b>
      * <pre>
      *   Finch bot = new Finch("A");
      *   bot.playNote(60, 1.0);      // Play note 60 ("middle C") for 1 second.
-     *   bot.setTurn("L", 360, 30);  // Spin left, 30% speed, while the first note plays.
      *   bot.playNote(64, 0.5);      // Play E for 0.5 seconds.
-     *   bot.setTurn("R", 180, 50);  // Turn right, 50% speed, while the second note plays.
      *   bot.playNote(67, 1.5);      // Play G for 1.5 seconds.
+     *   bot.spin("R", 180, 50);     // After, turn right, 50% speed.
      * </pre>
      *
      * @param note    MIDI note number (range: 32–135).
@@ -662,6 +664,61 @@ public class Finch extends Robot {
      */
     @Override
     public void playNote(int note, double beats) { super.playNote(note, beats); }
+
+    /**
+     * Play musical notes in sequence, and wait for the song to finish. This
+     * function works the same as calling 
+     * {@link birdbrain.Finch#playNote(int note, double beats) playNote(...)}
+     * several times in a row, once for each pair of numbers. The function must
+     * be given a list of numbers, notes and beats. One beat equals one second.
+     * The notes are defined by MIDI note numbers, on a scale from 32 to 135,
+     * corresponding to the keys on a piano. Note 60 is "middle C",
+     * approximately the middle key on a piano keyboard. Lower numbers are lower
+     * notes. This also pauses your program for the total amount of time, so the
+     * next part of the program doesn't execute until the song completes.
+     *
+     * <p><b>Example:</b>
+     * <pre>
+     *   Finch bot = new Finch("A");
+     *   bot.playSong(60, 1.0, 64, 0.5, 67, 0.5);
+     * </pre>
+     *
+     * @param notes_and_beats  A list of alternating integers (note numbers) and
+     * decimals (beat durations) defining the song to be played.
+     */
+    @Override
+    public void playSong(Object... notes_and_beats) { super.playSong(notes_and_beats); }
+
+    /**
+     * Play a musical note on the finch's buzzer, in the background, for a certain duration (in
+     * beats). One beat equals one second. The notes are defined by MIDI note
+     * numbers, on a scale from 32 to 135, corresponding to the keys on a piano.
+     * Note 60 is "middle C", approximately the middle key on a piano keyboard.
+     * Lower numbers are lower notes. This does <b>not</b> pause your program --
+     * instead, your program will continue executing, allowing you to command
+     * the finch to do other things while the note is playing. Calling this
+     * function several times in a row will not work -- each note will begin
+     * before the previous has finished, effectively cancelling the one before
+     * it. To play a song, either insert delays or other actions between notes,
+     * or see 
+     * {@link birdbrain.Finch#playNote(int note, double beats) playNote(...)}
+     * instead.
+     *
+     * <p><b>Example:</b>
+     * <pre>
+     *   Finch bot = new Finch("A");
+     *   bot.playNoteInBackground(60, 1.0);      // Play note 60 ("middle C") for 1 second.
+     *   bot.spin("L", 360, 30);                 // Spin left, 30% speed, while the first note plays.
+     *   bot.playNoteInBackground(64, 0.5);      // Play E for 0.5 seconds.
+     *   bot.spin("R", 180, 50);                 // Turn right, 50% speed, while the second note plays.
+     *   bot.playNoteInBackground(67, 1.5);      // Play G for 1.5 seconds.
+     * </pre>
+     *
+     * @param note    MIDI note number (range: 32–135).
+     * @param beats   duration in beats (seconds) (range: 0–16).
+     */
+    @Override
+    public void playNoteInBackground(int note, double beats) { super.playNoteInBackground(note, beats); }
 
     /**
      * Get the finch's acceleration along X, Y, and Z axes (in m/(s^2)). The
@@ -745,7 +802,7 @@ public class Finch extends Robot {
      *     } else {
      *       bot.setBeak(0, 0, 0);     // Beak is off otherwise
      *     }
-     *     bot.pause(1.0);             // A small delay... we check the button once per second
+     *     bot.delay(1.0);             // A small delay... we check the button once per second
      *   }
      * </pre>
      *
@@ -754,6 +811,28 @@ public class Finch extends Robot {
      */
     @Override
     public boolean getButton(String button) { return super.getButton(button); }
+
+    /**
+     * Wait for one of the buttons to be pressed, and return a string indicating
+     * which one was. This will wait indefinitely for the user to press one of
+     * the three buttons: "A", "B" or the touch-sensitive "Logo" button.
+     *
+     * <p><b>Example:</b>
+     * <pre>
+     *   Finch bot = new Finch("A");
+     *   String s = bot.waitForButton();
+     *   if (s.equals("A"))
+     *     bot.playNote(60, 0.5);
+     *   else if (s.equals("B")
+     *     bot.playNote(48, 0.5);
+     *   else // must be "Logo"
+     *     bot.payNote(72, 0.5);
+     * </pre>
+     *
+     * @return Either "A", "B", or "Logo", indicating which button was pressed.
+     */
+    @Override
+    public String waitForButton() { return super.waitForButton(); }
 
     /**
      * Get the builtin microphone sound level, as a rough percentage.
@@ -820,13 +899,13 @@ public class Finch extends Robot {
      * <pre>
      *   Finch bot = new Finch("A");
      *   bot.setMotors(30, 30);       // Start the wheels turning
-     *   bot.pause(1.5);              // delay for 1.5 seconds (and the wheels are still turning)
+     *   bot.delay(1.5);              // delay for 1.5 seconds (and the wheels are still turning)
      *   bot.stop();                  // then stop the wheels
      * </pre>
      *
      * @param numSeconds  time to wait, in seconds
      */
-    public static void pause(double numSeconds) { Robot.pause(numSeconds); }
+    public static void delay(double numSeconds) { Robot.delay(numSeconds); }
 
     /**
      * Turn off all outputs: stop the wheels, turn off LED panel, beak, and tail lights.

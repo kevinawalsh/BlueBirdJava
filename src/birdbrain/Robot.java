@@ -98,7 +98,7 @@ public class Robot {
                     for (int i = 1; i < 10 && msg == null && connectionStatus == BLUEBIRD_CONNECTOR_UNREACHABLE; i++) {
                         System.out.print(".");
                         System.out.flush();
-                        pause(1.0);
+                        delay(1.0);
                         msg = fetch("in/orientation/Shake/Z");
                     }
                     if (msg == null && connectionStatus == BLUEBIRD_CONNECTOR_UNREACHABLE) {
@@ -174,7 +174,7 @@ public class Robot {
         }
         System.out.println("Waiting up to 30 seconds... (press control-C to cancel)...");
         for (int i = 0; i < 30; i++) {
-            pause(1.0);
+            delay(1.0);
             System.out.print(".");
             System.out.flush();
             msg = fetch("in/orientation/Shake/" + choice);
@@ -409,10 +409,47 @@ public class Robot {
      * @param note - midi note number to play (Range: 32 to 135)
      * @param beats - duration in beats (Range: 0 to 16); each beat is one second
      */
+    public void playNoteInBackground(int note, double beats) {
+        note = clampParameterToBounds(note, 32, 135, "playNote", "note value");
+        beats = clampParameterToBounds(beats, 0, 16, "playNote", "number of beats");
+        httpRequestOut("out/playnote/%d/%d/%s", note, (int)(beats*1000), deviceInstance);
+    }
+
     public void playNote(int note, double beats) {
         note = clampParameterToBounds(note, 32, 135, "playNote", "note value");
-        beats = clampParameterToBounds(beats,0,16, "playNote", "number of beats");
+        beats = clampParameterToBounds(beats, 0, 16, "playNote", "number of beats");
         httpRequestOut("out/playnote/%d/%d/%s", note, (int)(beats*1000), deviceInstance);
+        delay(beats);
+    }
+
+    public void playSong(Object... notes_and_beats) {
+        int len = notes_and_beats.length;
+        if (len % 2 != 0) {
+            warn("playSong(...) was given %d arguments, but it requires pairs of numbers, so you must provide an even numbrer of arguments.", len);
+            return;
+        }
+        for (int i = 0; i < len; i++) {
+            Object o = notes_and_beats[i];
+            if (notes_and_beats[i] == null) {
+                warn("playSong(...) was given null as parameter %d, it should be an integer instead.", i+1);
+                return;
+            }
+            if (i % 2 == 0 && !(o instanceof Integer)) {
+                warn("playSong(...) was given a %s as parameter %d, it should be an integer instead.", 
+                        o.getClass(), i+1);
+                return;
+            }
+            else if (i % 2 != 0 && !(o instanceof Integer || o instanceof Float || o instanceof Double)) {
+                warn("playSong(...) was given a %s as parameter %d, it should be a double instead.", 
+                        o.getClass(), i+1);
+                return;
+            }
+        }
+        for (int i = 0; i < len; i += 2) {
+            int note = (int)notes_and_beats[i];
+            double beats = ((Number)notes_and_beats[i+1]).doubleValue();
+            playNote(note, beats);
+        }
     }
    
     /**
@@ -491,6 +528,25 @@ public class Robot {
     }
 
     /**
+     * getButton() waits for one of the three buttons to be pressed, and returns
+     * a string indicating which one was pressed.
+     *playNote
+     * @return Either "A", "B", or "Logo".
+     */
+    public String waitForButton() {
+        while (true) {
+            if (getButton("A"))
+                return "A";
+            else if (getButton("B"))
+                return "B";
+            else if (getButton("Logo"))
+                return "Logo";
+            else
+                delay(0.1);
+        }
+    }
+
+    /**
      * getSound() returns the current sound level from the micro:bit sound sensor
      * @return sound level
      */
@@ -546,7 +602,7 @@ public class Robot {
     }
 
     /** Pauses the program for a time in seconds. */
-    public static void pause(double numSeconds) {
+    public static void delay(double numSeconds) {
     	double milliSeconds = 1000*numSeconds;
     	try {
             Thread.sleep(Math.round(milliSeconds));
@@ -557,10 +613,10 @@ public class Robot {
     
     /** stopAll() turns off all the outputs. */
     public void stopAll() {
-    	pause(0.1);         // Give stopAll() time to act before the end of program
+    	delay(0.1);         // Give stopAll() time to act before the end of program
         httpRequestOut("out/stopall/%s", deviceInstance);
         Arrays.fill(displayStatus, "false");
-    	pause(0.1);         // Give stopAll() time to act before the end of program
+    	delay(0.1);         // Give stopAll() time to act before the end of program
     }
 
 
@@ -570,7 +626,7 @@ public class Robot {
         if (!alreadyWarned.contains(message)) {
             System.out.println("WARNING: " + message);
             alreadyWarned.add(message);
-            pause(1.0);
+            delay(1.0);
         }
     }
 }
