@@ -685,7 +685,13 @@ public class LinuxBluezBLE implements RobotCommunicator {
                 }
             } else if (value.length > 10 && robot.status == CONNECTED) {
                 // Sensor data and rssi
-                robotManager.receiveNotification(robot.name, value, robot.rssi);
+                // Note: robot.rssi will be stale here, because the underlying
+                // dbus/bluez stack does not keep it up to date except while
+                // scanning, and for connected devices even then only if they
+                // keep advertising while connected, which seems unlikely for
+                // micro:bit. So pass rssi=null here, disabling the rssi UI for
+                // connected robots.
+                robotManager.receiveNotification(robot.name, value, null /* robot.rssi*/);
             } else {
                 LOG.warn("got unexpected data from " + robot.rxCharPath);
             }

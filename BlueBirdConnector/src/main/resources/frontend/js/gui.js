@@ -345,12 +345,12 @@ function fmtDeviceIcon(item) {
     var deviceImage = getDeviceImage(deviceName);
     var deviceModel = getDeviceModel(deviceName);
     var devLetter = (item.devLetter == null ? " is available for connection" : (" connected as device " + item.devLetter));
+    var ret = "<img src=\"img/" + deviceImage + "\" alt=\"" + deviceModel + "\" title=\"" + deviceModel + devLetter + "\"/>";
+    if (item.rssi == null || item.rssi === "")
+        return ret;
     var rssiDesc;
     var rssiIcon;
-    if (item.rssi == null || item.rssi === "") {
-        rssiIcon = "rssi0.png";
-        rssiDesc = "signal strength unknown";
-    } else if (item.rssi <= -90) {
+    if (item.rssi <= -90) {
         rssiIcon = "rssi1.png";
         rssiDesc = "unreliable signal ("+item.rssi + " dbM)";
     } else if (item.rssi <= -70) {
@@ -363,7 +363,8 @@ function fmtDeviceIcon(item) {
         rssiIcon = "rssi4.png";
         rssiDesc = "great signal ("+item.rssi + " dbM)";
     }
-    return "<img src=\"img/" + deviceImage + "\" alt=\"" + deviceModel + "\" title=\"" + deviceModel + devLetter + "\"/> <img src=\"img/" + rssiIcon + "\" alt=\"" + rssiDesc + "\" title=\"" + rssiDesc + "\"/>";
+    ret += " <img src=\"img/" + rssiIcon + "\" alt=\"" + rssiDesc + "\" title=\"" + rssiDesc + "\"/>";
+    return ret;
 }
 
 /**
