@@ -662,10 +662,10 @@ public class DongleBLE extends BGAPIDefaultListener implements RobotCommunicator
                     sendCommand(pollStart, connection);
 
                     //finally call the connection successful
-                    robotManager.receiveConnectionEvent(robot.getName(), (version == 2));
+                    robotManager.receiveConnectionEvent(robot.getName(), (version == 2), null /* rssi unknown */);
                 } else if (value.length > 10){
                     //Sensor data
-                    robotManager.receiveNotification(robot.getName(), value);
+                    robotManager.receiveNotification(robot.getName(), value, null /* rssi unknown */);
                 } else {
                     LOG.error("Unidentified short notification found for {}. {}", robot.getName(), bytesToString(value));
                 }

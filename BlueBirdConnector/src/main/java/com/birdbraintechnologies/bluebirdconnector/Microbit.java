@@ -8,7 +8,8 @@ public class Microbit extends Robot {
         //Set Constants
         calibrationIndex = 7;
         batteryIndex = 3; // 4th sensor value at index 3
-        greenThresh = 4.75;
+        fullThresh = 4.75;
+        greenThresh = 4.575;
         yellowThresh = 4.4;
         rawToVoltage = 0.0406;
         voltageConst = 0;

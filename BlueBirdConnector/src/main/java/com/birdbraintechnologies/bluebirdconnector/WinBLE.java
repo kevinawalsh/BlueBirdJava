@@ -202,7 +202,7 @@ public class WinBLE implements RobotCommunicator {
                     for (int i = 0; i < hexArray.length; i++){
                         bytes[i] = (byte)Integer.parseInt(hexArray[i], 16);
                     }
-                    robotManager.receiveNotification(peripheralName, bytes);
+                    robotManager.receiveNotification(peripheralName, bytes, null /* rssi unknown */);
                     break;
                 case  "discovery" :
                     peripheralName = root.get("name").getAsString();
@@ -228,7 +228,7 @@ public class WinBLE implements RobotCommunicator {
                             LOG.info("blePacketReceived():Connection: connected, Peripheral: {}, hasV2: {}", peripheralName, hasV2String);
                             deviceConnecting = null;
                             boolean hasV2 = hasV2String.equals("True");
-                            RobotManager.getSharedInstance().receiveConnectionEvent(peripheralName, hasV2);
+                            RobotManager.getSharedInstance().receiveConnectionEvent(peripheralName, hasV2, null /* rssi unknown */);
                             break;
                         case "userDisconnected":  // The device was disconnected by the user
                             RobotManager.getSharedInstance().receiveDisconnectionEvent(peripheralName, true);

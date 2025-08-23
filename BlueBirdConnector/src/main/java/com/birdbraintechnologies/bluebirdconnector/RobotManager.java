@@ -282,9 +282,9 @@ public class RobotManager {
         }
     }
 
-    public void receiveNotification(String robotName, byte[] bytes) {
+    public void receiveNotification(String robotName, byte[] bytes, Short rssi) {
         Robot robot = getRobotByName(robotName);
-        if (robot != null) { robot.receiveNotification(bytes); }
+        if (robot != null) { robot.receiveNotification(bytes, rssi); }
     }
     public void receiveScanResponse(String robotName) {
         Integer index = robotIndexes.get(robotName);
@@ -294,7 +294,7 @@ public class RobotManager {
         }
     }
 
-    public void receiveConnectionEvent(String robotName, boolean hasV2) {
+    public void receiveConnectionEvent(String robotName, boolean hasV2, Short rssi) {
         Integer index = robotIndexes.get(robotName);
         if (index == null || index == -1) {
             LOG.error("{} not found in selectedRobots.", robotName);
@@ -303,8 +303,8 @@ public class RobotManager {
         Robot robot = selectedRobots[index];
         robot.setHasV2(hasV2);
         robot.setConnected(true);
-        LOG.debug("receiveConnectionEvent {} {}", robotName, hasV2);
-        FrontendServer.getSharedInstance().updateGUIConnection(robot, index);
+        LOG.debug("receiveConnectionEvent {} {} {}", robotName, hasV2, rssi);
+        FrontendServer.getSharedInstance().updateGUIConnection(robot, index, rssi);
 
         if (autoCalibrate) {
             Timer timer = new Timer();
@@ -345,7 +345,7 @@ public class RobotManager {
             robotIndexes.put(robotName, -1); //autoreconnect
             LOG.debug("{} will autoreconnect", robotName);
         }
-        FrontendServer.getSharedInstance().updateGUIConnection(robot, index);
+        FrontendServer.getSharedInstance().updateGUIConnection(robot, index, null);
         if (!permanent) {
             startDiscovery();
         }

@@ -74,10 +74,10 @@ public class FrontendServer {
 
     // FIXME: index should be a property of Robot
     // FIXME: this should be two functions: didConnect, and didDisconnect
-    public void updateGUIConnection(Robot robot, int index) {
+    public void updateGUIConnection(Robot robot, int index, Short rssi) {
         if (robot.isConnected()) {
             String devLetter = Utilities.indexToDevLetter(index);
-            String[] args = new String[] {robot.name, robot.name, robot.fancyName, devLetter, String.valueOf(robot.hasV2) };
+            String[] args = new String[] {robot.name, robot.name, robot.fancyName, devLetter, String.valueOf(robot.hasV2), rssi == null ? "" : String.valueOf(rssi) };
             sendToGUI("deviceDidConnect", args);
         } else {
             sendToGUI("deviceDidDisconnect", robot.name);
@@ -120,8 +120,8 @@ public class FrontendServer {
         sendToGUI("showCalibrationResult", success);
     }
 
-    public void updateBatteryState(String robotName, String batteryState) {
-        String[] args = new String[] { robotName, batteryState };
+    public void updateBatteryState(String robotName, String batteryState, String rssi) {
+        String[] args = new String[] { robotName, batteryState, rssi };
         sendToGUI("deviceBatteryUpdate", args);
     }
 

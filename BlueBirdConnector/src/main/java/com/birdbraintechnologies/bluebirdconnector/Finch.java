@@ -29,15 +29,17 @@ public class Finch extends Robot {
         LOG.debug("Updating finch battery constants for hasV2=" + hasV2);
         if (hasV2) {
             batteryMask = 0x3;
-            greenThresh = 1;
-            yellowThresh = 0;
+            fullThresh = 2.9;
+            greenThresh = 1.9;
+            yellowThresh = 0.9;
             rawToVoltage = 1;
             voltageConst = 0;
             batteryTolerance = 0;
         } else {
             batteryMask = 0xFF;
-            greenThresh = 3.51375;
-            yellowThresh = 3.3732;
+            fullThresh = 3.9354;   // = (320 + 100)* 0.00937 = (voltageConst + BATT_THRESH1) * rawToVoltage 
+            greenThresh = 3.51375; // = (320 + 55) * 0.00937 = (voltageConst + BATT_THRESH1) * rawToVoltage 
+            yellowThresh = 3.3732; // = (320 + 40) * 0.00937 = (voltageConst + BATT_THRESH2) * rawToVoltage
             rawToVoltage = 0.00937;
             voltageConst = 320;
             batteryTolerance = 0.05;

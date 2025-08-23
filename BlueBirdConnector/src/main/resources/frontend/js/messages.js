@@ -151,19 +151,20 @@ CallbackManager.updateScanDeviceList = function(newList) {
  * @param  {string} fancyName device memorable name
  * @param  {string} devLetter letter assigned to device
  */
-CallbackManager.deviceDidConnect = function(address, name, fancyName, devLetter, hasV2) {
+CallbackManager.deviceDidConnect = function(address, name, fancyName, devLetter, hasV2, rssi) {
   sendMessageToBackend(msgTypes.CONSOLE_LOG, {
-    consoleLog: "device did connect: " + address + ", " + name + ", " + fancyName + ", " + devLetter + ", " + hasV2
-  })
+    consoleLog: "device did connect: " + address + ", " + name + ", " + fancyName + ", " + devLetter + ", hasV2=" + hasV2 + ", rssi="+rssi
+  });
   connectedDeviceList.push({
     deviceAddress: address,
     deviceFancyName: fancyName,
     deviceName: name,
     devLetter: devLetter,
     hasV2: hasV2,
+    rssi: rssi,
     batteryStatus: "unknown"
-  })
-  $.connectedDevListRefresh()
+  });
+  $.connectedDevListRefresh();
   scanDeviceList.forEach((device, i) => {
     if (device.address == address) {
       scanDeviceList.splice(i, 1)
@@ -197,15 +198,17 @@ CallbackManager.deviceDidDisconnect = function(address) {
  * from device. Update display.
  *
  * @param  {string} address       uuid of updated device
- * @param  {string} batteryStatus new status
+ * @param  {string} batteryStatus new battery status
+ * @param  {string} rssi          new rssi status
  */
-CallbackManager.deviceBatteryUpdate = function(address, batteryStatus) {
+CallbackManager.deviceBatteryUpdate = function(address, batteryStatus, rssi) {
   sendMessageToBackend(msgTypes.CONSOLE_LOG, {
-    consoleLog: "device battery update: " + address + " -> " + batteryStatus
+    consoleLog: "device battery and rssi update: " + address + " -> " + batteryStatus
   })
   connectedDeviceList.forEach( (device) => {
     if (device.deviceAddress == address) {
-      device.batteryStatus = batteryStatus
+      device.batteryStatus = batteryStatus;
+      device.rssi = rssi;
     }
   })
   $.connectedDevListRefresh()

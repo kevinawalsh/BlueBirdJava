@@ -24,12 +24,9 @@ function translate(key) {
 //HTML code to string conversion tool:  http://pojo.sodhanalibrary.com/string.html
 var connectButton =
       "              <div class=\"col-xs-2 buttons\">"+
-      "                 <a class=\"button\" href=\"#\"><span class=\"button-connect fa-stack fa-2x\">"+
-      "                   <i class=\"fas fa-circle fa-stack-2x\"></i>"+
-      "                   <i class=\"fas fa-plus fa-stack-1x fa-inverse\"></i>"+
-      "                 </span></a>"+
-//      "               </div>"+
-      "             </div>";
+      "                 <a class=\"button button-connect\" href=\"#\" role=\"button\" aria-label=\"Connect\">connect</a>"+
+      "              </div>";
+
 
 
 
@@ -115,14 +112,13 @@ $.scanListRefresh = function() {
   $.each(scanDeviceList, function(i, item) {
     var name = (item.fancyName == null ? item.name : item.fancyName);
     var ttsName = (item.fancyName == null ? item.name : item.fancyName.substring(0, item.fancyName.lastIndexOf(" ")));
-    var ttsContent = "connect to " + ttsName
-    var deviceImage = getDeviceImage(item.name);
+    var ttsContent = "connect to " + ttsName;
     var btn = (connectedDeviceList.length < 3 ? connectButton : "");
 
     var el = $(
       "<div class=\"row robot-item\" onmouseenter=\"tts(\'" + ttsContent + "\')\"><a href=\"#\"> " +
       "<div class=\"row robot-item\">" +
-      "<div class=\"col-xs-2 img\"><img src=\"img/" + deviceImage + "\" alt=\"Bit\" /></div>" +
+      "<div class=\"col-xs-2 img\">" + fmtDeviceIcon(item) + "</div>" +
       "<div class=\"col-xs-8 name\">" + name + "</div>" +
       btn + "</a>");
 
@@ -205,7 +201,6 @@ $.connectedDevListRefresh = function() {
     var name = (item.deviceFancyName == null ? item.deviceName : item.deviceFancyName);
     var deviceName = item.deviceName;
     var devLetter = item.devLetter;
-    var deviceImage = getDeviceImage(deviceName);
 
     var ttsName = (item.deviceFancyName == null ? item.deviceName : item.deviceFancyName.substring(0, item.deviceFancyName.lastIndexOf(" ")));
     var ttsCalibrate = "calibrate " + ttsName
@@ -213,23 +208,23 @@ $.connectedDevListRefresh = function() {
 
     var el = $(
       "             <div class=\"row robot-item\">" +
-      "               <div class=\"col-xs-2 img\">" + devLetter + " <img src=\"img/" + deviceImage + "\" alt=\"Hummingbird Bit\" /></div>" +
+      "               <div class=\"col-xs-2 img\">" + devLetter + " " + fmtDeviceIcon(item) + " </div>" +
       "               <div class=\"col-xs-6 name\" onmouseenter=\"tts(\'" + ttsName + "\')\">" + name + "</div>" +
       "               <div class=\"col-xs-4 buttons\">" +
 
       //Battery for Hummingbits and Finches only
       "                 <div style=\"display:inline-block\">" +
-      "                   <span style=\"display:inline-block\" class=\"button button-battery button-battery-" + devLetter + " fa-stack fa-2x\"><i class=\"fas /*fa-battery-full fa-battery-half*/ /*fa-battery-quarter*/ fa-stack-2x\"></i></span> " +
+      "                   <span title=\"Battery Level: unknown\" style=\"display:inline-block\" class=\"button button-battery button-battery-" + devLetter + " fa-stack fa-2x\"><i class=\"fas /*fa-battery-full fa-battery-half*/ /*fa-battery-quarter*/ fa-stack-2x\"></i></span> " +
 
       // Calibration button
-      "                   <a class=\"button\" href=\"#\" onmouseenter=\"tts(\'" + ttsCalibrate + "\')\" onclick=\"return launchCalibrate(\'" + devLetter + "\', \'" + deviceName + "\', \'" + item.hasV2 + "\');\"><span class=\"button-calibrate fa-stack fa-2x\">" +
+      "                   <a title=\"Calibrate orientation magnetometer\" class=\"button\" href=\"#\" onmouseenter=\"tts(\'" + ttsCalibrate + "\')\" onclick=\"return launchCalibrate(\'" + devLetter + "\', \'" + deviceName + "\', \'" + item.hasV2 + "\');\"><span class=\"button-calibrate fa-stack fa-2x\">" +
       "                     <i class=\"fas fa-square fa-stack-2x\"></i>" +
       "                     <i class=\"fas fa-compass fa-stack-1x fa-inverse\"></i>" +
       "                   </span></a>" +
       "                  </div>" +
 
       //Disconnect Button
-      "                 <a class=\"button\" href=\"#\" onmouseenter=\"tts(\'" + ttsDisconnect + "\')\"><span class=\"button-disconnect fa-stack fa-2x\">" +
+      "                 <a title=\"Disconnect\" class=\"button\" href=\"#\" onmouseenter=\"tts(\'" + ttsDisconnect + "\')\"><span class=\"button-disconnect fa-stack fa-2x\">" +
       "                   <i class=\"fas fa-circle fa-stack-2x\"></i>" +
       "                   <i class=\"fas fa-minus fa-stack-1x fa-inverse\"></i>" +
       "                 </span></a>" +
@@ -237,17 +232,25 @@ $.connectedDevListRefresh = function() {
       "             </div>");
 
     //Add the battery icon, but only if we know the battery status
-    let battery = el.find('.button-battery-' + devLetter + ' i')
+    let battery = el.find('.button-battery-' + devLetter + ' i');
+    let batterySpan = el.find('.button-battery-' + devLetter);
     switch (item.batteryStatus) {
-      case "green":
+      case "full":
         battery.addClass("fa-battery-full");
+        batterySpan.attr('title', "Battery Level: Full");
+        break;
+      case "green":
+        battery.addClass("fa-battery-three-quarters");
+        batterySpan.attr('title', "Battery Level: High");
         break;
       case "yellow":
         battery.addClass("fa-battery-half");
+        batterySpan.attr('title', "Battery Level: Moderate");
         break;
       case "red":
         battery.addClass("fa-battery-quarter");
-      break
+        batterySpan.attr('title', "Battery Level: Low");
+        break;
     }
 
     //Set up disconnect button
@@ -328,6 +331,39 @@ function getDeviceImage(deviceName) {
   if (deviceName.startsWith("MB")) deviceImage = "img-bit.png";
   if (deviceName.startsWith("FN")) deviceImage = "img-finch.png";
   return deviceImage;
+}
+
+function getDeviceModel(deviceName) {
+  var deviceModel = "Hummingbird";
+  if (deviceName.startsWith("MB")) deviceModel = "Micro:bit";
+  if (deviceName.startsWith("FN")) deviceModel = "Finch";
+  return deviceModel;
+}
+
+function fmtDeviceIcon(item) {
+    var deviceName = (item.name == null ? item.deviceName : item.name);
+    var deviceImage = getDeviceImage(deviceName);
+    var deviceModel = getDeviceModel(deviceName);
+    var devLetter = (item.devLetter == null ? " is available for connection" : (" connected as device " + item.devLetter));
+    var rssiDesc;
+    var rssiIcon;
+    if (item.rssi == null || item.rssi === "") {
+        rssiIcon = "rssi0.png";
+        rssiDesc = "signal strength unknown";
+    } else if (item.rssi <= -90) {
+        rssiIcon = "rssi1.png";
+        rssiDesc = "unreliable signal ("+item.rssi + " dbM)";
+    } else if (item.rssi <= -70) {
+        rssiIcon = "rssi2.png";
+        rssiDesc = "weak signal ("+item.rssi + " dbM)";
+    } else if (item.rssi <= -55) {
+        rssiIcon = "rssi3.png";
+        rssiDesc = "good signal ("+item.rssi + " dbM)";
+    } else {
+        rssiIcon = "rssi4.png";
+        rssiDesc = "great signal ("+item.rssi + " dbM)";
+    }
+    return "<img src=\"img/" + deviceImage + "\" alt=\"" + deviceModel + "\" title=\"" + deviceModel + devLetter + "\"/> <img src=\"img/" + rssiIcon + "\" alt=\"" + rssiDesc + "\" title=\"" + rssiDesc + "\"/>";
 }
 
 /**

@@ -8,12 +8,37 @@
 .btn-orange { background-color: #ff9922; color: #fff; }
 .btn-orange:hover, .btn-orange:active, .btn-orange:visited { color: #fff; }
 
-.button-connect { color: #33EA06; }
 .button-disconnect { color: #FF5222; }
 .button-calibrate { color: #881199; }
 .button-battery { color: #33EA06; }
+.button-battery .fa-battery-three-quarter{ color: #33EA06; }
 .button-battery .fa-battery-half { color: #ff9922; }
 .button-battery .fa-battery-quarter { color: #FF5222; }
+
+.button-connect{
+  display:inline-block;
+  padding:4px 12px;
+  border-radius:10px;              /* rounded-rectangle */
+  background:#33EA06;              /* green */
+  font-size:15pt;
+  color:#fff;
+  font-weight:600;
+  text-decoration:none;
+  line-height:1.2;
+  border:1px solid rgba(0,0,0,.15);
+  box-shadow:0 1px 1px rgba(0,0,0,.08);
+  cursor:pointer;
+}
+.button-connect:hover{ background:#33bb06; }
+.button-connect:active{ background:#27722c; }
+.button-connect:focus{ outline:2px solid #1e4b23; outline-offset:2px; }
+.button-connect[aria-disabled="true"], .button-connect.disabled{
+  opacity:.55; pointer-events:none;
+}
+.button-connect:hover,
+.button-connect:focus,
+.button-connect:active,
+.button-connect:visited { text-decoration: none; color:#fff;}
 
 /* !toggle switch */
 .switch { display: inline-block; height: 34px; position: relative; width: 60px; }

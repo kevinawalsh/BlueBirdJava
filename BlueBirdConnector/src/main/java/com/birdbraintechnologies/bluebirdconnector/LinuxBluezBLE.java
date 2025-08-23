@@ -502,10 +502,10 @@ public class LinuxBluezBLE implements RobotCommunicator {
         private void updateRSSI(BLERobotDevice robot, Short rssi) {
             LOG.info("RSSI for robot {}: {} {}", robot.name, rssi,
                     (rssi == null) ? "(not currently known)" :
-                    (rssi < RSSI_LEVEL_THRESHOLD) ? "(unreliable)" :
-                    (rssi < -75) ? "(weak)" :
-                    (rssi < -60) ? "(okay)" :
-                    "(good)");
+                    (rssi < RSSI_LEVEL_THRESHOLD) ? "(unreliable)" : // -90
+                    (rssi < -70) ? "(weak)" :
+                    (rssi < -55) ? "(good)" :
+                    "(great)");
             switch (robot.status) {
                 case UNAVAILABLE:
                     robot.rssi = rssi;
@@ -554,7 +554,6 @@ public class LinuxBluezBLE implements RobotCommunicator {
                     break;
 
                 case AVAILABLE:
-                    LOG.warn("WARNING: Previously available device was updated, or discovered again.");
                     cleanupConnection(connected, robot.path, robot.status);
                     updateRSSI(robot, rssi);
                     break;
@@ -680,13 +679,13 @@ public class LinuxBluezBLE implements RobotCommunicator {
                         robot.connectionTimer.cancel(false);
                         robot.connectionTimer = null;
                     }
-                    robotManager.receiveConnectionEvent(robot.name, (robot.version == 2));
+                    robotManager.receiveConnectionEvent(robot.name, (robot.version == 2), robot.rssi);
                 } catch (Exception e) {
                     LOG.error("can't start polling for " + robot.name);
                 }
             } else if (value.length > 10 && robot.status == CONNECTED) {
-                // Sensor data.
-                robotManager.receiveNotification(robot.name, value);
+                // Sensor data and rssi
+                robotManager.receiveNotification(robot.name, value, robot.rssi);
             } else {
                 LOG.warn("got unexpected data from " + robot.rxCharPath);
             }

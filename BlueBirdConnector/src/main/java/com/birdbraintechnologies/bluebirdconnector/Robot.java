@@ -20,6 +20,7 @@ public abstract class Robot {
     private boolean isCalibrating;
     private byte[] currentData;
     private String currentBattery;
+    private String currentRSSI;
 
     static final byte[] CALIBRATE_CMD = {(byte) 0xCE, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF};
     //Outgoing BLE Data. 20 bytes
@@ -55,6 +56,7 @@ public abstract class Robot {
     //Device Specific Constants
     int calibrationIndex;
     int batteryIndex;
+    double fullThresh;
     double greenThresh;
     double yellowThresh;
     double rawToVoltage;
@@ -81,6 +83,7 @@ public abstract class Robot {
         isConnected = false;
         hasV2 = false;
         currentBattery = "unknown";
+        currentRSSI = "";
 
         currentData = new byte[20];
         setAllChanged = false;
@@ -380,7 +383,7 @@ public abstract class Robot {
     }
 
 
-    public void receiveNotification(byte[] bytes) {
+    public void receiveNotification(byte[] bytes, Short rssi) {
         currentData = bytes;
 
         if (isCalibrating) {
@@ -409,14 +412,29 @@ public abstract class Robot {
         byte battByte = bytes[batteryIndex];
         int battInt = battByte;
         int battUInt = battByte & batteryMask;
-        //LOG.debug ("Battery Byte = {} (0x{}); Battery Int = {};  Battery UInt = {}", battByte, Integer.toHexString(battByte), battUInt);
+        // LOG.debug("Battery: Byte = 0x{}, mask = 0x{}, result = 0x{}", 
+        //         Integer.toHexString((int)(battByte & 0xff)),
+        //         Integer.toHexString(batteryMask),
+        //         Integer.toHexString(battUInt));
         double voltage = (battUInt + voltageConst) * rawToVoltage;
-        //battData = Math.abs(battData);
-        //LOG.debug ("Battery level connection {}: {}", i, battData);
+        // LOG.debug("Robot status: {} volts, RSSI {} dBm", voltage, rssi);
         String battLevel = "unknown";
         switch (currentBattery) {
             case "unknown":
-                if (voltage > greenThresh) {
+                if (voltage > fullThresh) {
+                    battLevel = "full";
+                } else if (voltage > greenThresh) {
+                    battLevel = "green";
+                } else if (voltage > yellowThresh) {
+                    battLevel = "yellow";
+                } else {
+                    battLevel = "red";
+                }
+                break;
+            case "full":
+                if (voltage > fullThresh - batteryTolerance) {
+                    battLevel = "full";
+                } else if (voltage > greenThresh) {
                     battLevel = "green";
                 } else if (voltage > yellowThresh) {
                     battLevel = "yellow";
@@ -425,25 +443,31 @@ public abstract class Robot {
                 }
                 break;
             case "green":
-                if (voltage < yellowThresh) {
-                    battLevel = "red";
-                } else if (voltage < greenThresh - batteryTolerance) {
+                if (voltage > fullThresh + batteryTolerance) {
+                    battLevel = "full";
+                } else if (voltage > greenThresh - batteryTolerance) {
+                    battLevel = "green";
+                } else if (voltage > yellowThresh) {
                     battLevel = "yellow";
                 } else {
-                    battLevel = "green";
+                    battLevel = "red";
                 }
                 break;
             case "yellow":
-                if (voltage > greenThresh + batteryTolerance) {
+                if (voltage > fullThresh) {
+                    battLevel = "full";
+                } else if (voltage > greenThresh + batteryTolerance) {
                     battLevel = "green";
-                } else if (voltage < yellowThresh - batteryTolerance) {
-                    battLevel = "red";
-                } else {
+                } else if (voltage > yellowThresh - batteryTolerance) {
                     battLevel = "yellow";
+                } else {
+                    battLevel = "red";
                 }
                 break;
             case "red":
-                if (voltage > greenThresh) {
+                if (voltage > fullThresh) {
+                    battLevel = "full";
+                } else if (voltage > greenThresh) {
                     battLevel = "green";
                 } else if (voltage > yellowThresh + batteryTolerance) {
                     battLevel = "yellow";
@@ -453,11 +477,16 @@ public abstract class Robot {
                 break;
         }
 
-        if (!battLevel.equals(currentBattery)) {
-            currentBattery = battLevel;
-            FrontendServer.getSharedInstance().updateBatteryState(name, battLevel);
+        String rssiLevel = (rssi == null ? "" : String.valueOf(rssi));
 
-            if (tts != null) {
+        boolean rssiChanged = !rssiLevel.equals(currentRSSI);
+        boolean battChanged = !battLevel.equals(currentBattery);
+        if (rssiChanged || battChanged) {
+            currentRSSI = rssiLevel;
+            currentBattery = battLevel;
+            FrontendServer.getSharedInstance().updateBatteryState(name, battLevel, rssiLevel);
+
+            if (battChanged && tts != null) {
                 tts.say(ttsName + " battery " + battLevel);
             }
         }
