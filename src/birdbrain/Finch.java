@@ -126,20 +126,23 @@ public class Finch extends Robot {
      * <p><b>Example:</b>
      * <pre>
      *    Finch bot = new Finch("A");
-     *    bot.setMotors(30, 30, 100, 100);  // Set motors driving forward for 30cm.
-     *    bot.allowTime(0.1);               // Allow a moment for the motors to engage.
+     *    bot.setMotors(30, 30, 10, 10);  // Set motors driving forward for 30cm at 10% speed.
+     *    bot.allowTime(0.2);             // Allow a moment for the motors to engage.
      *    int i = 0;
-     *    while (bot.isMoving()) {          // Keep changing beak color so long
-     *      i++;                            // as the finch is still moving.
-     *      bot.setBeak(i%100, (i/3)%100, (i/7)%100);
-     *      bot.allowTime(0.2);             // Slight delay to not overwhelm the lights
+     *    while (bot.isMoving()) {        // Keep changing beak color so long
+     *      i++;                          // as the finch is still moving.
+     *      int r = (i*3)%100;
+     *      int g = (i*7)%100;
+     *      int b = (i*5)%100;
+     *      bot.setBeak(r, g, b);         // Use varying colors, depending on i.
+     *      bot.allowTime(0.1);           // Slight delay to not overwhelm the lights.
      *    }
      *    bot.print("Blinked " + i + " times");
      * </pre>
      *
-     * @return  encoder value in rotations
+     * @return  true or false indicating whether the finch's wheels are engaged
      */
-    public boolean isFinchMoving() { 
+    public boolean isMoving() { 
         return httpRequestInBoolean("in/finchIsMoving/static/%s", deviceInstance);
     }
 
@@ -306,11 +309,13 @@ public class Finch extends Robot {
     }
 
     /**
-     * Drive the finch by specifying wheel speeds directly. Using different
-     * combinations of positive, negative, or zero values, you can make the
-     * finch move straight, forwards or backwards, or turn in place. You can
-     * even make it curve in an arc or circle, by having the wheels go at
-     * different speeds.
+     * Drive the finch by specifying wheel speeds directly. 
+     * This version of {@code setMotors(...)} uses two parameters, see also
+     * the {@link birdbrain.Finch#setMotors(double leftDistance, double rightDistance, double leftSpeed, double rightSpeed) four-parameter version}.
+     * Using different combinations of positive, negative, or zero values, you
+     * can make the finch move straight, forwards or backwards, or turn in
+     * place. You can even make it curve in an arc or circle, by having the
+     * wheels go at different speeds.
      * Unlike {@link birdbrain.Finch#straight(String direction, double distance, double speed) straight(...)},
      * and {@link birdbrain.Finch#spin(String direction, double angle, double speed) spin(...)},
      * this function does <b>not</b> pause your program. Instead, your program
@@ -345,13 +350,15 @@ public class Finch extends Robot {
     }
 
     /**
-     * Drive the finch by specifying wheel speeds and distances directly. Using different
-     * combinations of positive, negative, or zero values, you can make the
-     * finch move straight, forwards or backwards, or turn in place. You can
-     * even make it curve in an arc or circle, by having the wheels go at
-     * different speeds. You can make it go forever, or make it go only a
-     * certain distance before automatically stopping. And you can fully control
-     * each wheel independently of the other.
+     * Drive the finch by specifying wheel speeds and distances directly.
+     * This version of {@code setMotors(...)} uses four parameters, see also
+     * the {@link birdbrain.Finch#setMotors(double leftSpeed, double rightSpeed) two-parameter version}.
+     * Using different combinations of positive, negative, or zero values, you
+     * can make the finch move straight, forwards or backwards, or turn in
+     * place. You can even make it curve in an arc or circle, by having the
+     * wheels go at different speeds. You can make it go forever, or make it go
+     * only a certain distance before automatically stopping. And you can fully
+     * control each wheel independently of the other.
      * Unlike {@link birdbrain.Finch#straight(String direction, double distance, double speed) straight(...)},
      * and {@link birdbrain.Finch#spin(String direction, double angle, double speed) spin(...)},
      * this function does <b>not</b> pause your program. Instead, your program
@@ -388,8 +395,6 @@ public class Finch extends Robot {
      *    bot.setMotors(0, 0, -50, 50);     // Left wheel moves forever at 50% backwards power, right wheel moves forever at 50% power.
      *    bot.allowTime(5.0);               // Delay for 5 seconds... meanwhile the robot is spinning loops!
      *    bot.setMotors(0, 20, 0, 100);     // Left wheel halts, right wheel 20 cm at 100% power forward.
-     *    bot.allowTime(5.0);               // Delay for 5 seconds... meanwhile the robot is spinning loops!
-     *    bot.stop();                       // Stop moving.
      * </pre>
      *
      * @param leftDistance  Distance for the left wheel, in cm (range: 0 to 1000 ... up to ten meters), but note that 0.0 means "drive indefinitely".
@@ -413,7 +418,7 @@ public class Finch extends Robot {
      * <pre>
      *    Finch bot = new Finch("A");
      *    bot.setMotors(25, 25);    // Starts moving.
-     *    ...                       // ... delay or do other things while moving ...
+     *    bot.allowTime(2.0);       // ... delay or do other things while moving ...
      *    bot.stop();               // Stop moving.
      * </pre>
      */
@@ -474,7 +479,7 @@ public class Finch extends Robot {
      *    Finch bot = new Finch("A");
      *    bot.setTail(1, 100, 100, 100);  // Make tail light #1 full bright white.
      *    bot.setTail(4, 50, 0, 0);       // Make tail light #4 red, at 50% brightness.
-     *    bot.setTail(3, 30, 30, 30);     // Make tail light #3 dull white, 30% brightness.
+     *    bot.setTail(3, 10, 10, 10);     // Make tail light #3 dull white, 10% brightness.
      * </pre>
      *
      * @param ledChoice  choice of led to set (range: 1 to 4).
@@ -552,12 +557,12 @@ public class Finch extends Robot {
      * <pre>
      *    Finch bot = new Finch("A");
      *    bot.resetEncoders();              // Reset the odometers
-     *    bot.setMotors(50, 50);            // Move straight forward at 50% speed.
+     *    bot.setMotors(30, 30);            // Move straight forward at 30% speed.
      *    while (bot.getLight("L") &gt; 30) {  // keep checking the left side light sensor...
      *       bot.delay(1.0);                // ... and delay while it is above 30%
      *    }
      *    bot.stop();                       // Stop moving once we reach a nice shady spot.
-     *    int d = bot.getEncoder("L");      // Get the encoder value for the left wheel.
+     *    double d = bot.getEncoder("L");   // Get the encoder value for the left wheel.
      *    System.out.println("Wheels moved " + d + " rotations!");
      * </pre>
      */
@@ -604,9 +609,9 @@ public class Finch extends Robot {
      * <pre>
      *    Finch bot = new Finch("A");
      *    double x = bot.getEncoder("R");  // Get the right wheel encoder value.
-     *    ...
-     *    ...                              // Do movements or other things here...
-     *    ...
+     *    // ...
+     *    bot.straight("F", 10, 30);       // Do movements or other things here...
+     *    // ...
      *    double y = bot.getEncoder("R");  // Get the right wheel encoder value again.
      *    double total = (y - x) * 15.94;  // Calculate total distance moved so far.
      *    System.out.println("We moved " + total + " centimeters so far!");
@@ -619,6 +624,7 @@ public class Finch extends Robot {
         double value = getSensor("Encoder", false, side);
         value = Math.round(value * 100.0)/100.0;
         return value;
+        // TODO: consider converting to centimeters instead of rotations?
     }
 
     /**
@@ -799,7 +805,7 @@ public class Finch extends Robot {
      * <pre>
      *   Finch bot = new Finch("A");
      *   bot.print("Hello 123");   // Scrolls “Hello 123” on the panel.
-     *   bot.spin("L", 45, 30);    // Slow left spin, plenty of time to show the message.
+     *   bot.spin("L", 360, 10);   // Slow left spin, plenty of time to show the message.
      *   bot.print("Bye!");        // Next, scrolls “Bye!" on the panel.
      *   bot.delay(3.0);           // Delay 3 seconds, should be enough for "Bye!" to finish.
      * </pre>
@@ -963,15 +969,25 @@ public class Finch extends Robot {
      * finch contains a 3-axis MEMS accelerometer, which helps it determine
      * whether it is accelerating along X, Y, or Z axes. When the finch is at
      * rest, these values can be used to determine orientation, by measuring
-     * which direction gravity is pulling on the finch. These values can also be
-     * used to determine if the finch is shaking, falling, bumping into objects,
-     * etc.
+     * which direction gravity is pulling on the finch. Sampling these values
+     * repeatedly can also be used to determine if the finch is shaking,
+     * falling, bumping into objects, etc.
+     *
+     * The Z axis points up, out the top surface of the finch. The X axis points
+     * to the finch's right. The Y axis points towards the finch's tail. Since
+     * gravity pulls downwards, when sitting on a level surface on the earth, Z
+     * will be around -9.8, and X and Y values will be close to zero. On the
+     * moon, Z would be around -1.6. If the finch is rapidly driving forward, Y
+     * will be slightly negative.
+     * <img alt="finch orientation axes" src="finch-orientation.png">
      *
      * <p><b>Example:</b>
      * <pre>
      *   Finch bot = new Finch("A");
-     *   double[] a = bot.getAcceleration();
-     *   System.out.println("ax=" + a[0] + " ay=" + a[1] + " az=" + a[2]);
+     *   while (true) {
+     *     double[] a = bot.getAcceleration();
+     *     System.out.printf("ax=%2.3f ay=%2.3f az=%2.3f\n", a[0], a[1], a[2]);
+     *   }
      * </pre>
      *
      * @return array {ax, ay, az} in m/(s^2).
@@ -979,7 +995,6 @@ public class Finch extends Robot {
     @Override
     public double[] getAcceleration() { return super.getAcceleration(); }
 
-    // TODO: what basis is used here?
     /**
      * Get the finch's magnetometer vector (compass field) in micro-tesla for X,
      * Y, and Z. The finch contains a small 3-axis digital magnetic compass,
@@ -988,11 +1003,17 @@ public class Finch extends Robot {
      * the results are only approximate values. The direction is represented by
      * a 3-dimensional vector (X, Y, Z).
      *
+     * <b>Caution:</b> This function is experimental. Currently, the values it
+     * provides are in the reference frame of the micro:bit control board,
+     * and do not correct for the mounting angle of the tail.
+     *
      * <p><b>Example:</b>
      * <pre>
      *   Finch bot = new Finch("A");
-     *   int[] m = bot.getMagnetometer();
-     *   System.out.println("mx=" + m[0] + " my=" + m[1] + " mz=" + m[2]);
+     *   while (true) {
+     *     int[] m = bot.getMagnetometer();
+     *     System.out.printf("mx=%5d my=%5d mz=%5d\n", m[0], m[1], m[2]);
+     *   }
      * </pre>
      *
      * @return array {mx, my, mz} in micro-tesla
@@ -1007,11 +1028,17 @@ public class Finch extends Robot {
      * facing. <b>Note:</b> This sensor is not terribly precise, so the results
      * are only approximate values.
      *
+     * <b>Caution:</b> This function is experimental. Currently, the values it
+     * provides are not fully calibrated.
+     *
+     *
      * <p><b>Example:</b>
      * <pre>
      *   Finch bot = new Finch("A");
-     *   int deg = bot.getCompass();
-     *   System.out.println("Currently pointing: " + deg + " degrees");
+     *   while (true) {
+     *     int deg = bot.getCompass();
+     *     System.out.println("Currently pointing: " + deg + " degrees");
+     *   }
      * </pre>
      *
      * @return heading in degrees (0–360)

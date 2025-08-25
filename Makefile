@@ -24,7 +24,15 @@ jar: compile
 docs:
 	@mkdir -p docs
 	javadoc -d docs -sourcepath src -public -quiet -noindex -notree -nohelp -nonavbar -notimestamp -noqualifier all src/birdbrain/Finch.java
+	cp finch-orientation.png docs/birdbrain/
 	@echo "See: docs/birdbrain/Finch.html"
+
+.PHONY: examples
+examples:
+	@mkdir -p examples
+	@rm -f examples/Example*.java
+	awk -f extract_examples.awk src/birdbrain/Finch.java
+	@echo "To test, try: java -classpath $(JAR) examples/Example01.java"
 
 # ---- Clean ----
 .PHONY: clean
