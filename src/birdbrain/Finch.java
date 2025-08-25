@@ -1,7 +1,7 @@
 package birdbrain;
 
 /**
- * This class provides mothods to control and query a Finch robot. It includes
+ * This class provides methods to control and query a finch robot. It includes
  * methods to set the values of motors and LEDs, print strings to the 25-LED
  * panel, and to read the values of all sensors.
  *
@@ -24,8 +24,8 @@ public class Finch extends Robot {
      * them succeeds. Use this if you only have one robot connected, or you
      * don't care which one you control.
      * <b>NOTE:</b> You must first run the <b>BlueBird Connector</b> program,
-     * and use that program to scan for bluetooth devices. That program can
-     * connect to up to three robots simultaneously, which will be labeled "A,
+     * and use that program to scan for Bluetooth devices. That program can
+     * connect to up to three robots simultaneously, which will be labeled "A",
      * "B", and "C". Normally you'll just connect to one robot, and it will be
      * "A".
      *
@@ -41,25 +41,25 @@ public class Finch extends Robot {
     }
 
     /**
-     * Constructor to initialize a Finch, by name.
+     * Constructor to initialize a Finch object, by name.
      * <b>NOTE:</b> You must first run the <b>BlueBird Connector</b> program,
-     * and use that program to scan for bluetooth devices. That program can
-     * connect to up to three robots simultaneously, which will be labeled "A,
+     * and use that program to scan for Bluetooth devices. That program can
+     * connect to up to three robots simultaneously, which will be labeled "A",
      * "B", and "C". Normally you'll just connect to one robot, and it will be
      * "A". But if you want to control multiple robots, this constructor will
      * let you specify which one each Finch object controls.
      *
      * @param device  A device letter ("A", "B", or "C") to indicate which robot
      * to control. The available device letters can be seen within the
-     * <b>BlueBird Connector</b> program after you have scanned for bluetooth
+     * <b>BlueBird Connector</b> program after you have scanned for Bluetooth
      * devices and connected to some robots.
      * 
      * <p><b>Example:</b>
      * <pre>
-     *    Finch bot1 = new Finch("A");  // Connect to robot "A".
-     *    Finch bot2 = new Finch("C");  // Connect to robot "C".
-     *    bot1.straight("F", 10, 50.0); // Move A forward 10 cm distance at 50% speed.
-     *    bot2.setBeak(0, 75, 50);      // Set B's beak to 0% red, 75% green, 50% blue.
+     *    Finch martin = new Finch("A");  // Connect to robot "A".
+     *    Finch robin = new Finch("C");   // Connect to robot "C".
+     *    robin.straight("F", 10, 50.0);  // Move robin forward 10 cm distance at 50% speed.
+     *    martin.setBeak(0, 75, 50);      // Set martin's beak to 0% red, 75% green, 50% blue.
      * </pre>
      */
     public Finch(String device) {
@@ -159,12 +159,12 @@ public class Finch extends Robot {
 
     /**
      * Move the finch forward or backwards a specified distance and speed. This
-     * <b>pauses your program</b> until the finch has finished moving the
-     * desired distance. <b>Note:</b> The finch can't always measure distances
-     * perfectly, it can be affected if the floor is slippery, or bumpy, etc.
-     * Note: technically, it is legal to specify a distance of zero cm in this
-     * function, but in practice finch will ignore such a command. Similarly,
-     * specifying a speed of zero doesn't make much sense.
+     * also <b>pauses your program</b>, allowing enough time for the finch to
+     * finish moving the desired distance. <b>Note:</b> The finch can't always
+     * measure distances perfectly, it can be affected if the floor is slippery,
+     * or bumpy, etc. Note: technically, it is legal to specify a distance of
+     * zero cm in this function, but in practice finch will ignore such a
+     * command. Similarly, specifying a speed of zero doesn't make much sense.
      * 
      * <p><b>Example:</b>
      * <pre>
@@ -193,23 +193,23 @@ public class Finch extends Robot {
 
     /**
      * Turn the finch right or left, rotating in place by the specified angle
-     * and speed. This <b>pauses your program</b> until the finch has finished
-     * turning the desired angle. <b>Note:</b> The finch can't always measure
-     * angles perfectly, it can be affected if the floor is slippery, or bumpy,
-     * etc. Uusually you should use positive numbers for the angle. Using a
-     * negative number causes finch to spin in the opposite direction you
-     * specified.
+     * and speed. This also <b>pauses your program</b>, allowing enough time for
+     * the finch to finish turning the desired angle. <b>Note:</b> The finch
+     * can't always measure angles perfectly, it can be affected if the floor is
+     * slippery, or bumpy, etc. Usually you should use positive numbers for the
+     * angle. Using a negative number causes finch to spin in the opposite
+     * direction you specified.
      *
      * <p><b>Example:</b>
      * <pre>
      *    Finch bot = new Finch("A");
      *    bot.spin("R", 90, 100);  // First, spin right (clockwise) 90 degrees, at 100% speed.
      *    bot.spin("L", 45, 25.0); // Then, spin left (counter-clockwise) 45 degrees, at 25% speed.
-     *    bot.spin("L", -45, 25.0); // Then, surprise! It spins right, becuse negative angle means opposite direction.
+     *    bot.spin("L", -45, 25.0); // Then, surprise! It spins right, because negative angle means opposite direction.
      * </pre>
      *
      * @param direction  Use "R" or "L" for right (clockwise) or left (counter-clockwise).
-     * @param angle  Angle to turn, in degrees, where negatives go in the reverse direction (range: -3600 to 3000 ... up to ten full rotations, though Finch might get a bit dizzy).
+     * @param angle  Angle to turn, in degrees, where negatives go in the reverse direction (range: -3600 to 3000 ... up to ten full rotations, though the finch might get a bit dizzy).
      * @param speed  Speed, as a percentage (range: 0 to 100).
      */
     public void spin(String direction, double angle, double speed) {
@@ -228,11 +228,16 @@ public class Finch extends Robot {
      * distance and speed. This <b>pauses your program</b> until the finch has
      * finished moving the desired distance.
      *
-     * <b>Note:</b> The finch can't always measure distances and angles
-     * perfectly, it can be affected if the floor is slippery, or bumpy, etc. In
-     * fact, because of the acceleration and deceleration profiles built into
-     * the wheel motors, even on a perfect surface the finch won't quite follow
-     * a perfect circular path.
+     * <b>Caution:</b> This function is experimental, still in development. Some
+     * combinations of parameters may not behave quite as hoped. Using low
+     * speeds (for example, 10% speed) generally produces more geometrically
+     * precise movements. However, because of the acceleration and deceleration
+     * profiles built into the wheel motors, even on a perfect surface the finch
+     * won't quite follow a perfect circular path, and this effect is
+     * exacerbated when the motors need to accelerate to higher speeds. So you
+     * may get unusual oval or elbow-shaped curves instead of nice circles. Even
+     * in ideal scenarios, finch can't always measure distances and angles
+     * perfectly, it can be affected if the floor is slippery, or bumpy, etc.
      *
      * <b>Note:</b> When moving backwards, the direction the arc curves might
      * seem opposite from what you expect. Moving forward along a left-bending
@@ -353,6 +358,14 @@ public class Finch extends Robot {
      * will continue executing, allowing you to command the finch to do other
      * things while it moves. 
      *
+     * <b>Caution:</b> This function is experimental, still in development. The
+     * finch wheel motors are somewhat complex, with built-in acceleration and
+     * deceleration profiles, which can affect the geometry of the movements,
+     * especially if the wheels are moving at different speeds or for different
+     * distances. Even in ideal scenarios, finch can't always measure distances
+     * and angles perfectly, it can be affected if the floor is slippery, or
+     * bumpy, etc.
+     *
      * <p><b>Note:</b> If you specify a zero distance for either of the two
      * wheels, along with a non-zero speed, then that wheel will continue moving
      * indefinitely. That's because a zero distance in this function is treated
@@ -451,7 +464,7 @@ public class Finch extends Robot {
      * Change one of the finch's tail light colors. There are four lights on the
      * tail, numbered 1 to 4 from left to right, and you can achieve most any
      * color for each one using combinations of red, green, and blue. Use all
-     * zeros to a light off, or all 100's to make the light bright
+     * zeros to turn a light off, or all 100's to make the light bright
      * white.
      * See also {@link birdbrain.Finch#setTail(String ledChoice, int red, int green, int blue) setTail(String, ...)}
      * which lets you change all four lights with one line of code.
@@ -538,13 +551,13 @@ public class Finch extends Robot {
      * <p><b>Example:</b>
      * <pre>
      *    Finch bot = new Finch("A");
-     *    bot.resetEncoders();          // Reset the odometers
-     *    bot.setMotors(50, 50);        // Move straight forward at 50% speed.
-     *    while (getLight("L") &gt; 30) {  // keep checking the left side light sensor...
-     *       bot.delay(1.0);            // ... and delay while it is above 30%
+     *    bot.resetEncoders();              // Reset the odometers
+     *    bot.setMotors(50, 50);            // Move straight forward at 50% speed.
+     *    while (bot.getLight("L") &gt; 30) {  // keep checking the left side light sensor...
+     *       bot.delay(1.0);                // ... and delay while it is above 30%
      *    }
-     *    bot.stop();                   // Stop moving once we reach a nice shady spot.
-     *    int d = bot.getEncoder("L");  // Get the encoder value for the left wheel.
+     *    bot.stop();                       // Stop moving once we reach a nice shady spot.
+     *    int d = bot.getEncoder("L");      // Get the encoder value for the left wheel.
      *    System.out.println("Wheels moved " + d + " rotations!");
      * </pre>
      */
@@ -590,12 +603,12 @@ public class Finch extends Robot {
      * <p><b>Example:</b>
      * <pre>
      *    Finch bot = new Finch("A");
-     *    int x = bot.getEncoder("R");  // Get the right wheel encoder value.
+     *    double x = bot.getEncoder("R");  // Get the right wheel encoder value.
      *    ...
-     *    ...                           // Do movements or other things here...
+     *    ...                              // Do movements or other things here...
      *    ...
-     *    int y = bot.getEncoder("R");  // Get the right wheel encoder value again.
-     *    int total = (y - x) * 15.94;  // Calculate total distance moved so far.
+     *    double y = bot.getEncoder("R");  // Get the right wheel encoder value again.
+     *    double total = (y - x) * 15.94;  // Calculate total distance moved so far.
      *    System.out.println("We moved " + total + " centimeters so far!");
      * </pre>
      *
@@ -613,12 +626,12 @@ public class Finch extends Robot {
      * function is useful for checking if the finch is about to run into a wall
      * or other obstacle in front of the robot. It uses a pair of ultrasound
      * transmitters and sensors located just below the beak of the finch, like a
-     * bat uses sonar, attempting measure the approximate distance to the
+     * bat uses sonar, attempting to measure the approximate distance to the
      * nearest obstacle in front of the robot. 
      *
      * <b>Note:</b> This function has nothing to do with "distance travelled" or
      * the wheel encoders, but instead is used to check for obstacles in front
-     * of the robot. Also, tthe sensors used for this are not very accurate,
+     * of the robot. Also, the sensors used for this are not very accurate,
      * they give only a rough approximation of distance, and they are only able
      * to see a short distance ahead, about one meter or so at best.
      *
@@ -723,9 +736,9 @@ public class Finch extends Robot {
 
     /**
      * Get information about the finch's physical orientation, or "tilt". The
-     * finch contains a tiny multi-axis MEMS gyroscope, which it can use to
+     * finch contains a tiny multi-axis MEMS accelerometer, which it can use to
      * detect tilting and rotation of its body, much like a human's inner ear
-     * gives us a sense of balance. While driving on the floor, this function is
+     * gives us a sense of balance. While driving on a level floor, this function is
      * probably not useful, as the finch will probably always be "Level". But
      * this function can be used to detect if the finch has been picked up, or
      * fallen upside down. Or, this function can be used to make programs where
@@ -747,7 +760,7 @@ public class Finch extends Robot {
      *   }
      * </pre>
      *
-     * @return the orientation of the finch (range: "Beak up", "Beak down", "Tilt left", "Tilt right", "Level", "Upside down")
+     * @return the orientation of the finch (range: "Beak up", "Beak down", "Tilt left", "Tilt right", "Level", "Upside down", "In between")
      */
     public String getOrientation() {
         boolean beakUp = getOrientationBoolean(BEAK_UP);
@@ -800,7 +813,7 @@ public class Finch extends Robot {
      * Set the entire 5x5 LED panel at once using a 25-element array of 0/1 values
      * (where 1 means on, 0 means off). The array is in row-major order (first
      * five values are the top row, next five values are the second row, etc.).
-     * Anything previuosly put on the screen, including any previous print
+     * Anything previously put on the screen, including any previous print
      * messages, is cancelled.
      *
      * <p><b>Example:</b>
@@ -811,7 +824,7 @@ public class Finch extends Robot {
      *     0,1,0,1,0,           // 2nd row: two eyes
      *     0,0,0,0,0,           // 3rd row: nothing here, we have no "nose"
      *     1,0,0,0,1,           // 4th row: top of smile
-     *     0,1,1,1,0            // 4th row: bottom of smile
+     *     0,1,1,1,0            // 5th row: bottom of smile
      *   };
      *   bot.setDisplay(smile);
      * </pre>
@@ -1010,9 +1023,9 @@ public class Finch extends Robot {
      * Check whether a button on the finch is currently being pressed. The finch
      * has three buttons located on the tail micro:bit circuit board. "A" and
      * "B" are small round black buttons, labeled with small colored triangles.
-     * The "Logo" button is a the touch-sensitive gold logo near the back center
+     * The "Logo" button is a touch-sensitive gold logo near the back center
      * of the circuit board (pill-shaped, with two small dots). <b>Note:</b>
-     * This function determins whether the button is <b>currently</b> being
+     * This function determines whether the button is <b>currently</b> being
      * pressed at the exact moment your program calls this function -- it does
      * not wait for the user to press a button, nor does it check if the user
      * pressed the button recently. If you want to wait for a button press, you
@@ -1109,7 +1122,7 @@ public class Finch extends Robot {
 
     /**
      * Detect whether the finch is currently being shaken. This uses the
-     * gyroscopes to sense whether the robot has been picked up and is being
+     * accelerometers to sense whether the robot has been picked up and is being
      * shaken.
      *
      * <p><b>Example:</b>
@@ -1177,7 +1190,7 @@ public class Finch extends Robot {
      * to simply wait, and the robot keeps doing whatever it was doing. Useful
      * if the robot needs some time to complete an action and you want to just
      * have the program delay for a moment. This is the exact same as
-     * {@link birdbrain.Finch#allowTime(double numSeconds) delay(...)} and
+     * {@link birdbrain.Finch#allowTime(double numSeconds) allowTime(...)} and
      * {@link birdbrain.Finch#carryOn(double numSeconds) carryOn(...)}.
      *
      * <p><b>Example:</b>
