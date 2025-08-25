@@ -1010,6 +1010,7 @@ public class RobotServlet extends HttpServlet {
                             ticksR = -ticksR;
                         }
                     }
+                    LOG.debug("wheels {} {} {} {}", left, ticksL, right, ticksR);
                     //ScratchME.blueBirdDriver.updateMotors(devLetter, left, ticksL, right, ticksR);
                     robotManager.updateMotors(devLetter, left, ticksL, right, ticksR);
                     break;
