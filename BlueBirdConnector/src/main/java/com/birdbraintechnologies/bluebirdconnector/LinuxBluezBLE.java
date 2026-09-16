@@ -441,24 +441,24 @@ public class LinuxBluezBLE implements RobotCommunicator {
             String addr = props.containsKey("Address") ? props.get("Address").getValue().toString() : "(unknown)";
             String name = props.containsKey("Name") ? props.get("Name").getValue().toString() : "(no name)";
             // LOG.debug("Device detected: " + name + " [" + addr + "] at " + path);
+            if (name.length() < 3) // could probably be more strict: see "Constraints" below and "example" above
+                return;
             String prefix = name.substring(0, 2);
             if (!supportedRobotTypes.contains(prefix))
                 return;
-            if (!containsIgnoreCase(props.get("UUIDs").getValue(), SERVICE_UUID))
+            if (!props.containsKey("UUIDs") || !containsIgnoreCase(props.get("UUIDs").getValue(), SERVICE_UUID))
                 return;
             LOG.info("Detected device offering BirdBrain services: {} [{}]", name, path);
             for (var entry : props.entrySet())
                 LOG.debug("  key: {}   value: {}", entry.getKey(), entry.getValue().getValue().toString());
-            Short rssi = null;
-            if (props.containsKey("RSSI")) {
-                rssi = (Short)props.get("RSSI").getValue();
-            } else {
+            Short rssi = getProp(props, "RSSI", Short.class);
+            if (rssi == null) {
                 // TODO: Maybe query dbus to see if RSSI property can be found?
                 // Currently, we get the RSSI on the next PropertiesChanged signal.
                 LOG.info("RSSI: unknown");
             }
-            Boolean connected = null;
-            if (props.containsKey("Connected")) {
+            Boolean connected = getProp(props, "Connected", Boolean.class);
+            if (connected != null) {
                 connected = (Boolean)props.get("Connected").getValue();
                 LOG.info("Already Connected: " + connected);
             } else {
@@ -583,12 +583,11 @@ public class LinuxBluezBLE implements RobotCommunicator {
         }
 
         private void bluetoothGattAdded(String path, Map<String, Variant<?>> props) {
-            Variant<?> uuidVar = props.get("UUID");
-            Variant<?> serviceVar = props.get("Service");
-            if (uuidVar == null || serviceVar == null)
+            String uuid = getProp(props, "UUID", String.class);
+            DBusPath dpath = getProp(props, "Service", DBusPath.class);
+            if (uuid == null || dpath == null)
                 return;
-            String uuid = uuidVar.getValue().toString();
-            String service = ((DBusPath)serviceVar.getValue()).getPath();
+            String service = dpath.getPath();
             BLERobotDevice robot = robotByService(service);
             LOG.debug("GATT update for Robot {}, UUID is {}", robot != null ? robot.name : "<NULL>", uuid);
             updateGatt(path, robot, uuid);
@@ -801,9 +800,11 @@ public class LinuxBluezBLE implements RobotCommunicator {
                     var ifaces = entry.getValue();
                     if (ifaces.containsKey("org.bluez.GattCharacteristic1")) {
                         Map<String, Variant<?>> props = ifaces.get("org.bluez.GattCharacteristic1");
-                        String uuid = (String) props.get("UUID").getValue();
-                        LOG.debug("item is a Gatt characteristic, UUID={}", uuid);
-                        updateGatt(path, robot, uuid);
+                        String uuid = getProp(props, "UUID", String.class);
+                        if (uuid != null) {
+                            LOG.debug("item is a Gatt characteristic, UUID={}", uuid);
+                            updateGatt(path, robot, uuid);
+                        }
                     }
                 }
             } catch (Exception e) {
