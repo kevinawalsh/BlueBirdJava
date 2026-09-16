@@ -12,6 +12,7 @@ Package/BlueBird Connector/*
 Package/BIRDBRAIN.pfx
 Package/command.txt
 Package/tempFiles/*
+**/.vscode/
 
 # Compiled class file
 *.class
